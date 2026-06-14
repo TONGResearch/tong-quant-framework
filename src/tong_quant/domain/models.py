@@ -8,6 +8,7 @@ from tong_quant.domain.enums import (
     AssetType,
     Market,
     Regime,
+    SecurityStatus,
     SignalAction,
     SignalStage,
 )
@@ -89,11 +90,63 @@ class FundamentalFact:
     metric: str
     period_end: date
     published_at: datetime
+    available_at: datetime
     value: Decimal
     source: str
+    period_start: date | None = None
+    fiscal_period: str | None = None
+    currency: str | None = None
+    unit: str = "absolute"
+    revision: int = 0
 
     def __post_init__(self) -> None:
         require_timezone(self.published_at, "published_at")
+        require_timezone(self.available_at, "available_at")
+        if self.available_at < self.published_at:
+            raise ValueError("available_at cannot precede published_at")
+        if self.period_start is not None and self.period_start > self.period_end:
+            raise ValueError("period_start cannot follow period_end")
+        if self.revision < 0:
+            raise ValueError("revision cannot be negative")
+
+
+@dataclass(frozen=True, slots=True)
+class InstrumentStatus:
+    instrument: Instrument
+    effective_from: date
+    status: SecurityStatus
+    is_tradable: bool
+    available_at: datetime
+    source: str
+    effective_to: date | None = None
+    industry: str | None = None
+
+    def __post_init__(self) -> None:
+        require_timezone(self.available_at, "available_at")
+        if self.effective_to is not None and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot precede effective_from")
+        if (
+            self.status in {SecurityStatus.SUSPENDED, SecurityStatus.DELISTED}
+            and self.is_tradable
+        ):
+            raise ValueError(f"{self.status.value} securities cannot be tradable")
+
+
+@dataclass(frozen=True, slots=True)
+class UniverseMembership:
+    universe: str
+    instrument: Instrument
+    effective_from: date
+    available_at: datetime
+    source: str
+    effective_to: date | None = None
+
+    def __post_init__(self) -> None:
+        require_timezone(self.available_at, "available_at")
+        if not self.universe.strip():
+            raise ValueError("universe must not be empty")
+        if self.effective_to is not None and self.effective_to < self.effective_from:
+            raise ValueError("effective_to cannot precede effective_from")
 
 
 @dataclass(frozen=True, slots=True)

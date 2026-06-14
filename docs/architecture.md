@@ -123,3 +123,19 @@ MarketDataService + timestamped external metrics
 It never creates orders and does not contain a trading strategy. Transition
 states remain informational and map to the primary `Sideways` state. See
 `docs/market-regime-engine.md`.
+
+## Data Foundation Hardening
+
+Historical research must reconstruct both what a company reported and which
+securities were eligible at the decision time:
+
+```text
+FundamentalFact revisions -----> point-in-time fundamental query
+UniverseMembership ------------> historical candidate universe
+InstrumentStatus --------------> historical tradability and classification
+```
+
+These records use separate effective and availability timestamps. Effective
+dates describe when a fact or status applies; availability timestamps describe
+when the system was allowed to know it. Screening must consume these canonical
+queries rather than current company snapshots or today's listed-stock universe.

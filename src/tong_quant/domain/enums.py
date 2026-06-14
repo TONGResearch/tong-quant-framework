@@ -14,6 +14,14 @@ class AssetType(StrEnum):
     INDEX = "index"
 
 
+class SecurityStatus(StrEnum):
+    LISTED = "listed"
+    SUSPENDED = "suspended"
+    SPECIAL_TREATMENT = "special_treatment"
+    DELISTING = "delisting"
+    DELISTED = "delisted"
+
+
 class Adjustment(StrEnum):
     NONE = "none"
     FORWARD = "forward"

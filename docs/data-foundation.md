@@ -15,6 +15,8 @@ AKShare -> Raw schema validation -> Normalization -> Domain validation -> SQLite
 - China trading dates
 - Current A-share universe
 - Current basic company information
+- Point-in-time fundamental fact persistence contract
+- Historical universe membership and security-status persistence contract
 
 ## Point-in-Time Rules
 
@@ -32,6 +34,27 @@ Company information and the A-share universe are current snapshots. They are
 stored with their retrieval time and must not be treated as historical company
 fundamentals or historical index membership.
 
+Fundamental facts use separate observation and availability fields:
+
+- `period_start` and `period_end`: accounting period represented by the fact
+- `published_at`: issuer or source publication time
+- `available_at`: earliest time Tong Quant permits the fact to influence a decision
+- `revision`: version number for restatements and corrections
+
+Historical queries select only facts with `available_at <= as_of` and return
+the latest version that was visible at that time. A later restatement therefore
+cannot replace the value seen by an earlier backtest.
+
+Historical security reconstruction uses two independent records:
+
+- `universe_memberships`: when a security belonged to an index, exchange-wide,
+  or custom research universe
+- `instrument_status_history`: listed, suspended, ST, delisting, or delisted
+  state, tradability, and historical industry
+
+Membership and tradability are intentionally separate. A security may belong
+to a historical universe while being suspended or otherwise not tradable.
+
 The trading calendar is operational reference data. Historical dates are marked
 available from the beginning of their trading date, but source corrections are
 not reconstructed before Tong Quant first ingests them.
@@ -41,6 +64,9 @@ not reconstructed before Tong Quant first ingests them.
 - `instruments`
 - `daily_bars`
 - `trading_calendar`
+- `fundamental_facts`
+- `instrument_status_history`
+- `universe_memberships`
 - `signals`
 - `screening_results`
 
@@ -57,7 +83,9 @@ default expiry is 24 hours and is configurable in `config/default.toml`.
 
 - AKShare is an aggregation library backed by third-party websites; upstream
   schemas and availability can change.
-- V0.2 does not create a historical security-master or delisting database.
-- Current company information must not be used as point-in-time historical
-  fundamentals.
+- Provider ingestion for historical fundamentals, status changes, delistings,
+  and universe membership is not implemented yet. The canonical models,
+  storage, and point-in-time read contracts now exist.
+- Current company information must still not be used as point-in-time
+  historical fundamentals.
 - Exact exchange holidays beyond the ingested source are not synthesized.

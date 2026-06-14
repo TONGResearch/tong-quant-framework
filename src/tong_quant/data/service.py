@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import Adjustment, AssetType, Market
-from tong_quant.domain.models import Bar, Instrument
+from tong_quant.domain.models import Bar, FundamentalFact, Instrument, InstrumentStatus
 
 
 class MarketDataService:
@@ -51,3 +51,56 @@ class MarketDataService:
         as_of: datetime,
     ) -> list[date]:
         return self._store.trading_days(market, start, end, as_of=as_of)
+
+    def fundamental_facts(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        metric: str,
+        *,
+        as_of: datetime,
+        period_end_on_or_before: date | None = None,
+    ) -> list[FundamentalFact]:
+        return self._store.fundamental_facts(
+            symbol,
+            market,
+            asset_type,
+            metric,
+            as_of=as_of,
+            period_end_on_or_before=period_end_on_or_before,
+        )
+
+    def instrument_status(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        *,
+        on_date: date,
+        as_of: datetime,
+    ) -> InstrumentStatus | None:
+        return self._store.instrument_status(
+            symbol,
+            market,
+            asset_type,
+            on_date=on_date,
+            as_of=as_of,
+        )
+
+    def universe(
+        self,
+        universe: str,
+        market: Market,
+        *,
+        on_date: date,
+        as_of: datetime,
+        tradable_only: bool = False,
+    ) -> list[Instrument]:
+        return self._store.universe_as_of(
+            universe,
+            market,
+            on_date=on_date,
+            as_of=as_of,
+            tradable_only=tradable_only,
+        )
