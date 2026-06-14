@@ -1,0 +1,10 @@
+[market]
+id = "us"
+timezone = "America/New_York"
+currency = "USD"
+default_buy_lot = 1
+same_day_sale = true
+has_daily_price_limits = false
+
+[fees]
+commission_rate = 0.0

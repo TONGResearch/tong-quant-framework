@@ -1,0 +1,10 @@
+[market]
+id = "malaysia"
+timezone = "Asia/Kuala_Lumpur"
+currency = "MYR"
+default_buy_lot = 100
+same_day_sale = true
+has_daily_price_limits = true
+
+[fees]
+commission_rate = 0.0003

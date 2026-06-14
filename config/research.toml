@@ -1,0 +1,8 @@
+[project]
+environment = "research"
+
+[execution]
+mode = "research"
+allow_live_orders = false
+require_manual_approval = true
+broker = "paper"

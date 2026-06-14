@@ -1,7 +1,6 @@
-import akshare as ak
-import pandas as pd
-import matplotlib
+"""PyCharm-friendly development entry point."""
 
-print("AKShare OK")
-print("Pandas OK")
-print("Matplotlib OK")
+from tong_quant.__main__ import main
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tong-quant-framework"
+version = "0.2.0"
+description = "Personal quantitative investment research platform"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Tong Li" }]
+dependencies = [
+  "akshare>=1.18,<2",
+  "pandas>=2.2,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10",
+  "pandas-stubs>=2.2",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+pythonpath = ["src"]
+markers = [
+  "integration: exercises multiple data-foundation components",
+  "live_data: requires network access to live provider endpoints",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["tong_quant"]
+
+[[tool.mypy.overrides]]
+module = ["akshare", "akshare.*"]
+ignore_missing_imports = true

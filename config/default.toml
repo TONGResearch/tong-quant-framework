@@ -1,0 +1,34 @@
+[project]
+name = "Tong Quant Framework"
+environment = "research"
+base_currency = "CNY"
+
+[data]
+provider = "akshare"
+storage_root = "data"
+database_path = "data/tong_quant.sqlite3"
+cache_root = "data/cache"
+cache_ttl_seconds = 86400
+strict_point_in_time = true
+default_adjustment = "none"
+
+[market]
+enabled = ["china_a"]
+default = "china_a"
+
+[risk]
+max_position_weight = 0.10
+max_sector_weight = 0.30
+max_portfolio_drawdown = 0.15
+risk_per_trade = 0.01
+
+[execution]
+mode = "paper"
+allow_live_orders = false
+require_manual_approval = true
+broker = "paper"
+
+[validation]
+minimum_observations = 500
+require_out_of_sample = true
+require_walk_forward = true

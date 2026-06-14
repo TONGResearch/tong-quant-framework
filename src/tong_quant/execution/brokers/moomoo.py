@@ -1,0 +1,1 @@
+"""Future Moomoo broker adapter."""

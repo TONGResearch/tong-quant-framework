@@ -1,0 +1,1 @@
+"""Backtestable and explainable strategies."""
