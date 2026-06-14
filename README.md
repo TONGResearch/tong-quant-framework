@@ -11,9 +11,9 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.2 Scope
+## V0.3 Scope
 
-V0.2 establishes:
+V0.3 includes the V0.2 data foundation and adds:
 
 - Clean package architecture
 - Shared market-independent interfaces
@@ -28,8 +28,12 @@ V0.2 establishes:
 - Raw-response caching and data-quality validation
 - Versioned SQLite storage
 - Point-in-time-safe historical queries
+- Explainable China and global Market Regime Engines
+- Bull, Transition to Bull, Sideways, Transition to Bear, and Bear states
+- Configurable factor weights, thresholds, and confidence scoring
+- Point-in-time-safe regime input builders for historical replay
 
-It intentionally does not implement complex strategies or live brokerage.
+It intentionally does not implement trading strategies or live brokerage.
 
 ## Quick Start
 
@@ -50,5 +54,5 @@ python scripts/ingest_data.py daily-bars 600000 20240101 20241231
 python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
 ```
 
-See `docs/architecture.md`, `docs/data-foundation.md`, and
-`docs/development-roadmap.md`.
+See `docs/architecture.md`, `docs/data-foundation.md`,
+`docs/market-regime-engine.md`, and `docs/development-roadmap.md`.

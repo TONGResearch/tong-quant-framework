@@ -10,6 +10,8 @@ def test_default_configuration_is_safe() -> None:
     assert settings.execution.mode == "paper"
     assert settings.execution.allow_live_orders is False
     assert settings.execution.broker == "paper"
+    assert settings.market_regime.china.weights["csi_300_trend"] == 0.25
+    assert settings.market_regime.china.transition_bull_threshold == 12.0
 
 
 def test_research_override_preserves_default_values() -> None:

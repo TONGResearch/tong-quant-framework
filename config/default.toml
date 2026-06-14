@@ -16,6 +16,38 @@ default_adjustment = "none"
 enabled = ["china_a"]
 default = "china_a"
 
+[market_regime]
+enabled = true
+
+[market_regime.china]
+bull_threshold = 25.0
+bear_threshold = -25.0
+transition_bull_threshold = 12.0
+transition_bear_threshold = -12.0
+transition_min_agreement = 0.60
+model_version = "china-v0.3"
+
+[market_regime.china.weights]
+csi_300_trend = 0.25
+csi_all_share_trend = 0.20
+rising_stocks = 0.20
+market_turnover = 0.15
+market_breadth = 0.20
+
+[market_regime.global]
+bull_threshold = 25.0
+bear_threshold = -25.0
+transition_bull_threshold = 12.0
+transition_bear_threshold = -12.0
+transition_min_agreement = 0.60
+model_version = "global-v0.3"
+
+[market_regime.global.weights]
+major_index_trend = 0.35
+market_breadth = 0.25
+volatility = 0.20
+relative_strength = 0.20
+
 [risk]
 max_position_weight = 0.10
 max_sector_weight = 0.30

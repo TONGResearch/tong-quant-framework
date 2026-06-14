@@ -55,6 +55,12 @@ validation, risk management, and controlled execution.
   `MarketDataService` with an explicit timezone-aware `as_of` timestamp.
 - Treat company information and universe snapshots as current snapshots unless
   a dedicated historical security-master source proves otherwise.
+- Market regime classifiers consume only normalized `RegimeMetric` inputs.
+- Every regime input, bar, and external breadth or volatility metric must have
+  `available_at <= as_of`.
+- Transition regimes are informational and map to primary state `Sideways`;
+  they must not enable trend trading.
+- Regime weights and thresholds belong in configuration, not strategy code.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 

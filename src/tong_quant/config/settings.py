@@ -30,6 +30,24 @@ class MarketSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class RegimeModelSettings:
+    bull_threshold: float
+    bear_threshold: float
+    transition_bull_threshold: float
+    transition_bear_threshold: float
+    transition_min_agreement: float
+    model_version: str
+    weights: dict[str, float]
+
+
+@dataclass(frozen=True, slots=True)
+class MarketRegimeSettings:
+    enabled: bool
+    china: RegimeModelSettings
+    global_market: RegimeModelSettings
+
+
+@dataclass(frozen=True, slots=True)
 class RiskSettings:
     max_position_weight: float
     max_sector_weight: float
@@ -57,6 +75,7 @@ class Settings:
     project: ProjectSettings
     data: DataSettings
     market: MarketSettings
+    market_regime: MarketRegimeSettings
     risk: RiskSettings
     execution: ExecutionSettings
     validation: ValidationSettings
@@ -107,6 +126,11 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             enabled=tuple(raw["market"]["enabled"]),
             default=raw["market"]["default"],
         ),
+        market_regime=MarketRegimeSettings(
+            enabled=raw["market_regime"]["enabled"],
+            china=RegimeModelSettings(**raw["market_regime"]["china"]),
+            global_market=RegimeModelSettings(**raw["market_regime"]["global"]),
+        ),
         risk=RiskSettings(**raw["risk"]),
         execution=ExecutionSettings(**raw["execution"]),
         validation=ValidationSettings(**raw["validation"]),
@@ -122,4 +146,10 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("research and paper modes cannot allow live orders")
     if settings.data.cache_ttl_seconds < 0:
         raise ValueError("cache_ttl_seconds cannot be negative")
+    for model in (
+        settings.market_regime.china,
+        settings.market_regime.global_market,
+    ):
+        if not model.weights:
+            raise ValueError("market regime weights cannot be empty")
     return settings

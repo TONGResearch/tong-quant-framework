@@ -24,6 +24,17 @@ Exit: a reproducible daily dataset can be rebuilt for a fixed universe and date.
 Status: implemented in V0.2. Historical security-master reconstruction and
 corporate-action datasets remain future data milestones.
 
+## Milestone 1.5: Market Regime Engine
+
+- China factors: CSI 300, CSI All Share, rising stocks, turnover, and breadth
+- Global factors: major index trend, breadth, volatility, and relative strength
+- Five-state output with informational transition states
+- Configurable scoring and confidence
+- Point-in-time input construction and historical replay
+
+Status: implemented in V0.3. Strategy gating remains a future consumer and is
+not implemented here.
+
 ## Milestone 2: Minimal Trend Research
 
 - Donchian breakout

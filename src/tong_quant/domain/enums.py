@@ -43,7 +43,9 @@ class SignalStage(StrEnum):
 
 class Regime(StrEnum):
     BULL = "bull"
+    TRANSITION_TO_BULL = "transition_to_bull"
     SIDEWAYS = "sideways"
+    TRANSITION_TO_BEAR = "transition_to_bear"
     BEAR = "bear"
 
 

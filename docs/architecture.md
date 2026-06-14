@@ -102,3 +102,24 @@ research code.
 The data foundation now implements the provider, cache, validation,
 normalization, SQLite, and point-in-time read boundaries described above. See
 `docs/data-foundation.md` for schemas, supported datasets, and limitations.
+
+## V0.3 Market Regime Engine
+
+The regime engine is an analytical layer between point-in-time market data and
+future screening, research, portfolio, and strategy systems:
+
+```text
+MarketDataService + timestamped external metrics
+                    |
+              Input Builder
+                    |
+       Normalized RegimeMetric [-1, 1]
+                    |
+       Configured weighted classifier
+                    |
+    MarketRegime + universal WATCH Signal
+```
+
+It never creates orders and does not contain a trading strategy. Transition
+states remain informational and map to the primary `Sideways` state. See
+`docs/market-regime-engine.md`.
