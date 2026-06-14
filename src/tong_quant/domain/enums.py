@@ -22,6 +22,28 @@ class SecurityStatus(StrEnum):
     DELISTED = "delisted"
 
 
+class ScreeningDimensionName(StrEnum):
+    NEWS = "news"
+    INDUSTRY = "industry"
+    SURVIVAL = "survival"
+    GROWTH = "growth"
+    VALUATION = "valuation"
+    POSITIONING = "positioning"
+    MACRO = "macro"
+
+
+class ScoreType(StrEnum):
+    RESEARCH = "research"
+    INVESTMENT = "investment"
+
+
+class ResearchQueueStatus(StrEnum):
+    PENDING = "pending"
+    IN_RESEARCH = "in_research"
+    COMPLETED = "completed"
+    REJECTED = "rejected"
+
+
 class Adjustment(StrEnum):
     NONE = "none"
     FORWARD = "forward"

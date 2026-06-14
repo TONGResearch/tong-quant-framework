@@ -2,8 +2,8 @@
 
 ## Design Decision
 
-China and global markets share the same workflow and domain contracts. They do
-not share every trading rule.
+China A, US, Hong Kong, and Malaysia share the same workflow and domain
+contracts. They do not share every market policy or trading rule.
 
 ```text
 Provider adapters
@@ -121,7 +121,8 @@ MarketDataService + timestamped external metrics
 ```
 
 It never creates orders and does not contain a trading strategy. Transition
-states remain informational and map to the primary `Sideways` state. See
+states remain informational and map to the primary `Sideways` state. Regime is
+a weighted decision input, never an automatic approval or rejection. See
 `docs/market-regime-engine.md`.
 
 ## Data Foundation Hardening
@@ -139,3 +140,34 @@ These records use separate effective and availability timestamps. Effective
 dates describe when a fact or status applies; availability timestamps describe
 when the system was allowed to know it. Screening must consume these canonical
 queries rather than current company snapshots or today's listed-stock universe.
+
+## V0.4 Screening Engine
+
+Screening implements the first complete upstream workflow:
+
+```text
+OpportunityCandidate
+        |
+Ordered Hard Screening ------ failure ------> EXCLUDE Signal
+        |
+Seven Dimension Assessments
+        |
+Research Score
+        |
+Research Queue Entry + RESEARCH Signal
+        |
+Completed Research
+        |
+Investment Score + Market Regime contribution
+        |
+Future Validation
+```
+
+Research Queue `priority_score`, `urgency_score`, and `confidence_score` remain
+separate values. Research Score helps allocate research attention. Investment
+Score is calculated only after research and includes Market Regime as a
+high-weight component. Neither score creates orders or bypasses validation.
+
+Shared screening orchestration lives in `screening/`. China A, US, Hong Kong,
+and Malaysia inject separate market policies for status eligibility, risk
+flags, liquidity, and financial-health requirements.

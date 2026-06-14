@@ -1,14 +1,17 @@
-from collections.abc import Sequence
-from typing import Protocol
+from tong_quant.screening.interfaces import (
+    HardScreenRule,
+    MarketScreeningPolicy,
+    OpportunitySource,
+    ScoreAggregator,
+    ScreeningDimension,
+    ScreeningRepository,
+)
 
-from tong_quant.domain.models import Instrument, MarketSnapshot, Signal
-
-
-class ScreeningDimension(Protocol):
-    source_id: str
-
-    def evaluate(
-        self,
-        instruments: Sequence[Instrument],
-        snapshot: MarketSnapshot,
-    ) -> Sequence[Signal]: ...
+__all__ = [
+    "HardScreenRule",
+    "MarketScreeningPolicy",
+    "OpportunitySource",
+    "ScoreAggregator",
+    "ScreeningDimension",
+    "ScreeningRepository",
+]

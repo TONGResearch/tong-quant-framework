@@ -14,8 +14,8 @@
 
 The required workflow is:
 
-> Discover Opportunities -> Screen Opportunities -> Research Opportunities ->
-> Validate Opportunities -> Execute Opportunities
+> Discovery -> Hard Screening -> Research Queue -> Scoring -> Research ->
+> Validation -> Execution
 
 Tong Quant is not a pure quantitative, technical-analysis, or AI system. It
 combines opportunity discovery, traditional investment research, quantitative
@@ -35,6 +35,12 @@ validation, risk management, and controlled execution.
 - Never embed A-share assumptions in shared strategy logic.
 - Use point-in-time timestamps and reject future data.
 - Missing data must not silently become a favorable result.
+- Hard-screen failures cannot be offset by favorable scores.
+- Research Score prioritizes research only; it is not an investment decision.
+- Investment Score supports researched opportunities before validation; it is
+  not an order or automatic approval.
+- Priority, urgency, and confidence are separate Research Queue concepts.
+- No single factor may determine an investment decision.
 - Every decision must be deterministic where practical, explainable, versioned,
   and backtestable.
 - Backtest, paper, and live modes should share decision logic.
@@ -58,8 +64,8 @@ validation, risk management, and controlled execution.
 - Market regime classifiers consume only normalized `RegimeMetric` inputs.
 - Every regime input, bar, and external breadth or volatility metric must have
   `available_at <= as_of`.
-- Transition regimes are informational and map to primary state `Sideways`;
-  they must not enable trend trading.
+- Market Regime is a high-weight decision variable, not a hard trading switch.
+- No regime state may automatically approve or reject an opportunity.
 - Regime weights and thresholds belong in configuration, not strategy code.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.

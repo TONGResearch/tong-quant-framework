@@ -11,9 +11,9 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.3 Scope
+## V0.4 Scope
 
-V0.3 includes the V0.2 data foundation and adds:
+V0.4 includes the data foundation and Market Regime Engine, and adds:
 
 - Clean package architecture
 - Shared market-independent interfaces
@@ -32,6 +32,15 @@ V0.3 includes the V0.2 data foundation and adds:
 - Bull, Transition to Bull, Sideways, Transition to Bear, and Bear states
 - Configurable factor weights, thresholds, and confidence scoring
 - Point-in-time-safe regime input builders for historical replay
+- Discovery-candidate contracts
+- Ordered hard-screening rules with immediate rejection
+- Separate China A, US, Hong Kong, and Malaysia screening policies
+- Seven screening dimensions, including Macro
+- Research Queue persistence
+- Separate priority, urgency, and confidence scores
+- Research Score for queue prioritization
+- Investment Score for researched opportunities
+- Market Regime as a high-weight Investment Score variable, never a hard switch
 
 It intentionally does not implement trading strategies or live brokerage.
 
@@ -55,4 +64,5 @@ python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
 ```
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
-`docs/market-regime-engine.md`, and `docs/development-roadmap.md`.
+`docs/market-regime-engine.md`, `docs/screening-engine.md`, and
+`docs/development-roadmap.md`.

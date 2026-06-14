@@ -12,6 +12,10 @@ def test_default_configuration_is_safe() -> None:
     assert settings.execution.broker == "paper"
     assert settings.market_regime.china.weights["csi_300_trend"] == 0.25
     assert settings.market_regime.china.transition_bull_threshold == 12.0
+    assert settings.screening.enabled is True
+    assert settings.screening.research_score.weights["industry"] == 0.20
+    assert settings.screening.investment_score.weights["market_regime"] == 0.25
+    assert settings.screening.research_queue.urgency_weight == 0.25
 
 
 def test_research_override_preserves_default_values() -> None:

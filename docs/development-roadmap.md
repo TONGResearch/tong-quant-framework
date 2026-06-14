@@ -35,6 +35,21 @@ corporate-action datasets remain future data milestones.
 Status: implemented in V0.3. Strategy gating remains a future consumer and is
 not implemented here.
 
+## Milestone 1.75: Screening Engine
+
+- Discovery-candidate contract
+- Ordered hard screening with immediate rejection
+- Research Queue with separate priority, urgency, and confidence
+- Seven dimensions: News, Industry, Survival, Growth, Valuation, Positioning,
+  and Macro
+- Separate Research Score and Investment Score
+- Four market policy boundaries: China A, US, Hong Kong, and Malaysia
+- Market Regime as a weighted variable, not a hard switch
+- SQLite persistence for queue entries and scorecards
+
+Status: implemented in V0.4 as an explainable, point-in-time-safe framework.
+Concrete provider-backed dimension models remain future research work.
+
 ## Milestone 2: Minimal Trend Research
 
 - Donchian breakout

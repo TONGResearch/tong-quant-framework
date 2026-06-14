@@ -48,6 +48,43 @@ market_breadth = 0.25
 volatility = 0.20
 relative_strength = 0.20
 
+[screening]
+enabled = true
+
+[screening.research_score]
+model_version = "research-score-v0.4"
+maximum_component_weight = 0.35
+require_all_components = true
+
+[screening.research_score.weights]
+news = 0.15
+industry = 0.20
+survival = 0.15
+growth = 0.15
+valuation = 0.10
+positioning = 0.10
+macro = 0.15
+
+[screening.investment_score]
+model_version = "investment-score-v0.4"
+maximum_component_weight = 0.35
+require_all_components = true
+
+[screening.investment_score.weights]
+news = 0.08
+industry = 0.12
+survival = 0.15
+growth = 0.13
+valuation = 0.12
+positioning = 0.08
+macro = 0.07
+market_regime = 0.25
+
+[screening.research_queue]
+research_weight = 0.65
+urgency_weight = 0.25
+confidence_weight = 0.10
+
 [risk]
 max_position_weight = 0.10
 max_sector_weight = 0.30

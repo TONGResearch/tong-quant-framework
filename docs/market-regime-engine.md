@@ -14,9 +14,10 @@ risk, and strategy systems.
 - `TransitionToBear`
 - `Bear`
 
-Transition states are informational. Their `primary_state` is `Sideways`, so
-they do not enable trend trading. The engine emits a universal `WATCH` Signal,
-never an Order.
+Transition states are informational and their `primary_state` is `Sideways`.
+The engine emits a universal `WATCH` Signal, never an Order. No state acts as a
+hard trading switch: Market Regime is a high-weight input to layered research,
+investment scoring, and validation.
 
 ## Output
 

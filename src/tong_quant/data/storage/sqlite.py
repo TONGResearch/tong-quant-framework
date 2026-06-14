@@ -4,9 +4,17 @@ from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
-from tong_quant.domain.enums import Adjustment, AssetType, Market, SecurityStatus
+from tong_quant.domain.enums import (
+    Adjustment,
+    AssetType,
+    Market,
+    ResearchQueueStatus,
+    ScoreType,
+    SecurityStatus,
+)
 from tong_quant.domain.models import (
     Bar,
     FundamentalFact,
@@ -163,6 +171,43 @@ CREATE TABLE IF NOT EXISTS screening_results (
 
 CREATE INDEX IF NOT EXISTS idx_screening_results_pit
 ON screening_results (instrument_id, dimension, available_at);
+
+CREATE TABLE IF NOT EXISTS research_queue (
+    queue_id TEXT PRIMARY KEY,
+    instrument_id TEXT NOT NULL,
+    discovery_source TEXT NOT NULL,
+    discovered_at TEXT NOT NULL,
+    admitted_at TEXT NOT NULL,
+    priority_score REAL NOT NULL,
+    urgency_score REAL NOT NULL,
+    confidence_score REAL NOT NULL,
+    research_score REAL NOT NULL,
+    status TEXT NOT NULL,
+    thesis TEXT NOT NULL,
+    evidence_json TEXT NOT NULL,
+    assigned_to TEXT,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_queue_priority
+ON research_queue (status, priority_score DESC, admitted_at);
+
+CREATE TABLE IF NOT EXISTS screening_scorecards (
+    score_id TEXT PRIMARY KEY,
+    instrument_id TEXT NOT NULL,
+    score_type TEXT NOT NULL,
+    calculated_at TEXT NOT NULL,
+    score REAL NOT NULL,
+    confidence REAL NOT NULL,
+    components_json TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_screening_scorecards_pit
+ON screening_scorecards (instrument_id, score_type, calculated_at);
 """
 
 
@@ -734,6 +779,142 @@ class SQLiteStore:
             )
         return result_id
 
+    def save_research_queue_entry(
+        self,
+        *,
+        instrument: Instrument,
+        discovery_source: str,
+        discovered_at: datetime,
+        admitted_at: datetime,
+        priority_score: float,
+        urgency_score: float,
+        confidence_score: float,
+        research_score: float,
+        status: ResearchQueueStatus,
+        thesis: str,
+        evidence: tuple[str, ...],
+        assigned_to: str | None,
+        model_version: str,
+    ) -> str:
+        self._require_aware(discovered_at)
+        self._require_aware(admitted_at)
+        queue_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO research_queue (
+                    queue_id, instrument_id, discovery_source, discovered_at,
+                    admitted_at, priority_score, urgency_score, confidence_score,
+                    research_score, status, thesis, evidence_json, assigned_to,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    queue_id,
+                    instrument_id(instrument),
+                    discovery_source,
+                    _datetime_text(discovered_at),
+                    _datetime_text(admitted_at),
+                    priority_score,
+                    urgency_score,
+                    confidence_score,
+                    research_score,
+                    status.value,
+                    thesis,
+                    json.dumps(evidence),
+                    assigned_to,
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return queue_id
+
+    def save_screening_score(
+        self,
+        *,
+        instrument: Instrument,
+        score_type: ScoreType,
+        calculated_at: datetime,
+        score: float,
+        confidence: float,
+        components: list[dict[str, object]],
+        reasons: tuple[str, ...],
+        model_version: str,
+    ) -> str:
+        self._require_aware(calculated_at)
+        score_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO screening_scorecards (
+                    score_id, instrument_id, score_type, calculated_at,
+                    score, confidence, components_json, reasons_json,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    score_id,
+                    instrument_id(instrument),
+                    score_type.value,
+                    _datetime_text(calculated_at),
+                    score,
+                    confidence,
+                    json.dumps(components, sort_keys=True),
+                    json.dumps(reasons),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return score_id
+
+    def research_queue(
+        self,
+        *,
+        status: ResearchQueueStatus = ResearchQueueStatus.PENDING,
+        limit: int = 50,
+    ) -> list[sqlite3.Row]:
+        if limit <= 0:
+            raise ValueError("research queue limit must be positive")
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM research_queue
+                WHERE status = ?
+                ORDER BY priority_score DESC, admitted_at
+                LIMIT ?
+                """,
+                (status.value, limit),
+            ).fetchall()
+        return list(rows)
+
+    def latest_screening_score(
+        self,
+        instrument: Instrument,
+        score_type: ScoreType,
+        *,
+        as_of: datetime,
+    ) -> sqlite3.Row | None:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM screening_scorecards
+                WHERE instrument_id = ?
+                  AND score_type = ?
+                  AND calculated_at <= ?
+                ORDER BY calculated_at DESC
+                LIMIT 1
+                """,
+                (
+                    instrument_id(instrument),
+                    score_type.value,
+                    _datetime_text(as_of),
+                ),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
     def table_count(self, table: str) -> int:
         if table not in {
             "instruments",
@@ -744,6 +925,8 @@ class SQLiteStore:
             "universe_memberships",
             "signals",
             "screening_results",
+            "research_queue",
+            "screening_scorecards",
         }:
             raise ValueError("unsupported table")
         with self._connect() as connection:

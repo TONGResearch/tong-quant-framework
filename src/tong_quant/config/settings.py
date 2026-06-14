@@ -48,6 +48,29 @@ class MarketRegimeSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class ScoreModelSettings:
+    model_version: str
+    maximum_component_weight: float
+    require_all_components: bool
+    weights: dict[str, float]
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchQueueSettings:
+    research_weight: float
+    urgency_weight: float
+    confidence_weight: float
+
+
+@dataclass(frozen=True, slots=True)
+class ScreeningSettings:
+    enabled: bool
+    research_score: ScoreModelSettings
+    investment_score: ScoreModelSettings
+    research_queue: ResearchQueueSettings
+
+
+@dataclass(frozen=True, slots=True)
 class RiskSettings:
     max_position_weight: float
     max_sector_weight: float
@@ -76,6 +99,7 @@ class Settings:
     data: DataSettings
     market: MarketSettings
     market_regime: MarketRegimeSettings
+    screening: ScreeningSettings
     risk: RiskSettings
     execution: ExecutionSettings
     validation: ValidationSettings
@@ -131,6 +155,12 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             china=RegimeModelSettings(**raw["market_regime"]["china"]),
             global_market=RegimeModelSettings(**raw["market_regime"]["global"]),
         ),
+        screening=ScreeningSettings(
+            enabled=raw["screening"]["enabled"],
+            research_score=ScoreModelSettings(**raw["screening"]["research_score"]),
+            investment_score=ScoreModelSettings(**raw["screening"]["investment_score"]),
+            research_queue=ResearchQueueSettings(**raw["screening"]["research_queue"]),
+        ),
         risk=RiskSettings(**raw["risk"]),
         execution=ExecutionSettings(**raw["execution"]),
         validation=ValidationSettings(**raw["validation"]),
@@ -146,10 +176,32 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("research and paper modes cannot allow live orders")
     if settings.data.cache_ttl_seconds < 0:
         raise ValueError("cache_ttl_seconds cannot be negative")
-    for model in (
+    for regime_model in (
         settings.market_regime.china,
         settings.market_regime.global_market,
     ):
-        if not model.weights:
+        if not regime_model.weights:
             raise ValueError("market regime weights cannot be empty")
+    for score_model in (
+        settings.screening.research_score,
+        settings.screening.investment_score,
+    ):
+        if not score_model.weights:
+            raise ValueError("screening score weights cannot be empty")
+        if not 0 < score_model.maximum_component_weight < 1:
+            raise ValueError("maximum_component_weight must be between zero and one")
+        total = sum(score_model.weights.values())
+        if total <= 0 or any(weight <= 0 for weight in score_model.weights.values()):
+            raise ValueError("screening score weights must be positive")
+        if max(weight / total for weight in score_model.weights.values()) > (
+            score_model.maximum_component_weight
+        ):
+            raise ValueError("a screening score component exceeds the maximum weight")
+    queue_weights = (
+        settings.screening.research_queue.research_weight,
+        settings.screening.research_queue.urgency_weight,
+        settings.screening.research_queue.confidence_weight,
+    )
+    if any(weight < 0 for weight in queue_weights) or abs(sum(queue_weights) - 1) > 1e-9:
+        raise ValueError("research queue weights must be non-negative and sum to one")
     return settings

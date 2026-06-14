@@ -31,6 +31,8 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("universe_memberships") == 0
     assert store.table_count("signals") == 0
     assert store.table_count("screening_results") == 0
+    assert store.table_count("research_queue") == 0
+    assert store.table_count("screening_scorecards") == 0
 
 
 def test_point_in_time_queries_require_aware_timestamp(tmp_path: Path) -> None:
