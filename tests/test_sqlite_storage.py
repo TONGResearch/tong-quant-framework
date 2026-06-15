@@ -33,6 +33,10 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("screening_results") == 0
     assert store.table_count("research_queue") == 0
     assert store.table_count("screening_scorecards") == 0
+    assert store.table_count("research_runs") == 0
+    assert store.table_count("research_evidence") == 0
+    assert store.table_count("research_assessments") == 0
+    assert store.table_count("research_reports") == 0
 
 
 def test_point_in_time_queries_require_aware_timestamp(tmp_path: Path) -> None:
@@ -148,6 +152,23 @@ def test_fundamental_facts_hide_future_revisions(tmp_path: Path) -> None:
     assert [fact.value for fact in before_restatement] == [Decimal("100")]
     assert [fact.value for fact in after_restatement] == [Decimal("80")]
     assert after_restatement[0].revision == 1
+
+    history_before = store.fundamental_revision_history(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        "revenue",
+        as_of=datetime(2024, 4, 1, tzinfo=UTC),
+    )
+    history_after = store.fundamental_revision_history(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        "revenue",
+        as_of=datetime(2024, 4, 16, tzinfo=UTC),
+    )
+    assert [fact.revision for fact in history_before] == [0]
+    assert [fact.revision for fact in history_after] == [0, 1]
 
 
 def test_historical_universe_retains_delisted_members(tmp_path: Path) -> None:

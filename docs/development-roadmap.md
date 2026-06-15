@@ -50,6 +50,20 @@ not implemented here.
 Status: implemented in V0.4 as an explainable, point-in-time-safe framework.
 Concrete provider-backed dimension models remain future research work.
 
+## Milestone 1.9: Research Engine
+
+- Policy, Financial, Industry, Value, Technical, Trend, and Pattern modules
+- Dependency-aware module execution
+- Mandatory thesis, counter thesis, and invalidation conditions
+- Evidence-quality, completeness, agreement, and point-in-time confidence
+- Financial restatement awareness
+- Atomic Research Queue claiming
+- Research run, evidence, assessment, report, and Signal persistence
+
+Status: implemented in V0.5 as a research-only engine. Provider-backed policy,
+sentiment, industry heat, and intraday evidence remain future data work.
+Backtesting and trade approval remain outside this milestone.
+
 ## Milestone 2: Minimal Trend Research
 
 - Donchian breakout
@@ -58,7 +72,10 @@ Concrete provider-backed dimension models remain future research work.
 - Simple market-regime definition
 - Explainable four-confirmation signal record
 
-Exit: every signal includes its inputs, reasons, and missing confirmations.
+Exit: provider-backed trend evidence is calibrated and ready for validation.
+
+Status: the explainable research framework is implemented in V0.5. Calibration
+and historical validation remain future work.
 
 ## Milestone 3: Validation
 

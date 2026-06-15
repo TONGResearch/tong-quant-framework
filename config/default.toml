@@ -85,6 +85,25 @@ research_weight = 0.65
 urgency_weight = 0.25
 confidence_weight = 0.10
 
+[research]
+enabled = true
+model_version = "research-engine-v0.5"
+
+[research.technical]
+short_ma_period = 50
+long_ma_period = 200
+position_period = 252
+
+[research.trend]
+breakout_period = 20
+volume_period = 20
+atr_period = 14
+confirmation_threshold = 60.0
+
+[research.pattern]
+rising_stocks_threshold = 3000
+volume_period = 20
+
 [risk]
 max_position_weight = 0.10
 max_sector_weight = 0.30

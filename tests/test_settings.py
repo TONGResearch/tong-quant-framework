@@ -16,6 +16,9 @@ def test_default_configuration_is_safe() -> None:
     assert settings.screening.research_score.weights["industry"] == 0.20
     assert settings.screening.investment_score.weights["market_regime"] == 0.25
     assert settings.screening.research_queue.urgency_weight == 0.25
+    assert settings.research.enabled is True
+    assert settings.research.trend.atr_period == 14
+    assert settings.research.pattern.rising_stocks_threshold == 3000
 
 
 def test_research_override_preserves_default_values() -> None:

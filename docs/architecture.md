@@ -171,3 +171,27 @@ high-weight component. Neither score creates orders or bypasses validation.
 Shared screening orchestration lives in `screening/`. China A, US, Hong Kong,
 and Malaysia inject separate market policies for status eligibility, risk
 flags, liquidity, and financial-health requirements.
+
+## V0.5 Research Engine
+
+Research consumes V0.4 Research Queue entries and executes only the requested
+modules plus their declared dependencies:
+
+```text
+Research Queue -> ResearchContext -> Module dependency graph
+                                    |
+              Policy / Financial / Industry / Value
+              Technical / Trend / China A Pattern
+                                    |
+                  falsifiable ResearchReport
+                                    |
+                      universal RESEARCH Signal
+                                    |
+                       Future Validation
+```
+
+Every report contains a thesis, counter thesis, and explicit invalidation
+conditions. Confidence combines evidence quality, completeness, module
+agreement, and point-in-time integrity with a weakest-link cap. Market Regime
+is retained as a research variable rather than a gate. See
+`docs/research-engine.md`.

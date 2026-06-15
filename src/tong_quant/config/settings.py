@@ -71,6 +71,36 @@ class ScreeningSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class TechnicalResearchSettings:
+    short_ma_period: int
+    long_ma_period: int
+    position_period: int
+
+
+@dataclass(frozen=True, slots=True)
+class TrendResearchSettings:
+    breakout_period: int
+    volume_period: int
+    atr_period: int
+    confirmation_threshold: float
+
+
+@dataclass(frozen=True, slots=True)
+class PatternResearchSettings:
+    rising_stocks_threshold: int
+    volume_period: int
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchSettings:
+    enabled: bool
+    model_version: str
+    technical: TechnicalResearchSettings
+    trend: TrendResearchSettings
+    pattern: PatternResearchSettings
+
+
+@dataclass(frozen=True, slots=True)
 class RiskSettings:
     max_position_weight: float
     max_sector_weight: float
@@ -100,6 +130,7 @@ class Settings:
     market: MarketSettings
     market_regime: MarketRegimeSettings
     screening: ScreeningSettings
+    research: ResearchSettings
     risk: RiskSettings
     execution: ExecutionSettings
     validation: ValidationSettings
@@ -161,6 +192,13 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             investment_score=ScoreModelSettings(**raw["screening"]["investment_score"]),
             research_queue=ResearchQueueSettings(**raw["screening"]["research_queue"]),
         ),
+        research=ResearchSettings(
+            enabled=raw["research"]["enabled"],
+            model_version=raw["research"]["model_version"],
+            technical=TechnicalResearchSettings(**raw["research"]["technical"]),
+            trend=TrendResearchSettings(**raw["research"]["trend"]),
+            pattern=PatternResearchSettings(**raw["research"]["pattern"]),
+        ),
         risk=RiskSettings(**raw["risk"]),
         execution=ExecutionSettings(**raw["execution"]),
         validation=ValidationSettings(**raw["validation"]),
@@ -204,4 +242,19 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
     )
     if any(weight < 0 for weight in queue_weights) or abs(sum(queue_weights) - 1) > 1e-9:
         raise ValueError("research queue weights must be non-negative and sum to one")
+    research_periods = (
+        settings.research.technical.short_ma_period,
+        settings.research.technical.long_ma_period,
+        settings.research.technical.position_period,
+        settings.research.trend.breakout_period,
+        settings.research.trend.volume_period,
+        settings.research.trend.atr_period,
+        settings.research.pattern.volume_period,
+    )
+    if any(period <= 0 for period in research_periods):
+        raise ValueError("research lookback periods must be positive")
+    if not 0 <= settings.research.trend.confirmation_threshold <= 100:
+        raise ValueError("trend confirmation threshold must be between 0 and 100")
+    if settings.research.pattern.rising_stocks_threshold <= 0:
+        raise ValueError("rising-stocks threshold must be positive")
     return settings

@@ -5,20 +5,23 @@ from tong_quant.domain.enums import ResearchModuleName
 from tong_quant.research.base import evidence_driven_assessment
 from tong_quant.research.models import ResearchAssessment, ResearchContext
 
-VALUE_FIELDS = frozenset({"survival", "cycle", "valuation", "growth"})
+INDUSTRY_FIELDS = frozenset(
+    {
+        "industry_trend",
+        "industry_heat",
+        "industry_cycle",
+        "relative_strength",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
-class ValueResearchModule:
-    module: ResearchModuleName = ResearchModuleName.VALUE
+class IndustryResearchModule:
+    module: ResearchModuleName = ResearchModuleName.INDUSTRY
     dependencies: frozenset[ResearchModuleName] = frozenset(
-        {
-            ResearchModuleName.POLICY,
-            ResearchModuleName.FINANCIAL,
-            ResearchModuleName.INDUSTRY,
-        }
+        {ResearchModuleName.POLICY}
     )
-    model_version: str = "value-v0.5"
+    model_version: str = "industry-v0.5"
 
     def evaluate(
         self,
@@ -28,10 +31,10 @@ class ValueResearchModule:
         return evidence_driven_assessment(
             module=self.module,
             context=context,
-            required_names=VALUE_FIELDS,
+            required_names=INDUSTRY_FIELDS,
             model_version=self.model_version,
             dependencies=dependencies,
         )
 
 
-__all__ = ["ValueResearchModule"]
+__all__ = ["IndustryResearchModule"]

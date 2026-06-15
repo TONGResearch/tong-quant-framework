@@ -71,6 +71,25 @@ class MarketDataService:
             period_end_on_or_before=period_end_on_or_before,
         )
 
+    def fundamental_revision_history(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        metric: str,
+        *,
+        as_of: datetime,
+        period_end_on_or_before: date | None = None,
+    ) -> list[FundamentalFact]:
+        return self._store.fundamental_revision_history(
+            symbol,
+            market,
+            asset_type,
+            metric,
+            as_of=as_of,
+            period_end_on_or_before=period_end_on_or_before,
+        )
+
     def instrument_status(
         self,
         symbol: str,

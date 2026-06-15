@@ -40,6 +40,12 @@ validation, risk management, and controlled execution.
 - Investment Score supports researched opportunities before validation; it is
   not an order or automatic approval.
 - Priority, urgency, and confidence are separate Research Queue concepts.
+- Every Research Report requires a thesis, counter thesis, and explicit
+  falsifiable invalidation conditions.
+- Research confidence must consider evidence quality, data completeness,
+  module agreement, and point-in-time integrity; do not use simple averaging.
+- Policy Research covers regulatory, industrial, fiscal, monetary, and
+  geopolitical evidence and remains one variable among several.
 - No single factor may determine an investment decision.
 - Every decision must be deterministic where practical, explainable, versioned,
   and backtestable.
@@ -67,6 +73,10 @@ validation, risk management, and controlled execution.
 - Market Regime is a high-weight decision variable, not a hard trading switch.
 - No regime state may automatically approve or reject an opportunity.
 - Regime weights and thresholds belong in configuration, not strategy code.
+- Trend ATR, trailing, and pyramid outputs are research scenarios only until
+  they pass the future Validation Engine.
+- A-share Pattern Research must return insufficient data when required
+  breadth or intraday evidence is unavailable.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 

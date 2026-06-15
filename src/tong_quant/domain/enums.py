@@ -44,6 +44,41 @@ class ResearchQueueStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class ResearchModuleName(StrEnum):
+    POLICY = "policy"
+    FINANCIAL = "financial"
+    INDUSTRY = "industry"
+    VALUE = "value"
+    TECHNICAL = "technical"
+    TREND = "trend"
+    PATTERN = "pattern"
+
+
+class ResearchConclusion(StrEnum):
+    SUPPORTIVE = "supportive"
+    MIXED = "mixed"
+    CAUTION = "caution"
+    ADVERSE = "adverse"
+    INSUFFICIENT_DATA = "insufficient_data"
+    NOT_APPLICABLE = "not_applicable"
+
+
+class ResearchRunStatus(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    INCOMPLETE = "incomplete"
+    FAILED = "failed"
+    FAILED_POINT_IN_TIME_CHECK = "failed_point_in_time_check"
+
+
+class EvidenceQuality(StrEnum):
+    PRIMARY = "primary"
+    VERIFIED_SECONDARY = "verified_secondary"
+    SECONDARY = "secondary"
+    ESTIMATED = "estimated"
+
+
 class Adjustment(StrEnum):
     NONE = "none"
     FORWARD = "forward"

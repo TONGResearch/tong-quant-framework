@@ -3,6 +3,7 @@ import sqlite3
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from enum import Enum
 from pathlib import Path
 from typing import cast
 from uuid import uuid4
@@ -12,6 +13,7 @@ from tong_quant.domain.enums import (
     AssetType,
     Market,
     ResearchQueueStatus,
+    ResearchRunStatus,
     ScoreType,
     SecurityStatus,
 )
@@ -208,6 +210,90 @@ CREATE TABLE IF NOT EXISTS screening_scorecards (
 
 CREATE INDEX IF NOT EXISTS idx_screening_scorecards_pit
 ON screening_scorecards (instrument_id, score_type, calculated_at);
+
+CREATE TABLE IF NOT EXISTS research_runs (
+    run_id TEXT PRIMARY KEY,
+    queue_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    researcher TEXT,
+    modules_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    failure_reason TEXT,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_runs_queue
+ON research_runs (queue_id, started_at);
+
+CREATE TABLE IF NOT EXISTS research_evidence (
+    run_id TEXT NOT NULL,
+    evidence_id TEXT NOT NULL,
+    module TEXT NOT NULL,
+    name TEXT NOT NULL,
+    value_json TEXT NOT NULL,
+    observed_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    source TEXT NOT NULL,
+    quality TEXT NOT NULL,
+    source_reference TEXT NOT NULL,
+    calculation_version TEXT NOT NULL,
+    input_hash TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, evidence_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_evidence_pit
+ON research_evidence (run_id, module, available_at);
+
+CREATE TABLE IF NOT EXISTS research_assessments (
+    assessment_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    module TEXT NOT NULL,
+    conclusion TEXT NOT NULL,
+    score REAL,
+    confidence_json TEXT NOT NULL,
+    evaluated_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    findings_json TEXT NOT NULL,
+    risks_json TEXT NOT NULL,
+    limitations_json TEXT NOT NULL,
+    evidence_ids_json TEXT NOT NULL,
+    features_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_assessments_report
+ON research_assessments (report_id, module);
+
+CREATE TABLE IF NOT EXISTS research_reports (
+    report_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    queue_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    thesis TEXT NOT NULL,
+    counter_thesis TEXT NOT NULL,
+    invalidation_conditions_json TEXT NOT NULL,
+    confidence_json TEXT NOT NULL,
+    key_findings_json TEXT NOT NULL,
+    key_risks_json TEXT NOT NULL,
+    unresolved_questions_json TEXT NOT NULL,
+    policy_assessment_json TEXT,
+    market_regime_json TEXT,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_reports_pit
+ON research_reports (instrument_id, available_at);
 """
 
 
@@ -588,6 +674,41 @@ class SQLiteStore:
             ).fetchall()
         return [_fundamental_fact_from_row(row, instrument) for row in rows]
 
+    def fundamental_revision_history(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        metric: str,
+        *,
+        as_of: datetime,
+        period_end_on_or_before: date | None = None,
+    ) -> list[FundamentalFact]:
+        self._require_aware(as_of)
+        instrument = self.get_instrument(symbol, market, asset_type, as_of=as_of)
+        if instrument is None:
+            return []
+        period_limit = period_end_on_or_before or as_of.date()
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM fundamental_facts
+                WHERE instrument_id = ?
+                  AND metric = ?
+                  AND period_end <= ?
+                  AND available_at <= ?
+                ORDER BY period_end, available_at, revision, published_at
+                """,
+                (
+                    instrument_id(instrument),
+                    metric,
+                    period_limit.isoformat(),
+                    _datetime_text(as_of),
+                ),
+            ).fetchall()
+        return [_fundamental_fact_from_row(row, instrument) for row in rows]
+
     def instrument_status(
         self,
         symbol: str,
@@ -888,6 +1009,282 @@ class SQLiteStore:
             ).fetchall()
         return list(rows)
 
+    def start_research_run(
+        self,
+        *,
+        run_id: str,
+        queue_id: str,
+        instrument: Instrument,
+        started_at: datetime,
+        researcher: str | None,
+        modules: tuple[str, ...],
+        model_version: str,
+    ) -> None:
+        self._require_aware(started_at)
+        with self._connect() as connection:
+            claimed = connection.execute(
+                """
+                UPDATE research_queue
+                SET status = ?
+                WHERE queue_id = ? AND status = ?
+                """,
+                (
+                    ResearchQueueStatus.IN_RESEARCH.value,
+                    queue_id,
+                    ResearchQueueStatus.PENDING.value,
+                ),
+            )
+            if claimed.rowcount != 1:
+                raise ValueError("research queue entry is unavailable or already claimed")
+            connection.execute(
+                """
+                INSERT INTO research_runs (
+                    run_id, queue_id, instrument_id, status, started_at,
+                    completed_at, researcher, modules_json, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    queue_id,
+                    instrument_id(instrument),
+                    ResearchRunStatus.RUNNING.value,
+                    _datetime_text(started_at),
+                    researcher,
+                    json.dumps(modules),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_research_evidence(
+        self,
+        *,
+        run_id: str,
+        evidence_id: str,
+        module: str,
+        name: str,
+        value: object,
+        observed_at: datetime,
+        available_at: datetime,
+        source: str,
+        quality: str,
+        source_reference: str,
+        calculation_version: str,
+        input_hash: str,
+        metadata: dict[str, object],
+    ) -> None:
+        self._require_aware(observed_at)
+        self._require_aware(available_at)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO research_evidence (
+                    run_id, evidence_id, module, name, value_json, observed_at,
+                    available_at, source, quality, source_reference,
+                    calculation_version, input_hash, metadata_json, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    evidence_id,
+                    module,
+                    name,
+                    _json_dumps(value),
+                    _datetime_text(observed_at),
+                    _datetime_text(available_at),
+                    source,
+                    quality,
+                    source_reference,
+                    calculation_version,
+                    input_hash,
+                    _json_dumps(metadata),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_research_assessment(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        module: str,
+        conclusion: str,
+        score: float | None,
+        confidence: dict[str, object],
+        evaluated_at: datetime,
+        available_at: datetime,
+        findings: tuple[str, ...],
+        risks: tuple[str, ...],
+        limitations: tuple[str, ...],
+        evidence_ids: tuple[str, ...],
+        features: dict[str, object],
+        model_version: str,
+    ) -> str:
+        assessment_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO research_assessments (
+                    assessment_id, run_id, report_id, module, conclusion, score,
+                    confidence_json, evaluated_at, available_at, findings_json,
+                    risks_json, limitations_json, evidence_ids_json, features_json,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    run_id,
+                    report_id,
+                    module,
+                    conclusion,
+                    score,
+                    _json_dumps(confidence),
+                    _datetime_text(evaluated_at),
+                    _datetime_text(available_at),
+                    json.dumps(findings),
+                    json.dumps(risks),
+                    json.dumps(limitations),
+                    json.dumps(evidence_ids),
+                    _json_dumps(features),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return assessment_id
+
+    def save_research_report(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        queue_id: str,
+        instrument_id_value: str,
+        generated_at: datetime,
+        available_at: datetime,
+        status: ResearchRunStatus,
+        thesis: str,
+        counter_thesis: str,
+        invalidation_conditions: list[dict[str, object]],
+        confidence: dict[str, object],
+        key_findings: tuple[str, ...],
+        key_risks: tuple[str, ...],
+        unresolved_questions: tuple[str, ...],
+        policy_assessment: dict[str, object] | None,
+        market_regime: dict[str, object] | None,
+        model_version: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO research_reports (
+                    report_id, run_id, queue_id, instrument_id, generated_at,
+                    available_at, status, thesis, counter_thesis,
+                    invalidation_conditions_json, confidence_json,
+                    key_findings_json, key_risks_json, unresolved_questions_json,
+                    policy_assessment_json, market_regime_json, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    report_id,
+                    run_id,
+                    queue_id,
+                    instrument_id_value,
+                    _datetime_text(generated_at),
+                    _datetime_text(available_at),
+                    status.value,
+                    thesis,
+                    counter_thesis,
+                    _json_dumps(invalidation_conditions),
+                    _json_dumps(confidence),
+                    json.dumps(key_findings),
+                    json.dumps(key_risks),
+                    json.dumps(unresolved_questions),
+                    None if policy_assessment is None else _json_dumps(policy_assessment),
+                    None if market_regime is None else _json_dumps(market_regime),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def complete_research_run(
+        self,
+        *,
+        run_id: str,
+        queue_id: str,
+        status: ResearchRunStatus,
+        completed_at: datetime,
+    ) -> None:
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE research_runs
+                SET status = ?, completed_at = ?
+                WHERE run_id = ? AND status = ?
+                """,
+                (
+                    status.value,
+                    _datetime_text(completed_at),
+                    run_id,
+                    ResearchRunStatus.RUNNING.value,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise ValueError("research run is not active")
+            queue_updated = connection.execute(
+                """
+                UPDATE research_queue
+                SET status = ?
+                WHERE queue_id = ? AND status = ?
+                """,
+                (
+                    ResearchQueueStatus.COMPLETED.value,
+                    queue_id,
+                    ResearchQueueStatus.IN_RESEARCH.value,
+                ),
+            )
+            if queue_updated.rowcount != 1:
+                raise ValueError("research queue entry is not active")
+
+    def fail_research_run(
+        self,
+        *,
+        run_id: str,
+        queue_id: str,
+        completed_at: datetime,
+        reason: str,
+    ) -> None:
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE research_runs
+                SET status = ?, completed_at = ?, failure_reason = ?
+                WHERE run_id = ? AND status = ?
+                """,
+                (
+                    ResearchRunStatus.FAILED.value,
+                    _datetime_text(completed_at),
+                    reason[:1000],
+                    run_id,
+                    ResearchRunStatus.RUNNING.value,
+                ),
+            )
+            if updated.rowcount != 1:
+                return
+            connection.execute(
+                """
+                UPDATE research_queue
+                SET status = ?
+                WHERE queue_id = ? AND status = ?
+                """,
+                (
+                    ResearchQueueStatus.PENDING.value,
+                    queue_id,
+                    ResearchQueueStatus.IN_RESEARCH.value,
+                ),
+            )
+
     def latest_screening_score(
         self,
         instrument: Instrument,
@@ -927,6 +1324,10 @@ class SQLiteStore:
             "screening_results",
             "research_queue",
             "screening_scorecards",
+            "research_runs",
+            "research_evidence",
+            "research_assessments",
+            "research_reports",
         }:
             raise ValueError("unsupported table")
         with self._connect() as connection:
@@ -1033,3 +1434,14 @@ def _date_text(value: date | None) -> str | None:
 
 def _optional_date(value: str | None) -> date | None:
     return None if value is None else date.fromisoformat(value)
+
+
+def _json_dumps(value: object) -> str:
+    def default(item: object) -> str:
+        if isinstance(item, (datetime, date, Decimal)):
+            return item.isoformat() if not isinstance(item, Decimal) else str(item)
+        if isinstance(item, Enum):
+            return str(item.value)
+        raise TypeError(f"unsupported JSON value: {type(item).__name__}")
+
+    return json.dumps(value, default=default, sort_keys=True)
