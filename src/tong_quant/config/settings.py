@@ -117,10 +117,36 @@ class ExecutionSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class ValidationSplitSettings:
+    training_days: int
+    validation_days: int
+    step_days: int
+    embargo_days: int
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationRobustnessSettings:
+    minimum_windows: int
+    maximum_missing_rate: float
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationPortfolioSettings:
+    maximum_category_weight: float
+    maximum_hhi: float
+
+
+@dataclass(frozen=True, slots=True)
 class ValidationSettings:
+    enabled: bool
+    model_version: str
     minimum_observations: int
     require_out_of_sample: bool
     require_walk_forward: bool
+    fail_on_integrity_error: bool
+    splits: ValidationSplitSettings
+    robustness: ValidationRobustnessSettings
+    portfolio: ValidationPortfolioSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,7 +227,21 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         ),
         risk=RiskSettings(**raw["risk"]),
         execution=ExecutionSettings(**raw["execution"]),
-        validation=ValidationSettings(**raw["validation"]),
+        validation=ValidationSettings(
+            enabled=raw["validation"]["enabled"],
+            model_version=raw["validation"]["model_version"],
+            minimum_observations=raw["validation"]["minimum_observations"],
+            require_out_of_sample=raw["validation"]["require_out_of_sample"],
+            require_walk_forward=raw["validation"]["require_walk_forward"],
+            fail_on_integrity_error=raw["validation"]["fail_on_integrity_error"],
+            splits=ValidationSplitSettings(**raw["validation"]["splits"]),
+            robustness=ValidationRobustnessSettings(
+                **raw["validation"]["robustness"]
+            ),
+            portfolio=ValidationPortfolioSettings(
+                **raw["validation"]["portfolio"]
+            ),
+        ),
     )
 
     _validate_fraction("max_position_weight", settings.risk.max_position_weight)
@@ -257,4 +297,29 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("trend confirmation threshold must be between 0 and 100")
     if settings.research.pattern.rising_stocks_threshold <= 0:
         raise ValueError("rising-stocks threshold must be positive")
+    if settings.validation.minimum_observations <= 0:
+        raise ValueError("validation minimum_observations must be positive")
+    validation_periods = (
+        settings.validation.splits.training_days,
+        settings.validation.splits.validation_days,
+        settings.validation.splits.step_days,
+    )
+    if any(period <= 0 for period in validation_periods):
+        raise ValueError("validation split periods must be positive")
+    if settings.validation.splits.embargo_days < 0:
+        raise ValueError("validation embargo cannot be negative")
+    if settings.validation.robustness.minimum_windows <= 0:
+        raise ValueError("validation minimum_windows must be positive")
+    for name, value in (
+        (
+            "maximum_missing_rate",
+            settings.validation.robustness.maximum_missing_rate,
+        ),
+        (
+            "maximum_category_weight",
+            settings.validation.portfolio.maximum_category_weight,
+        ),
+        ("maximum_hhi", settings.validation.portfolio.maximum_hhi),
+    ):
+        _validate_fraction(name, value)
     return settings

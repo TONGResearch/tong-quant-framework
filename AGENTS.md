@@ -61,6 +61,9 @@ validation, risk management, and controlled execution.
 - Add dependencies only when they solve a current requirement.
 - Keep provider-specific payloads outside the domain layer.
 - Access AKShare only through `tong_quant.data.providers`.
+- In strict point-in-time mode, do not ingest provider-adjusted historical bars
+  until dated corporate-action factors can reconstruct the adjustment visible
+  at each decision time.
 - Persist normalized market data through `SQLiteStore`; do not write ad hoc
   strategy-specific data files.
 - Screening, research, and validation must read historical data through
@@ -77,6 +80,19 @@ validation, risk management, and controlled execution.
   they pass the future Validation Engine.
 - A-share Pattern Research must return insufficient data when required
   breadth or intraday evidence is unavailable.
+- Validation must distinguish data `as_of` from the actual `requested_at` run
+  timestamp.
+- Validation outcomes and thresholds must be registered before results are
+  evaluated.
+- Research correctness and Decision Journal correctness must be measured
+  independently.
+- Every Validation Run must store Git, framework, configuration, research,
+  validation, and database schema versions.
+- Final OOS usage limits must be enforced by persistent state, not caller
+  convention.
+- Portfolio validation may measure research concentration but must not simulate
+  portfolio returns or orders.
+- Validation outputs only `REVIEW` Signals and must never create trade actions.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 

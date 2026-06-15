@@ -16,6 +16,7 @@ from tong_quant.domain.enums import (
     ResearchRunStatus,
     ScoreType,
     SecurityStatus,
+    ValidationRunStatus,
 )
 from tong_quant.domain.models import (
     Bar,
@@ -27,7 +28,15 @@ from tong_quant.domain.models import (
     UniverseMembership,
 )
 
+SCHEMA_VERSION = "0.6.0"
+
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS schema_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS instruments (
     instrument_id TEXT NOT NULL,
     symbol TEXT NOT NULL,
@@ -294,6 +303,190 @@ CREATE TABLE IF NOT EXISTS research_reports (
 
 CREATE INDEX IF NOT EXISTS idx_research_reports_pit
 ON research_reports (instrument_id, available_at);
+
+CREATE TABLE IF NOT EXISTS validation_runs (
+    run_id TEXT PRIMARY KEY,
+    validation_id TEXT NOT NULL,
+    subject_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    framework_snapshot_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    failure_reason TEXT,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_validation_runs_id
+ON validation_runs (validation_id, started_at);
+
+CREATE TABLE IF NOT EXISTS validation_oos_usage (
+    oos_key TEXT PRIMARY KEY,
+    frozen_configuration_hash TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    use_count INTEGER NOT NULL,
+    maximum_uses INTEGER NOT NULL,
+    last_used_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS validation_splits (
+    run_id TEXT NOT NULL,
+    split_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    frozen_configuration_hash TEXT NOT NULL,
+    sequence INTEGER NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, split_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_observations (
+    run_id TEXT NOT NULL,
+    sample_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    research_report_id TEXT NOT NULL,
+    decision_at TEXT NOT NULL,
+    research_expected_success INTEGER NOT NULL,
+    market_regime TEXT,
+    factor_scores_json TEXT NOT NULL,
+    portfolio_position_json TEXT,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, sample_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_outcomes (
+    run_id TEXT NOT NULL,
+    outcome_id TEXT NOT NULL,
+    definition_id TEXT NOT NULL,
+    subject_id TEXT NOT NULL,
+    observed_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    value REAL,
+    benchmark_value REAL,
+    succeeded INTEGER,
+    thesis_status TEXT NOT NULL,
+    invalidation_triggered INTEGER,
+    metadata_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, outcome_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_validation_outcomes_pit
+ON validation_outcomes (subject_id, available_at);
+
+CREATE TABLE IF NOT EXISTS validation_outcome_definitions (
+    run_id TEXT NOT NULL,
+    outcome_id TEXT NOT NULL,
+    target_metric TEXT NOT NULL,
+    observation_horizon_days INTEGER NOT NULL,
+    success_operator TEXT NOT NULL,
+    success_threshold REAL NOT NULL,
+    availability_lag_days INTEGER NOT NULL,
+    benchmark TEXT,
+    version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, outcome_id)
+);
+
+CREATE TABLE IF NOT EXISTS decision_journal (
+    decision_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    research_report_id TEXT NOT NULL,
+    decided_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    disposition TEXT NOT NULL,
+    rationale_json TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    decision_maker TEXT NOT NULL,
+    framework_snapshot_hash TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS validation_assessments (
+    assessment_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    module TEXT NOT NULL,
+    status TEXT NOT NULL,
+    score REAL,
+    confidence REAL NOT NULL,
+    sample_size INTEGER NOT NULL,
+    evaluated_at TEXT NOT NULL,
+    metrics_json TEXT NOT NULL,
+    findings_json TEXT NOT NULL,
+    risks_json TEXT NOT NULL,
+    limitations_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS validation_reports (
+    report_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    validation_id TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    aggregate_status TEXT NOT NULL,
+    framework_snapshot_json TEXT NOT NULL,
+    known_limitations_json TEXT NOT NULL,
+    reproducibility_manifest_json TEXT NOT NULL,
+    decision_summary_json TEXT,
+    portfolio_risk_json TEXT,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS validation_factor_contributions (
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    factor TEXT NOT NULL,
+    sample_size INTEGER NOT NULL,
+    success_score_gap REAL NOT NULL,
+    ablation_brier_delta REAL NOT NULL,
+    stable INTEGER NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, report_id, factor)
+);
+
+CREATE TABLE IF NOT EXISTS validation_accuracy_history (
+    accuracy_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    sample_size INTEGER NOT NULL,
+    accuracy REAL NOT NULL,
+    brier_score REAL NOT NULL,
+    calibration_error REAL NOT NULL,
+    high_confidence_failure_rate REAL NOT NULL,
+    recorded_at TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS validation_integrity_checks (
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    module TEXT NOT NULL,
+    check_id TEXT NOT NULL,
+    passed INTEGER NOT NULL,
+    checked_at TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, report_id, module, check_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_portfolio_risk (
+    run_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    dimension TEXT NOT NULL,
+    total_weight REAL NOT NULL,
+    maximum_weight REAL NOT NULL,
+    hhi REAL NOT NULL,
+    category_weights_json TEXT NOT NULL,
+    breached INTEGER NOT NULL,
+    ingested_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, report_id, dimension)
+);
 """
 
 
@@ -305,6 +498,16 @@ class SQLiteStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             connection.executescript(SCHEMA)
+            connection.execute(
+                """
+                INSERT INTO schema_metadata (key, value, updated_at)
+                VALUES ('schema_version', ?, ?)
+                ON CONFLICT (key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                (SCHEMA_VERSION, _datetime_text(datetime.now(UTC))),
+            )
 
     def upsert_instruments(self, instruments: Iterable[Instrument]) -> int:
         rows = []
@@ -1285,6 +1488,558 @@ class SQLiteStore:
                 ),
             )
 
+    def start_validation_run(
+        self,
+        *,
+        run_id: str,
+        validation_id: str,
+        subject_id: str,
+        started_at: datetime,
+        framework_snapshot: dict[str, object],
+        model_version: str,
+        oos_key: str,
+        oos_configuration_hash: str,
+        oos_start_date: date,
+        oos_end_date: date,
+        oos_maximum_uses: int,
+    ) -> None:
+        self._require_aware(started_at)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_oos_usage (
+                    oos_key, frozen_configuration_hash, start_date, end_date,
+                    use_count, maximum_uses, last_used_at
+                ) VALUES (?, ?, ?, ?, 0, ?, ?)
+                ON CONFLICT (oos_key) DO NOTHING
+                """,
+                (
+                    oos_key,
+                    oos_configuration_hash,
+                    oos_start_date.isoformat(),
+                    oos_end_date.isoformat(),
+                    oos_maximum_uses,
+                    _datetime_text(started_at),
+                ),
+            )
+            usage = connection.execute(
+                """
+                SELECT use_count, maximum_uses
+                FROM validation_oos_usage
+                WHERE oos_key = ?
+                """,
+                (oos_key,),
+            ).fetchone()
+            if usage is None:
+                raise ValueError("OOS usage registry is unavailable")
+            if int(usage["maximum_uses"]) != oos_maximum_uses:
+                raise ValueError("OOS maximum-use policy changed after registration")
+            if int(usage["use_count"]) >= int(usage["maximum_uses"]):
+                raise ValueError("OOS dataset usage limit has been reached")
+            connection.execute(
+                """
+                UPDATE validation_oos_usage
+                SET use_count = use_count + 1, last_used_at = ?
+                WHERE oos_key = ?
+                """,
+                (_datetime_text(started_at), oos_key),
+            )
+            connection.execute(
+                """
+                INSERT INTO validation_runs (
+                    run_id, validation_id, subject_id, status, started_at,
+                    completed_at, framework_snapshot_json, model_version,
+                    failure_reason, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NULL, ?)
+                """,
+                (
+                    run_id,
+                    validation_id,
+                    subject_id,
+                    ValidationRunStatus.RUNNING.value,
+                    _datetime_text(started_at),
+                    _json_dumps(framework_snapshot),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_split(
+        self,
+        *,
+        run_id: str,
+        split_id: str,
+        kind: str,
+        start_date: date,
+        end_date: date,
+        frozen_configuration_hash: str,
+        sequence: int,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_splits (
+                    run_id, split_id, kind, start_date, end_date,
+                    frozen_configuration_hash, sequence, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    split_id,
+                    kind,
+                    start_date.isoformat(),
+                    end_date.isoformat(),
+                    frozen_configuration_hash,
+                    sequence,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_observation(
+        self,
+        *,
+        run_id: str,
+        sample_id: str,
+        instrument_id_value: str,
+        research_report_id: str,
+        decision_at: datetime,
+        research_expected_success: bool,
+        market_regime: str | None,
+        factor_scores: dict[str, float],
+        portfolio_position: dict[str, object] | None,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_observations (
+                    run_id, sample_id, instrument_id, research_report_id,
+                    decision_at, research_expected_success, market_regime,
+                    factor_scores_json, portfolio_position_json, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    sample_id,
+                    instrument_id_value,
+                    research_report_id,
+                    _datetime_text(decision_at),
+                    int(research_expected_success),
+                    market_regime,
+                    _json_dumps(factor_scores),
+                    (
+                        None
+                        if portfolio_position is None
+                        else _json_dumps(portfolio_position)
+                    ),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_outcome(
+        self,
+        *,
+        run_id: str,
+        outcome_id: str,
+        definition_id: str,
+        subject_id: str,
+        observed_at: datetime,
+        available_at: datetime,
+        value: float | None,
+        benchmark_value: float | None,
+        succeeded: bool | None,
+        thesis_status: str,
+        invalidation_triggered: bool | None,
+        metadata: dict[str, object],
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_outcomes (
+                    run_id, outcome_id, definition_id, subject_id, observed_at,
+                    available_at, value, benchmark_value, succeeded,
+                    thesis_status, invalidation_triggered, metadata_json,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    outcome_id,
+                    definition_id,
+                    subject_id,
+                    _datetime_text(observed_at),
+                    _datetime_text(available_at),
+                    value,
+                    benchmark_value,
+                    None if succeeded is None else int(succeeded),
+                    thesis_status,
+                    (
+                        None
+                        if invalidation_triggered is None
+                        else int(invalidation_triggered)
+                    ),
+                    _json_dumps(metadata),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_outcome_definition(
+        self,
+        *,
+        run_id: str,
+        outcome_id: str,
+        target_metric: str,
+        observation_horizon_days: int,
+        success_operator: str,
+        success_threshold: float,
+        availability_lag_days: int,
+        benchmark: str | None,
+        version: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_outcome_definitions (
+                    run_id, outcome_id, target_metric, observation_horizon_days,
+                    success_operator, success_threshold, availability_lag_days,
+                    benchmark, version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    outcome_id,
+                    target_metric,
+                    observation_horizon_days,
+                    success_operator,
+                    success_threshold,
+                    availability_lag_days,
+                    benchmark,
+                    version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_decision_journal_entry(
+        self,
+        *,
+        decision_id: str,
+        run_id: str,
+        research_report_id: str,
+        decided_at: datetime,
+        available_at: datetime,
+        disposition: str,
+        rationale: tuple[str, ...],
+        confidence: float,
+        decision_maker: str,
+        framework_snapshot_hash: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO decision_journal (
+                    decision_id, run_id, research_report_id, decided_at,
+                    available_at, disposition, rationale_json, confidence,
+                    decision_maker, framework_snapshot_hash, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    decision_id,
+                    run_id,
+                    research_report_id,
+                    _datetime_text(decided_at),
+                    _datetime_text(available_at),
+                    disposition,
+                    json.dumps(rationale),
+                    confidence,
+                    decision_maker,
+                    framework_snapshot_hash,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_assessment(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        module: str,
+        status: str,
+        score: float | None,
+        confidence: float,
+        sample_size: int,
+        evaluated_at: datetime,
+        metrics: dict[str, object],
+        findings: tuple[str, ...],
+        risks: tuple[str, ...],
+        limitations: tuple[str, ...],
+        model_version: str,
+    ) -> str:
+        assessment_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_assessments (
+                    assessment_id, run_id, report_id, module, status, score,
+                    confidence, sample_size, evaluated_at, metrics_json,
+                    findings_json, risks_json, limitations_json, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    run_id,
+                    report_id,
+                    module,
+                    status,
+                    score,
+                    confidence,
+                    sample_size,
+                    _datetime_text(evaluated_at),
+                    _json_dumps(metrics),
+                    json.dumps(findings),
+                    json.dumps(risks),
+                    json.dumps(limitations),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return assessment_id
+
+    def save_validation_report(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        validation_id: str,
+        generated_at: datetime,
+        status: str,
+        aggregate_status: str,
+        framework_snapshot: dict[str, object],
+        known_limitations: tuple[str, ...],
+        reproducibility_manifest: dict[str, str],
+        decision_summary: dict[str, object] | None,
+        portfolio_risk: dict[str, object] | None,
+        model_version: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_reports (
+                    report_id, run_id, validation_id, generated_at, status,
+                    aggregate_status, framework_snapshot_json,
+                    known_limitations_json, reproducibility_manifest_json,
+                    decision_summary_json, portfolio_risk_json, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    report_id,
+                    run_id,
+                    validation_id,
+                    _datetime_text(generated_at),
+                    status,
+                    aggregate_status,
+                    _json_dumps(framework_snapshot),
+                    json.dumps(known_limitations),
+                    _json_dumps(reproducibility_manifest),
+                    (
+                        None
+                        if decision_summary is None
+                        else _json_dumps(decision_summary)
+                    ),
+                    None if portfolio_risk is None else _json_dumps(portfolio_risk),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_factor_contribution(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        factor: str,
+        sample_size: int,
+        success_score_gap: float,
+        ablation_brier_delta: float,
+        stable: bool,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_factor_contributions (
+                    run_id, report_id, factor, sample_size, success_score_gap,
+                    ablation_brier_delta, stable, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    report_id,
+                    factor,
+                    sample_size,
+                    success_score_gap,
+                    ablation_brier_delta,
+                    int(stable),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_accuracy(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        sample_size: int,
+        accuracy: float,
+        brier_score: float,
+        calibration_error: float,
+        high_confidence_failure_rate: float,
+        recorded_at: datetime,
+    ) -> str:
+        accuracy_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_accuracy_history (
+                    accuracy_id, run_id, report_id, sample_size, accuracy,
+                    brier_score, calibration_error,
+                    high_confidence_failure_rate, recorded_at, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    accuracy_id,
+                    run_id,
+                    report_id,
+                    sample_size,
+                    accuracy,
+                    brier_score,
+                    calibration_error,
+                    high_confidence_failure_rate,
+                    _datetime_text(recorded_at),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return accuracy_id
+
+    def save_validation_integrity_check(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        module: str,
+        check_id: str,
+        passed: bool,
+        checked_at: datetime,
+        reasons: tuple[str, ...],
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_integrity_checks (
+                    run_id, report_id, module, check_id, passed, checked_at,
+                    reasons_json, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    report_id,
+                    module,
+                    check_id,
+                    int(passed),
+                    _datetime_text(checked_at),
+                    json.dumps(reasons),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_validation_portfolio_risk(
+        self,
+        *,
+        run_id: str,
+        report_id: str,
+        dimension: str,
+        total_weight: float,
+        maximum_weight: float,
+        hhi: float,
+        category_weights: dict[str, float],
+        breached: bool,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO validation_portfolio_risk (
+                    run_id, report_id, dimension, total_weight, maximum_weight,
+                    hhi, category_weights_json, breached, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    report_id,
+                    dimension,
+                    total_weight,
+                    maximum_weight,
+                    hhi,
+                    _json_dumps(category_weights),
+                    int(breached),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def complete_validation_run(
+        self,
+        *,
+        run_id: str,
+        status: ValidationRunStatus,
+        completed_at: datetime,
+    ) -> None:
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE validation_runs
+                SET status = ?, completed_at = ?
+                WHERE run_id = ? AND status = ?
+                """,
+                (
+                    status.value,
+                    _datetime_text(completed_at),
+                    run_id,
+                    ValidationRunStatus.RUNNING.value,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise ValueError("validation run is not active")
+
+    def fail_validation_run(
+        self,
+        *,
+        run_id: str,
+        completed_at: datetime,
+        reason: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE validation_runs
+                SET status = ?, completed_at = ?, failure_reason = ?
+                WHERE run_id = ? AND status = ?
+                """,
+                (
+                    ValidationRunStatus.FAILED.value,
+                    _datetime_text(completed_at),
+                    reason[:1000],
+                    run_id,
+                    ValidationRunStatus.RUNNING.value,
+                ),
+            )
+
+    def schema_version(self) -> str:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value FROM schema_metadata WHERE key = 'schema_version'"
+            ).fetchone()
+        if row is None:
+            raise ValueError("database schema version is unavailable")
+        return str(row["value"])
+
     def latest_screening_score(
         self,
         instrument: Instrument,
@@ -1328,6 +2083,20 @@ class SQLiteStore:
             "research_evidence",
             "research_assessments",
             "research_reports",
+            "schema_metadata",
+            "validation_runs",
+            "validation_oos_usage",
+            "validation_splits",
+            "validation_observations",
+            "validation_outcomes",
+            "validation_outcome_definitions",
+            "decision_journal",
+            "validation_assessments",
+            "validation_reports",
+            "validation_factor_contributions",
+            "validation_accuracy_history",
+            "validation_integrity_checks",
+            "validation_portfolio_risk",
         }:
             raise ValueError("unsupported table")
         with self._connect() as connection:

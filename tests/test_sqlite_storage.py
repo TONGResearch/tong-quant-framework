@@ -37,6 +37,21 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("research_evidence") == 0
     assert store.table_count("research_assessments") == 0
     assert store.table_count("research_reports") == 0
+    assert store.table_count("schema_metadata") == 1
+    assert store.schema_version() == "0.6.0"
+    assert store.table_count("validation_runs") == 0
+    assert store.table_count("validation_oos_usage") == 0
+    assert store.table_count("validation_splits") == 0
+    assert store.table_count("validation_observations") == 0
+    assert store.table_count("validation_outcomes") == 0
+    assert store.table_count("validation_outcome_definitions") == 0
+    assert store.table_count("decision_journal") == 0
+    assert store.table_count("validation_assessments") == 0
+    assert store.table_count("validation_reports") == 0
+    assert store.table_count("validation_factor_contributions") == 0
+    assert store.table_count("validation_accuracy_history") == 0
+    assert store.table_count("validation_integrity_checks") == 0
+    assert store.table_count("validation_portfolio_risk") == 0
 
 
 def test_point_in_time_queries_require_aware_timestamp(tmp_path: Path) -> None:

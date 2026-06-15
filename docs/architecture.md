@@ -195,3 +195,30 @@ conditions. Confidence combines evidence quality, completeness, module
 agreement, and point-in-time integrity with a weakest-link cap. Market Regime
 is retained as a research variable rather than a gate. See
 `docs/research-engine.md`.
+
+## V0.6 Validation Engine
+
+Validation audits stored historical outputs rather than turning research
+signals into simulated orders:
+
+```text
+Discovery / Screening / Research outputs
+                    |
+       Pre-registered OutcomeDefinition
+                    |
+       Point-in-time ValidationSample
+                    |
+ Historical + Walk-Forward + OOS
+ Regime + Thesis + Factor + Accuracy
+ Decision Journal + Portfolio Research Risk
+                    |
+      ValidationReport + REVIEW Signal
+```
+
+Research correctness and decision correctness remain separate. Portfolio
+validation measures concentration of research attention across country,
+industry, theme, and style; it is not portfolio return backtesting.
+
+Every run carries a reproducibility snapshot containing the Git commit,
+framework version, configuration hash, research version, validation version,
+and database schema version. See `docs/validation-engine.md`.

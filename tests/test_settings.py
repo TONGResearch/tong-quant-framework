@@ -19,6 +19,9 @@ def test_default_configuration_is_safe() -> None:
     assert settings.research.enabled is True
     assert settings.research.trend.atr_period == 14
     assert settings.research.pattern.rising_stocks_threshold == 3000
+    assert settings.validation.enabled is True
+    assert settings.validation.splits.embargo_days == 20
+    assert settings.validation.portfolio.maximum_category_weight == 0.35
 
 
 def test_research_override_preserves_default_values() -> None:

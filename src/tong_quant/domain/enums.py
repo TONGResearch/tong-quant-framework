@@ -72,6 +72,54 @@ class ResearchRunStatus(StrEnum):
     FAILED_POINT_IN_TIME_CHECK = "failed_point_in_time_check"
 
 
+class ValidationModuleName(StrEnum):
+    HISTORICAL = "historical"
+    WALK_FORWARD = "walk_forward"
+    OUT_OF_SAMPLE = "out_of_sample"
+    MARKET_REGIME = "market_regime"
+    THESIS = "thesis"
+    FACTOR_CONTRIBUTION = "factor_contribution"
+    RESEARCH_ACCURACY = "research_accuracy"
+    DECISION_JOURNAL = "decision_journal"
+    PORTFOLIO_RISK = "portfolio_risk"
+
+
+class ValidationStatus(StrEnum):
+    RELIABLE = "reliable"
+    CONDITIONALLY_RELIABLE = "conditionally_reliable"
+    INCONCLUSIVE = "inconclusive"
+    UNRELIABLE = "unreliable"
+    FAILED_INTEGRITY_CHECK = "failed_integrity_check"
+
+
+class ValidationRunStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    INCOMPLETE = "incomplete"
+    FAILED = "failed"
+
+
+class ValidationSplitKind(StrEnum):
+    TRAINING = "training"
+    VALIDATION = "validation"
+    OUT_OF_SAMPLE = "out_of_sample"
+
+
+class ThesisOutcomeStatus(StrEnum):
+    SUPPORTED = "supported"
+    PARTIALLY_SUPPORTED = "partially_supported"
+    INVALIDATED = "invalidated"
+    UNRESOLVED = "unresolved"
+    NOT_OBSERVABLE = "not_observable"
+
+
+class DecisionDisposition(StrEnum):
+    ADVANCE = "advance"
+    DEFER = "defer"
+    REJECT = "reject"
+    NO_ACTION = "no_action"
+
+
 class EvidenceQuality(StrEnum):
     PRIMARY = "primary"
     VERIFIED_SECONDARY = "verified_secondary"
@@ -94,6 +142,7 @@ class SignalAction(StrEnum):
     EXIT_LONG = "exit_long"
     HOLD = "hold"
     BLOCK = "block"
+    REVIEW = "review"
 
 
 class SignalStage(StrEnum):
@@ -104,6 +153,7 @@ class SignalStage(StrEnum):
     MARKET_REGIME = "market_regime"
     RISK = "risk"
     AI = "ai"
+    VALIDATION = "validation"
 
 
 class Regime(StrEnum):

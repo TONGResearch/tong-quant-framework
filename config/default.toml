@@ -117,6 +117,23 @@ require_manual_approval = true
 broker = "paper"
 
 [validation]
+enabled = true
+model_version = "validation-engine-v0.6"
 minimum_observations = 500
 require_out_of_sample = true
 require_walk_forward = true
+fail_on_integrity_error = true
+
+[validation.splits]
+training_days = 1095
+validation_days = 365
+step_days = 180
+embargo_days = 20
+
+[validation.robustness]
+minimum_windows = 3
+maximum_missing_rate = 0.10
+
+[validation.portfolio]
+maximum_category_weight = 0.35
+maximum_hhi = 0.25

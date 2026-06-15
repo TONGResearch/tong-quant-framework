@@ -36,3 +36,19 @@ def test_signal_rejects_missing_explanation() -> None:
             strength=0.5,
             reasons=(),
         )
+
+
+def test_validation_signal_cannot_express_strategy_action() -> None:
+    now = datetime(2026, 1, 2, tzinfo=UTC)
+
+    with pytest.raises(ValueError, match="validation signals cannot use action"):
+        Signal(
+            source="validation.engine",
+            stage=SignalStage.VALIDATION,
+            instrument=Instrument("600000", Market.CHINA_A, "Example"),
+            generated_at=now,
+            effective_at=now,
+            action=SignalAction.ENTER_LONG,
+            strength=0.8,
+            reasons=("Validation is informational only",),
+        )

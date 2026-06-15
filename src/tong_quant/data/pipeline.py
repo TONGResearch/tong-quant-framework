@@ -10,17 +10,33 @@ from tong_quant.data.normalization import (
 from tong_quant.data.providers.akshare import AkShareAdapter
 from tong_quant.data.quality import DataQualityError, validate_bars, validate_raw_dataset
 from tong_quant.data.storage.sqlite import SQLiteStore
+from tong_quant.domain.enums import Adjustment
 
 
 class DataIngestionPipeline:
-    def __init__(self, provider: AkShareAdapter, store: SQLiteStore) -> None:
+    def __init__(
+        self,
+        provider: AkShareAdapter,
+        store: SQLiteStore,
+        *,
+        strict_point_in_time: bool = True,
+    ) -> None:
         self._provider = provider
         self._store = store
+        self._strict_point_in_time = strict_point_in_time
 
     def initialize(self) -> None:
         self._store.initialize()
 
     def ingest_daily_bars(self, request: DailyBarRequest) -> IngestionResult:
+        if (
+            self._strict_point_in_time
+            and request.adjustment is not Adjustment.NONE
+        ):
+            raise ValueError(
+                "strict point-in-time mode rejects provider-adjusted bars; "
+                "ingest unadjusted prices until dated corporate-action factors exist"
+            )
         response = self._provider.daily_bars(request)
         raw_report = validate_raw_dataset(response.dataset)
         if not raw_report.is_valid:

@@ -43,6 +43,7 @@ def main() -> None:
     pipeline = DataIngestionPipeline(
         AkShareAdapter(cache=cache),
         SQLiteStore(settings.data.database_path),
+        strict_point_in_time=settings.data.strict_point_in_time,
     )
     pipeline.initialize()
 

@@ -79,13 +79,21 @@ and historical validation remain future work.
 
 ## Milestone 3: Validation
 
-- Event-driven daily backtest
-- T+1, suspensions, limit rules, costs, and slippage
-- Walk-forward and out-of-sample split
-- Parameter sensitivity report
-- Survivorship-bias controls
+- Pre-registered outcome definitions
+- Historical, walk-forward, and final out-of-sample validation
+- Market Regime and thesis validation
+- Factor contribution and confidence calibration
+- Decision Journal quality separation
+- Portfolio research-risk concentration
+- Reproducible framework snapshots and database schema versioning
+- Survivorship and point-in-time integrity controls
 
-Exit: a versioned validation report decides pass or reject.
+Status: implemented in V0.6 as a research-quality audit layer. It produces
+per-module reliability assessments and a REVIEW Signal, never a trade approval.
+Order-level event-driven backtesting remains a future, separate milestone.
+
+Exit: a versioned ValidationReport explains reliability, limitations, and
+integrity failures without creating an execution decision.
 
 ## Milestone 4: Paper Trading
 

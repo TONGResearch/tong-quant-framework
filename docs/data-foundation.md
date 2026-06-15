@@ -10,7 +10,7 @@ AKShare -> Raw schema validation -> Normalization -> Domain validation -> SQLite
 
 ## Supported Data
 
-- China A-share unadjusted, forward-adjusted, and backward-adjusted daily bars
+- China A-share unadjusted daily bars
 - China stock-index daily bars
 - China trading dates
 - Current A-share universe
@@ -29,6 +29,12 @@ Daily bars use:
 Queries require a timezone-aware `as_of` value and only return records where
 `available_at <= as_of`. Revised versions are retained and the newest version
 available at that time is selected.
+
+Strict point-in-time ingestion rejects provider-generated forward-adjusted and
+backward-adjusted histories. Those series may incorporate corporate actions
+that occurred after an earlier research date. Adjusted historical prices may
+only be enabled after Tong Quant stores dated corporate-action factors and can
+reconstruct the adjustment visible at each historical decision time.
 
 Company information and the A-share universe are current snapshots. They are
 stored with their retrieval time and must not be treated as historical company
@@ -89,3 +95,5 @@ default expiry is 24 hours and is configurable in `config/default.toml`.
 - Current company information must still not be used as point-in-time
   historical fundamentals.
 - Exact exchange holidays beyond the ingested source are not synthesized.
+- Point-in-time-safe corporate-action and adjustment-factor ingestion is not
+  implemented. Strict mode therefore accepts unadjusted bars only.

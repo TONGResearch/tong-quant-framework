@@ -11,9 +11,9 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.5 Scope
+## V0.6 Scope
 
-V0.5 includes the data foundation, Market Regime Engine, Screening Engine, and:
+V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 
 - Clean package architecture
 - Shared market-independent interfaces
@@ -47,9 +47,17 @@ V0.5 includes the data foundation, Market Regime Engine, Screening Engine, and:
 - Confidence based on evidence quality, completeness, agreement, and PIT integrity
 - Financial restatement awareness and revision-history access
 - Research run, evidence, assessment, report, and Signal persistence
+- Pre-registered historical outcome definitions
+- Historical, walk-forward, and final out-of-sample validation
+- Market Regime, thesis, factor contribution, and research-accuracy validation
+- Independent Decision Journal and research-quality tracking
+- Country, industry, theme, and style research-concentration validation
+- Git, framework, configuration, research, validation, and schema snapshots
+- Atomic OOS usage-limit enforcement
+- Universal `REVIEW` Validation Signal
 
-It intentionally does not implement backtesting, trade approval, orders, or
-live brokerage.
+It intentionally does not implement order-level backtesting, trade approval,
+orders, execution logic, or live brokerage.
 
 ## Quick Start
 
@@ -71,5 +79,7 @@ python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
 ```
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
-`docs/market-regime-engine.md`, `docs/screening-engine.md`, and
-`docs/research-engine.md`, and `docs/development-roadmap.md`.
+`docs/market-regime-engine.md`, `docs/screening-engine.md`,
+`docs/research-engine.md`, `docs/validation-engine.md`, and
+`docs/development-roadmap.md`. The current cross-project risk review is
+`docs/project-review-v0.6.md`.

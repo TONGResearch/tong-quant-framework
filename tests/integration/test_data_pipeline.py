@@ -10,7 +10,7 @@ from tong_quant.data.pipeline import DataIngestionPipeline
 from tong_quant.data.providers.akshare import AkShareAdapter
 from tong_quant.data.service import MarketDataService
 from tong_quant.data.storage.sqlite import SQLiteStore
-from tong_quant.domain.enums import AssetType, Market
+from tong_quant.domain.enums import Adjustment, AssetType, Market
 
 
 class FakeAkShareClient:
@@ -119,6 +119,29 @@ def test_daily_pipeline_caches_normalizes_and_enforces_point_in_time(
         date(2024, 1, 2),
         date(2024, 1, 3),
     ]
+
+
+@pytest.mark.integration
+def test_strict_pipeline_rejects_provider_adjusted_history(
+    data_foundation: tuple[
+        FakeAkShareClient,
+        DataIngestionPipeline,
+        MarketDataService,
+        SQLiteStore,
+    ],
+) -> None:
+    _, pipeline, _, store = data_foundation
+
+    with pytest.raises(ValueError, match="rejects provider-adjusted bars"):
+        pipeline.ingest_daily_bars(
+            DailyBarRequest(
+                "600000",
+                "20240102",
+                "20240103",
+                adjustment=Adjustment.FORWARD,
+            )
+        )
+    assert store.table_count("daily_bars") == 0
 
 
 @pytest.mark.integration

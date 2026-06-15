@@ -12,3 +12,23 @@ def test_order_models_exist_only_in_execution_package() -> None:
             offenders.append(str(path))
 
     assert offenders == []
+
+
+def test_validation_has_no_execution_or_order_dependency() -> None:
+    validation_root = Path("src/tong_quant/validation")
+    offenders = []
+    forbidden = (
+        "tong_quant.execution",
+        "class Order",
+        "create_order",
+        "submit_order",
+        "place_order",
+        "ENTER_LONG",
+        "EXIT_LONG",
+    )
+    for path in validation_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if any(item in text for item in forbidden):
+            offenders.append(str(path))
+
+    assert offenders == []

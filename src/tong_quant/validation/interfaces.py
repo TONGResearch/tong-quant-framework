@@ -1,15 +1,51 @@
-from collections.abc import Sequence
-from datetime import datetime
 from typing import Protocol
 
-from tong_quant.domain.models import Instrument, Signal
+from tong_quant.domain.enums import ValidationModuleName
+from tong_quant.validation.models import (
+    ValidationModuleResult,
+    ValidationReport,
+    ValidationRequest,
+    ValidationRun,
+    ValidationSplit,
+)
 
 
-class ValidationEngine(Protocol):
-    def validate(
+class ValidationModule(Protocol):
+    module: ValidationModuleName
+
+    def evaluate(
         self,
-        signals: Sequence[Signal],
-        instruments: Sequence[Instrument],
-        start: datetime,
-        end: datetime,
-    ) -> object: ...
+        request: ValidationRequest,
+        splits: tuple[ValidationSplit, ...],
+    ) -> ValidationModuleResult: ...
+
+
+class ValidationReportBuilder(Protocol):
+    def build(
+        self,
+        request: ValidationRequest,
+        results: tuple[ValidationModuleResult, ...],
+        splits: tuple[ValidationSplit, ...],
+    ) -> ValidationReport: ...
+
+
+class ValidationRepository(Protocol):
+    def start_run(self, request: ValidationRequest) -> str: ...
+
+    def save_run(self, run: ValidationRun) -> None: ...
+
+    def fail_run(
+        self,
+        run_id: str,
+        request: ValidationRequest,
+        *,
+        reason: str,
+    ) -> None: ...
+
+
+class HistoricalReplaySource(Protocol):
+    def reconstruct(self, request: ValidationRequest) -> ValidationRequest: ...
+
+
+class ValidationApplication(Protocol):
+    def run(self, request: ValidationRequest) -> ValidationRun: ...

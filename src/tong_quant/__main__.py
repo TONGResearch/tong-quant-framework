@@ -7,7 +7,7 @@ from tong_quant.markets.registry import build_market_rules
 def main() -> None:
     settings = load_settings(Path("config/default.toml"))
     rules = build_market_rules(settings.market.default)
-    print(f"{settings.project.name} v0.5")
+    print(f"{settings.project.name} v0.6")
     print(f"Environment: {settings.project.environment}")
     print(f"Default market: {rules.market.value}")
     print(f"Execution mode: {settings.execution.mode}")

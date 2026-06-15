@@ -13,6 +13,34 @@ from tong_quant.domain.enums import (
     SignalStage,
 )
 
+ALLOWED_SIGNAL_ACTIONS = {
+    SignalStage.DISCOVERY: {
+        SignalAction.INCLUDE,
+        SignalAction.WATCH,
+        SignalAction.RESEARCH,
+    },
+    SignalStage.SCREENING: {
+        SignalAction.INCLUDE,
+        SignalAction.EXCLUDE,
+        SignalAction.WATCH,
+        SignalAction.RESEARCH,
+    },
+    SignalStage.RESEARCH: {
+        SignalAction.WATCH,
+        SignalAction.RESEARCH,
+    },
+    SignalStage.STRATEGY: {
+        SignalAction.WATCH,
+        SignalAction.ENTER_LONG,
+        SignalAction.EXIT_LONG,
+        SignalAction.HOLD,
+    },
+    SignalStage.MARKET_REGIME: {SignalAction.WATCH},
+    SignalStage.RISK: {SignalAction.HOLD, SignalAction.BLOCK},
+    SignalStage.AI: {SignalAction.WATCH, SignalAction.RESEARCH},
+    SignalStage.VALIDATION: {SignalAction.REVIEW},
+}
+
 
 def require_timezone(value: datetime, field_name: str) -> None:
     if value.tzinfo is None or value.utcoffset() is None:
@@ -199,6 +227,10 @@ class Signal:
             raise ValueError("strength must be between 0 and 1")
         if not self.reasons:
             raise ValueError("every signal must be explainable")
+        if self.action not in ALLOWED_SIGNAL_ACTIONS[self.stage]:
+            raise ValueError(
+                f"{self.stage.value} signals cannot use action {self.action.value}"
+            )
 
 
 @dataclass(frozen=True, slots=True)
