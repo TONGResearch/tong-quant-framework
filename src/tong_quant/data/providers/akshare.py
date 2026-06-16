@@ -8,7 +8,12 @@ import pandas as pd
 
 from tong_quant.core.exceptions import DataProviderError
 from tong_quant.data.cache import DataFrameCache
-from tong_quant.data.models import DailyBarRequest, ProviderResponse, RawDataset
+from tong_quant.data.models import (
+    DailyBarRequest,
+    ProviderResponse,
+    RawDataset,
+    dataframe_sha256,
+)
 from tong_quant.domain.enums import Adjustment, AssetType
 
 
@@ -28,6 +33,24 @@ class AkShareClient(Protocol):
     def stock_zh_a_spot_em(self) -> pd.DataFrame: ...
 
     def stock_info_a_code_name(self) -> pd.DataFrame: ...
+
+    def stock_financial_benefit_new_ths(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_financial_debt_new_ths(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_financial_cash_new_ths(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_zh_a_st_em(self) -> pd.DataFrame: ...
+
+    def stock_zh_a_stop_em(self) -> pd.DataFrame: ...
+
+    def stock_info_sh_delist(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_info_sz_delist(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def index_stock_cons_csindex(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_fhps_detail_em(self, **kwargs: Any) -> pd.DataFrame: ...
 
 
 class AkShareAdapter:
@@ -152,6 +175,82 @@ class AkShareAdapter:
             fetch,
         )
 
+    def financial_statement(self, symbol: str, statement: str) -> ProviderResponse:
+        fetchers = {
+            "income": self._client.stock_financial_benefit_new_ths,
+            "balance": self._client.stock_financial_debt_new_ths,
+            "cash_flow": self._client.stock_financial_cash_new_ths,
+        }
+        try:
+            fetcher = fetchers[statement]
+        except KeyError as error:
+            raise ValueError(f"unsupported financial statement: {statement}") from error
+
+        def fetch() -> pd.DataFrame:
+            frame = fetcher(symbol=symbol, indicator="按报告期")
+            frame.attrs["tong_quant_source"] = f"akshare:financial:{statement}"
+            return frame
+
+        return self._fetch(
+            "fundamental_facts",
+            {"symbol": symbol, "statement": statement},
+            fetch,
+        )
+
+    def st_stocks(self) -> ProviderResponse:
+        return self._fetch(
+            "instrument_status_st",
+            {},
+            self._client.stock_zh_a_st_em,
+        )
+
+    def suspended_stocks(self) -> ProviderResponse:
+        return self._fetch(
+            "instrument_status_suspended",
+            {},
+            self._client.stock_zh_a_stop_em,
+        )
+
+    def delisted_stocks(self, exchange: str) -> ProviderResponse:
+        fetchers = {
+            "sh": self._client.stock_info_sh_delist,
+            "sz": self._client.stock_info_sz_delist,
+        }
+        try:
+            fetcher = fetchers[exchange]
+        except KeyError as error:
+            raise ValueError(f"unsupported delisting exchange: {exchange}") from error
+
+        return self._fetch(
+            "instrument_status_delisted",
+            {"exchange": exchange},
+            fetcher,
+        )
+
+    def index_membership(self, symbol: str) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.index_stock_cons_csindex(symbol=symbol)
+            frame.attrs["tong_quant_source"] = "akshare:index_stock_cons_csindex"
+            return frame
+
+        return self._fetch(
+            "index_membership",
+            {"symbol": symbol},
+            fetch,
+        )
+
+    def corporate_actions(self, symbol: str) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.stock_fhps_detail_em(symbol=symbol)
+            frame.attrs["tong_quant_source"] = "akshare:stock_fhps_detail_em"
+            return frame
+
+        return self._fetch(
+            "corporate_actions",
+            {"symbol": symbol},
+            fetch,
+        )
+
     def _fetch(
         self,
         dataset_name: str,
@@ -171,6 +270,7 @@ class AkShareAdapter:
             retrieved_at=self._clock(),
             source=source,
             parameters=parameters,
+            raw_data_hash=dataframe_sha256(frame, parameters),
         )
         if self._cache is not None:
             self._cache.put(dataset)

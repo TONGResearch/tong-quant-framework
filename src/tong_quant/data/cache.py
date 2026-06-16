@@ -55,6 +55,7 @@ class DataFrameCache:
             retrieved_at=retrieved_at,
             source=payload["source"],
             parameters=payload["parameters"],
+            raw_data_hash=payload.get("raw_data_hash", ""),
         )
 
     def put(self, dataset: RawDataset) -> None:
@@ -64,6 +65,7 @@ class DataFrameCache:
             "retrieved_at": dataset.retrieved_at.isoformat(),
             "source": dataset.source,
             "parameters": dataset.parameters,
+            "raw_data_hash": dataset.content_hash(),
             "frame": dataset.frame.to_json(orient="table", date_format="iso"),
         }
         with gzip.open(path, "wt", encoding="utf-8") as cache_file:

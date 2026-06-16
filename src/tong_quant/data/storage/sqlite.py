@@ -8,9 +8,20 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
+from tong_quant.data.models import (
+    DataAvailabilityWarning,
+    IngestionBatch,
+    PITReadinessAssessment,
+    ProviderLimitation,
+    RawDatasetFingerprint,
+)
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
+    AvailabilityPrecision,
+    DataTrustLevel,
+    FundSubtype,
+    InstrumentCategory,
     InvestmentAssessmentStatus,
     Market,
     ResearchQueueStatus,
@@ -21,6 +32,7 @@ from tong_quant.domain.enums import (
 )
 from tong_quant.domain.models import (
     Bar,
+    CorporateAction,
     FundamentalFact,
     Instrument,
     InstrumentStatus,
@@ -29,7 +41,7 @@ from tong_quant.domain.models import (
     UniverseMembership,
 )
 
-SCHEMA_VERSION = "0.6.1"
+SCHEMA_VERSION = "0.6.2"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_metadata (
@@ -43,6 +55,8 @@ CREATE TABLE IF NOT EXISTS instruments (
     symbol TEXT NOT NULL,
     market TEXT NOT NULL,
     asset_type TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'equity',
+    fund_subtype TEXT,
     name TEXT NOT NULL,
     currency TEXT NOT NULL,
     lot_size INTEGER NOT NULL,
@@ -106,9 +120,15 @@ CREATE TABLE IF NOT EXISTS fundamental_facts (
     unit TEXT NOT NULL,
     revision INTEGER NOT NULL,
     source TEXT NOT NULL,
+    raw_data_hash TEXT NOT NULL DEFAULT '',
+    batch_id TEXT NOT NULL DEFAULT '',
+    provider_dataset TEXT NOT NULL DEFAULT '',
+    availability_precision TEXT NOT NULL DEFAULT 'unknown',
+    trust_level TEXT NOT NULL DEFAULT 'unknown',
     ingested_at TEXT NOT NULL,
     PRIMARY KEY (
-        instrument_id, metric, period_end, published_at, revision, available_at
+        instrument_id, metric, period_end, published_at, revision, available_at,
+        raw_data_hash
     )
 );
 
@@ -124,8 +144,13 @@ CREATE TABLE IF NOT EXISTS instrument_status_history (
     industry TEXT,
     available_at TEXT NOT NULL,
     source TEXT NOT NULL,
+    raw_data_hash TEXT NOT NULL DEFAULT '',
+    batch_id TEXT NOT NULL DEFAULT '',
+    provider_dataset TEXT NOT NULL DEFAULT '',
+    availability_precision TEXT NOT NULL DEFAULT 'unknown',
+    trust_level TEXT NOT NULL DEFAULT 'unknown',
     ingested_at TEXT NOT NULL,
-    PRIMARY KEY (instrument_id, effective_from, available_at)
+    PRIMARY KEY (instrument_id, effective_from, available_at, raw_data_hash)
 );
 
 CREATE INDEX IF NOT EXISTS idx_instrument_status_pit
@@ -138,13 +163,105 @@ CREATE TABLE IF NOT EXISTS universe_memberships (
     effective_to TEXT,
     available_at TEXT NOT NULL,
     source TEXT NOT NULL,
+    raw_data_hash TEXT NOT NULL DEFAULT '',
+    batch_id TEXT NOT NULL DEFAULT '',
+    provider_dataset TEXT NOT NULL DEFAULT '',
+    availability_precision TEXT NOT NULL DEFAULT 'unknown',
+    trust_level TEXT NOT NULL DEFAULT 'unknown',
     ingested_at TEXT NOT NULL,
-    PRIMARY KEY (universe, instrument_id, effective_from, available_at)
+    PRIMARY KEY (universe, instrument_id, effective_from, available_at, raw_data_hash)
 );
 
 CREATE INDEX IF NOT EXISTS idx_universe_memberships_pit
 ON universe_memberships (
     universe, effective_from, effective_to, available_at, instrument_id
+);
+
+CREATE TABLE IF NOT EXISTS corporate_actions (
+    action_id TEXT PRIMARY KEY,
+    instrument_id TEXT NOT NULL,
+    action_type TEXT NOT NULL,
+    effective_date TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    value TEXT,
+    cash_amount TEXT,
+    ratio TEXT,
+    currency TEXT,
+    source TEXT NOT NULL,
+    raw_data_hash TEXT NOT NULL DEFAULT '',
+    batch_id TEXT NOT NULL DEFAULT '',
+    provider_dataset TEXT NOT NULL DEFAULT '',
+    availability_precision TEXT NOT NULL DEFAULT 'unknown',
+    trust_level TEXT NOT NULL DEFAULT 'unknown',
+    ingested_at TEXT NOT NULL,
+    UNIQUE (
+        instrument_id, action_type, effective_date, available_at, raw_data_hash
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_corporate_actions_pit
+ON corporate_actions (instrument_id, effective_date, available_at);
+
+CREATE TABLE IF NOT EXISTS ingestion_batches (
+    batch_id TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    dataset TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    status TEXT NOT NULL,
+    parameters_json TEXT NOT NULL,
+    raw_response_hash TEXT NOT NULL,
+    failure_reason TEXT NOT NULL,
+    retry_of TEXT,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS raw_dataset_fingerprints (
+    raw_data_hash TEXT PRIMARY KEY,
+    dataset TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    retrieved_at TEXT NOT NULL,
+    parameters_json TEXT NOT NULL,
+    row_count INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS data_availability_warnings (
+    warning_id TEXT PRIMARY KEY,
+    batch_id TEXT NOT NULL,
+    dataset TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    warning_code TEXT NOT NULL,
+    message TEXT NOT NULL,
+    trust_level TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS provider_limitations (
+    limitation_id TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    dataset TEXT NOT NULL,
+    limitation_code TEXT NOT NULL,
+    description TEXT NOT NULL,
+    trust_level TEXT NOT NULL,
+    documented_at TEXT NOT NULL,
+    ingested_at TEXT NOT NULL,
+    UNIQUE (provider, dataset, limitation_code)
+);
+
+CREATE TABLE IF NOT EXISTS pit_readiness_assessments (
+    assessment_id TEXT PRIMARY KEY,
+    dataset TEXT NOT NULL,
+    assessed_at TEXT NOT NULL,
+    coverage_ratio REAL NOT NULL,
+    trust_level TEXT NOT NULL,
+    missing_critical_fields_json TEXT NOT NULL,
+    warnings_json TEXT NOT NULL,
+    ready_for_historical_replay INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS signals (
@@ -557,6 +674,8 @@ class SQLiteStore:
                     instrument.symbol,
                     instrument.market.value,
                     instrument.asset_type.value,
+                    instrument.category.value,
+                    None if instrument.fund_subtype is None else instrument.fund_subtype.value,
                     instrument.name,
                     instrument.currency,
                     instrument.lot_size,
@@ -575,11 +694,13 @@ class SQLiteStore:
             connection.executemany(
                 """
                 INSERT INTO instruments (
-                    instrument_id, symbol, market, asset_type, name, currency,
-                    lot_size, exchange, industry, listing_date, delisting_date,
-                    available_at, source, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    instrument_id, symbol, market, asset_type, category,
+                    fund_subtype, name, currency, lot_size, exchange, industry,
+                    listing_date, delisting_date, available_at, source, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (instrument_id, available_at) DO UPDATE SET
+                    category = excluded.category,
+                    fund_subtype = excluded.fund_subtype,
                     name = CASE
                         WHEN excluded.name = excluded.symbol THEN instruments.name
                         ELSE excluded.name
@@ -678,6 +799,11 @@ class SQLiteStore:
                 fact.unit,
                 fact.revision,
                 fact.source,
+                fact.raw_data_hash,
+                fact.batch_id,
+                fact.provider_dataset,
+                fact.availability_precision.value,
+                fact.trust_level.value,
                 ingested_at,
             )
             for fact in facts
@@ -685,13 +811,34 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
+            for row in rows:
+                conflict = connection.execute(
+                    """
+                    SELECT raw_data_hash
+                    FROM fundamental_facts
+                    WHERE instrument_id = ?
+                      AND metric = ?
+                      AND period_end = ?
+                      AND published_at = ?
+                      AND revision = ?
+                      AND available_at = ?
+                      AND raw_data_hash <> ?
+                    LIMIT 1
+                    """,
+                    (row[0], row[1], row[3], row[5], row[10], row[6], row[12]),
+                ).fetchone()
+                if conflict is not None:
+                    raise ValueError(
+                        "fundamental fact raw hash conflict requires a new revision"
+                    )
             connection.executemany(
                 """
-                INSERT OR REPLACE INTO fundamental_facts (
+                INSERT OR IGNORE INTO fundamental_facts (
                     instrument_id, metric, period_start, period_end,
                     fiscal_period, published_at, available_at, value,
-                    currency, unit, revision, source, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    currency, unit, revision, source, raw_data_hash, batch_id,
+                    provider_dataset, availability_precision, trust_level, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -712,6 +859,11 @@ class SQLiteStore:
                 status.industry,
                 _datetime_text(status.available_at),
                 status.source,
+                status.raw_data_hash,
+                status.batch_id,
+                status.provider_dataset,
+                status.availability_precision.value,
+                status.trust_level.value,
                 ingested_at,
             )
             for status in statuses
@@ -719,12 +871,31 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
+            for row in rows:
+                conflict = connection.execute(
+                    """
+                    SELECT raw_data_hash
+                    FROM instrument_status_history
+                    WHERE instrument_id = ?
+                      AND effective_from = ?
+                      AND available_at = ?
+                      AND raw_data_hash <> ?
+                    LIMIT 1
+                    """,
+                    (row[0], row[1], row[6], row[8]),
+                ).fetchone()
+                if conflict is not None:
+                    raise ValueError(
+                        "instrument status raw hash conflict requires a new version"
+                    )
             connection.executemany(
                 """
-                INSERT OR REPLACE INTO instrument_status_history (
+                INSERT OR IGNORE INTO instrument_status_history (
                     instrument_id, effective_from, effective_to, status,
-                    is_tradable, industry, available_at, source, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    is_tradable, industry, available_at, source, raw_data_hash,
+                    batch_id, provider_dataset, availability_precision, trust_level,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -743,6 +914,11 @@ class SQLiteStore:
                 _date_text(membership.effective_to),
                 _datetime_text(membership.available_at),
                 membership.source,
+                membership.raw_data_hash,
+                membership.batch_id,
+                membership.provider_dataset,
+                membership.availability_precision.value,
+                membership.trust_level.value,
                 ingested_at,
             )
             for membership in memberships
@@ -750,16 +926,219 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
+            for row in rows:
+                conflict = connection.execute(
+                    """
+                    SELECT raw_data_hash
+                    FROM universe_memberships
+                    WHERE universe = ?
+                      AND instrument_id = ?
+                      AND effective_from = ?
+                      AND available_at = ?
+                      AND raw_data_hash <> ?
+                    LIMIT 1
+                    """,
+                    (row[0], row[1], row[2], row[4], row[6]),
+                ).fetchone()
+                if conflict is not None:
+                    raise ValueError(
+                        "universe membership raw hash conflict requires a new version"
+                    )
             connection.executemany(
                 """
-                INSERT OR REPLACE INTO universe_memberships (
+                INSERT OR IGNORE INTO universe_memberships (
                     universe, instrument_id, effective_from, effective_to,
-                    available_at, source, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    available_at, source, raw_data_hash, batch_id,
+                    provider_dataset, availability_precision, trust_level,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
         return len(rows)
+
+    def upsert_corporate_actions(
+        self,
+        actions: Iterable[CorporateAction],
+    ) -> int:
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                str(uuid4()),
+                instrument_id(action.instrument),
+                action.action_type.value,
+                action.effective_date.isoformat(),
+                _datetime_text(action.available_at),
+                None if action.value is None else str(action.value),
+                None if action.cash_amount is None else str(action.cash_amount),
+                None if action.ratio is None else str(action.ratio),
+                action.currency,
+                action.source,
+                action.raw_data_hash,
+                action.batch_id,
+                action.provider_dataset,
+                action.availability_precision.value,
+                action.trust_level.value,
+                ingested_at,
+            )
+            for action in actions
+        ]
+        if not rows:
+            return 0
+        with self._connect() as connection:
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO corporate_actions (
+                    action_id, instrument_id, action_type, effective_date,
+                    available_at, value, cash_amount, ratio, currency, source,
+                    raw_data_hash, batch_id, provider_dataset, availability_precision,
+                    trust_level, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+        return len(rows)
+
+    def save_ingestion_batch(self, batch: IngestionBatch) -> str:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO ingestion_batches (
+                    batch_id, provider, dataset, started_at, completed_at, status,
+                    parameters_json, raw_response_hash, failure_reason, retry_of,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (batch_id) DO UPDATE SET
+                    completed_at = excluded.completed_at,
+                    status = excluded.status,
+                    failure_reason = excluded.failure_reason,
+                    raw_response_hash = excluded.raw_response_hash,
+                    ingested_at = excluded.ingested_at
+                """,
+                (
+                    batch.batch_id,
+                    batch.provider,
+                    batch.dataset,
+                    _datetime_text(batch.started_at),
+                    None if batch.completed_at is None else _datetime_text(batch.completed_at),
+                    batch.status.value,
+                    _json_dumps(batch.parameters),
+                    batch.raw_response_hash,
+                    batch.failure_reason,
+                    batch.retry_of,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return batch.batch_id
+
+    def save_raw_dataset_fingerprint(
+        self,
+        fingerprint: RawDatasetFingerprint,
+    ) -> str:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO raw_dataset_fingerprints (
+                    raw_data_hash, dataset, provider, retrieved_at, parameters_json,
+                    row_count, source, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    fingerprint.raw_data_hash,
+                    fingerprint.dataset,
+                    fingerprint.provider,
+                    _datetime_text(fingerprint.retrieved_at),
+                    _json_dumps(fingerprint.parameters),
+                    fingerprint.row_count,
+                    fingerprint.source,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return fingerprint.raw_data_hash
+
+    def save_data_availability_warning(
+        self,
+        warning: DataAvailabilityWarning,
+    ) -> str:
+        warning_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO data_availability_warnings (
+                    warning_id, batch_id, dataset, instrument_id, warning_code,
+                    message, trust_level, created_at, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    warning_id,
+                    warning.batch_id,
+                    warning.dataset,
+                    warning.instrument_id,
+                    warning.warning_code,
+                    warning.message,
+                    warning.trust_level.value,
+                    _datetime_text(warning.created_at),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return warning_id
+
+    def save_provider_limitation(self, limitation: ProviderLimitation) -> str:
+        limitation_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO provider_limitations (
+                    limitation_id, provider, dataset, limitation_code, description,
+                    trust_level, documented_at, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (provider, dataset, limitation_code) DO UPDATE SET
+                    description = excluded.description,
+                    trust_level = excluded.trust_level,
+                    documented_at = excluded.documented_at,
+                    ingested_at = excluded.ingested_at
+                """,
+                (
+                    limitation_id,
+                    limitation.provider,
+                    limitation.dataset,
+                    limitation.limitation_code,
+                    limitation.description,
+                    limitation.trust_level.value,
+                    _datetime_text(limitation.documented_at),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return limitation_id
+
+    def save_pit_readiness_assessment(
+        self,
+        assessment: PITReadinessAssessment,
+    ) -> str:
+        assessment_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO pit_readiness_assessments (
+                    assessment_id, dataset, assessed_at, coverage_ratio, trust_level,
+                    missing_critical_fields_json, warnings_json,
+                    ready_for_historical_replay, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    assessment.dataset,
+                    _datetime_text(assessment.assessed_at),
+                    assessment.coverage_ratio,
+                    assessment.trust_level.value,
+                    json.dumps(assessment.missing_critical_fields),
+                    json.dumps(assessment.warnings),
+                    int(assessment.ready_for_historical_replay),
+                    assessment.model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return assessment_id
 
     def get_instrument(
         self,
@@ -2188,6 +2567,12 @@ class SQLiteStore:
             "fundamental_facts",
             "instrument_status_history",
             "universe_memberships",
+            "corporate_actions",
+            "ingestion_batches",
+            "raw_dataset_fingerprints",
+            "data_availability_warnings",
+            "provider_limitations",
+            "pit_readiness_assessments",
             "signals",
             "screening_results",
             "research_queue",
@@ -2241,6 +2626,12 @@ def _instrument_from_row(row: sqlite3.Row) -> Instrument:
         market=Market(row["market"]),
         name=row["name"],
         asset_type=AssetType(row["asset_type"]),
+        category=InstrumentCategory(row["category"]),
+        fund_subtype=(
+            None
+            if row["fund_subtype"] is None
+            else FundSubtype(row["fund_subtype"])
+        ),
         currency=row["currency"],
         lot_size=int(row["lot_size"]),
         exchange=row["exchange"],
@@ -2286,6 +2677,11 @@ def _fundamental_fact_from_row(
         currency=row["currency"],
         unit=row["unit"],
         revision=int(row["revision"]),
+        raw_data_hash=row["raw_data_hash"],
+        batch_id=row["batch_id"],
+        provider_dataset=row["provider_dataset"],
+        availability_precision=AvailabilityPrecision(row["availability_precision"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
         source=row["source"],
     )
 
@@ -2301,6 +2697,11 @@ def _instrument_status_from_row(
         status=SecurityStatus(row["status"]),
         is_tradable=bool(row["is_tradable"]),
         industry=row["industry"],
+        raw_data_hash=row["raw_data_hash"],
+        batch_id=row["batch_id"],
+        provider_dataset=row["provider_dataset"],
+        availability_precision=AvailabilityPrecision(row["availability_precision"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
         available_at=datetime.fromisoformat(row["available_at"]),
         source=row["source"],
     )

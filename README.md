@@ -11,7 +11,7 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.6.1 Scope
+## V0.6.2 Scope
 
 V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 
@@ -58,6 +58,11 @@ V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 - Git, framework, configuration, research, validation, and schema snapshots
 - Atomic OOS usage-limit enforcement
 - Universal `REVIEW` Validation Signal
+- Conservative point-in-time data population for selected AKShare datasets
+- Explicit `DataTrustLevel` and `AvailabilityPrecision` metadata
+- Audited ingestion batches, raw dataset fingerprints, and availability warnings
+- Corporate action, provider limitation, and PIT readiness persistence
+- Fund and asset-allocation extension points reserved without implementation
 
 It intentionally does not implement order-level backtesting, trade approval,
 orders, execution logic, or live brokerage.

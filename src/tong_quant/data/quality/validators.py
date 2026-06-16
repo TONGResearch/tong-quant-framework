@@ -15,6 +15,12 @@ RAW_REQUIRED_COLUMNS: dict[str, frozenset[str]] = {
     "trading_calendar": frozenset({"trade_date"}),
     "company_info": frozenset({"item", "value"}),
     "a_share_universe": frozenset({"代码", "名称"}),
+    "fundamental_facts": frozenset({"report_date", "metric_name", "value"}),
+    "instrument_status_st": frozenset({"代码"}),
+    "instrument_status_suspended": frozenset({"代码"}),
+    "instrument_status_delisted": frozenset({"代码"}),
+    "index_membership": frozenset({"成分券代码"}),
+    "corporate_actions": frozenset(),
 }
 
 

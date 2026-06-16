@@ -5,6 +5,8 @@ from pathlib import Path
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
     AssetType,
+    AvailabilityPrecision,
+    DataTrustLevel,
     InvestmentAssessmentStatus,
     Market,
     SecurityStatus,
@@ -30,6 +32,12 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("fundamental_facts") == 0
     assert store.table_count("instrument_status_history") == 0
     assert store.table_count("universe_memberships") == 0
+    assert store.table_count("corporate_actions") == 0
+    assert store.table_count("ingestion_batches") == 0
+    assert store.table_count("raw_dataset_fingerprints") == 0
+    assert store.table_count("data_availability_warnings") == 0
+    assert store.table_count("provider_limitations") == 0
+    assert store.table_count("pit_readiness_assessments") == 0
     assert store.table_count("signals") == 0
     assert store.table_count("screening_results") == 0
     assert store.table_count("research_queue") == 0
@@ -41,7 +49,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("investment_assessments") == 0
     assert store.table_count("investment_scores") == 0
     assert store.table_count("schema_metadata") == 1
-    assert store.schema_version() == "0.6.1"
+    assert store.schema_version() == "0.6.2"
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0
@@ -220,6 +228,140 @@ def test_fundamental_facts_hide_future_revisions(tmp_path: Path) -> None:
     )
     assert [fact.revision for fact in history_before] == [0]
     assert [fact.revision for fact in history_after] == [0, 1]
+
+
+def test_fundamental_raw_hash_conflict_requires_explicit_revision(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteStore(tmp_path / "test.sqlite3")
+    store.initialize()
+    instrument = Instrument(
+        "600000",
+        Market.CHINA_A,
+        "Example",
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+    )
+    store.upsert_instruments([instrument])
+    first = FundamentalFact(
+        instrument=instrument,
+        metric="revenue",
+        period_end=date(2023, 12, 31),
+        published_at=datetime(2024, 3, 20, tzinfo=UTC),
+        available_at=datetime(2024, 3, 20, 18, tzinfo=UTC),
+        value=Decimal("100"),
+        source="test",
+        raw_data_hash="a" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+    conflicting = FundamentalFact(
+        instrument=instrument,
+        metric="revenue",
+        period_end=date(2023, 12, 31),
+        published_at=datetime(2024, 3, 20, tzinfo=UTC),
+        available_at=datetime(2024, 3, 20, 18, tzinfo=UTC),
+        value=Decimal("101"),
+        source="test",
+        raw_data_hash="b" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+
+    store.upsert_fundamental_facts([first])
+
+    try:
+        store.upsert_fundamental_facts([conflicting])
+    except ValueError as error:
+        assert "raw hash conflict" in str(error)
+    else:
+        raise AssertionError("conflicting raw payload should require a new revision")
+
+
+def test_status_raw_hash_conflict_requires_new_version(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "test.sqlite3")
+    store.initialize()
+    instrument = Instrument(
+        "600000",
+        Market.CHINA_A,
+        "Example",
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+    )
+    store.upsert_instruments([instrument])
+    first = InstrumentStatus(
+        instrument,
+        effective_from=date(2024, 1, 2),
+        status=SecurityStatus.LISTED,
+        is_tradable=True,
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+        raw_data_hash="a" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+    conflicting = InstrumentStatus(
+        instrument,
+        effective_from=date(2024, 1, 2),
+        status=SecurityStatus.SUSPENDED,
+        is_tradable=False,
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+        raw_data_hash="b" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+
+    store.upsert_instrument_statuses([first])
+
+    try:
+        store.upsert_instrument_statuses([conflicting])
+    except ValueError as error:
+        assert "raw hash conflict" in str(error)
+    else:
+        raise AssertionError("conflicting status payload should require a new version")
+
+
+def test_universe_raw_hash_conflict_requires_new_version(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "test.sqlite3")
+    store.initialize()
+    instrument = Instrument(
+        "600000",
+        Market.CHINA_A,
+        "Example",
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+    )
+    store.upsert_instruments([instrument])
+    first = UniverseMembership(
+        "china_a_all",
+        instrument,
+        effective_from=date(2024, 1, 2),
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+        raw_data_hash="a" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+    conflicting = UniverseMembership(
+        "china_a_all",
+        instrument,
+        effective_from=date(2024, 1, 2),
+        available_at=datetime(2024, 1, 2, tzinfo=UTC),
+        source="test",
+        raw_data_hash="b" * 64,
+        availability_precision=AvailabilityPrecision.EXACT,
+        trust_level=DataTrustLevel.HIGH,
+    )
+
+    store.upsert_universe_memberships([first])
+
+    try:
+        store.upsert_universe_memberships([conflicting])
+    except ValueError as error:
+        assert "raw hash conflict" in str(error)
+    else:
+        raise AssertionError("conflicting universe payload should require a new version")
 
 
 def test_historical_universe_retains_delisted_members(tmp_path: Path) -> None:

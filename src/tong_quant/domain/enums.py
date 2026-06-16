@@ -11,7 +11,24 @@ class Market(StrEnum):
 class AssetType(StrEnum):
     EQUITY = "equity"
     ETF = "etf"
+    MUTUAL_FUND = "mutual_fund"
+    REIT = "reit"
+    BOND_FUND = "bond_fund"
+    MONEY_MARKET_FUND = "money_market_fund"
     INDEX = "index"
+
+
+class InstrumentCategory(StrEnum):
+    EQUITY = "equity"
+    FUND = "fund"
+
+
+class FundSubtype(StrEnum):
+    ETF = "etf"
+    MUTUAL_FUND = "mutual_fund"
+    REIT = "reit"
+    BOND_FUND = "bond_fund"
+    MONEY_MARKET_FUND = "money_market_fund"
 
 
 class SecurityStatus(StrEnum):
@@ -132,6 +149,36 @@ class EvidenceQuality(StrEnum):
     VERIFIED_SECONDARY = "verified_secondary"
     SECONDARY = "secondary"
     ESTIMATED = "estimated"
+
+
+class DataTrustLevel(StrEnum):
+    VERIFIED = "verified"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    UNKNOWN = "unknown"
+
+
+class AvailabilityPrecision(StrEnum):
+    EXACT = "exact"
+    DATE_ONLY = "date_only"
+    ESTIMATED = "estimated"
+    RETRIEVAL_TIME = "retrieval_time"
+    UNKNOWN = "unknown"
+
+
+class IngestionBatchStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    RETRYING = "retrying"
+
+
+class CorporateActionType(StrEnum):
+    SPLIT = "split"
+    DIVIDEND = "dividend"
+    RIGHTS_ISSUE = "rights_issue"
+    ADJUSTMENT_FACTOR = "adjustment_factor"
 
 
 class Adjustment(StrEnum):

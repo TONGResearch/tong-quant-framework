@@ -17,6 +17,10 @@ AKShare -> Raw schema validation -> Normalization -> Domain validation -> SQLite
 - Current basic company information
 - Point-in-time fundamental fact persistence contract
 - Historical universe membership and security-status persistence contract
+- V0.6.2 audited ingestion batches, raw payload hashes, provider limitations,
+  and availability warnings
+- V0.6.2 conservative PIT population for selected AKShare fundamentals,
+  instrument-status snapshots, index membership, and corporate actions
 
 ## Point-in-Time Rules
 
@@ -46,10 +50,18 @@ Fundamental facts use separate observation and availability fields:
 - `published_at`: issuer or source publication time
 - `available_at`: earliest time Tong Quant permits the fact to influence a decision
 - `revision`: version number for restatements and corrections
+- `raw_data_hash`: provider payload fingerprint
+- `batch_id`: ingestion batch that introduced the record
+- `availability_precision`: exact, date-only, estimated, retrieval-time, or unknown
+- `trust_level`: verified, high, medium, low, or unknown
 
 Historical queries select only facts with `available_at <= as_of` and return
 the latest version that was visible at that time. A later restatement therefore
 cannot replace the value seen by an earlier backtest.
+
+Availability precision and trust level are intentionally separate. A dataset can
+have a precise date but low trust, or retrieval-time availability with medium
+trust. Research, Validation, and future HistoricalReplay code must inspect both.
 
 Historical security reconstruction uses two independent records:
 
@@ -65,6 +77,40 @@ The trading calendar is operational reference data. Historical dates are marked
 available from the beginning of their trading date, but source corrections are
 not reconstructed before Tong Quant first ingests them.
 
+## V0.6.2 PIT Population
+
+V0.6.2 fills existing structures where AKShare provides usable history, while
+recording limitations whenever publication time or historical intervals are not
+reliable.
+
+Implemented conservative ingestion:
+
+- Financial statements from AKShare financial endpoints into
+  `fundamental_facts`
+- Current ST and suspended snapshots into `instrument_status_history`
+- Delisting records into `instrument_status_history`
+- CSI index membership into `universe_memberships`
+- Dividend and split-like corporate action rows into `corporate_actions`
+- Raw dataset fingerprints and ingestion batches for every new dataset
+- Data availability warnings when exact publication time is unavailable
+
+Strict point-in-time mode still rejects provider-adjusted bars. Corporate
+actions are stored for audit and future reconstruction, but they do not yet
+enable adjusted historical price usage.
+
+## PIT Readiness
+
+`PITReadinessAssessment` quantifies whether a dataset is ready for future
+historical replay. It records:
+
+- Coverage ratio
+- DataTrustLevel
+- Missing critical fields
+- Warnings
+- `ready_for_historical_replay`
+
+This is a readiness gate only. It does not implement HistoricalReplaySource.
+
 ## SQLite Tables
 
 - `instruments`
@@ -73,6 +119,12 @@ not reconstructed before Tong Quant first ingests them.
 - `fundamental_facts`
 - `instrument_status_history`
 - `universe_memberships`
+- `corporate_actions`
+- `ingestion_batches`
+- `raw_dataset_fingerprints`
+- `data_availability_warnings`
+- `provider_limitations`
+- `pit_readiness_assessments`
 - `signals`
 - `screening_results`
 
@@ -90,8 +142,8 @@ default expiry is 24 hours and is configurable in `config/default.toml`.
 - AKShare is an aggregation library backed by third-party websites; upstream
   schemas and availability can change.
 - Provider ingestion for historical fundamentals, status changes, delistings,
-  and universe membership is not implemented yet. The canonical models,
-  storage, and point-in-time read contracts now exist.
+  and universe membership is partial and provider-limited. Exact issuer
+  publication timestamps are not always available through AKShare.
 - Current company information must still not be used as point-in-time
   historical fundamentals.
 - Exact exchange holidays beyond the ingested source are not synthesized.

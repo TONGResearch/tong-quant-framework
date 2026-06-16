@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any
@@ -7,8 +7,23 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from tong_quant.data.models import DailyBarRequest, RawDataset
-from tong_quant.domain.enums import AssetType, Market
-from tong_quant.domain.models import Bar, Instrument, TradingSession
+from tong_quant.domain.enums import (
+    AssetType,
+    AvailabilityPrecision,
+    CorporateActionType,
+    DataTrustLevel,
+    Market,
+    SecurityStatus,
+)
+from tong_quant.domain.models import (
+    Bar,
+    CorporateAction,
+    FundamentalFact,
+    Instrument,
+    InstrumentStatus,
+    TradingSession,
+    UniverseMembership,
+)
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 MARKET_CLOSE = time(hour=15)
@@ -104,6 +119,235 @@ def normalize_universe(dataset: RawDataset) -> list[Instrument]:
     return instruments
 
 
+def normalize_financial_statement(
+    dataset: RawDataset,
+    instrument: Instrument,
+    *,
+    batch_id: str,
+) -> list[FundamentalFact]:
+    facts: list[FundamentalFact] = []
+    raw_hash = dataset.content_hash()
+    for row in dataset.frame.to_dict(orient="records"):
+        metric = _optional_text(row.get("metric_name") or row.get("指标名称"))
+        if metric is None:
+            continue
+        value = _optional_decimal(row.get("value") or row.get("金额"))
+        if value is None:
+            continue
+        period_end = _optional_date(
+            row.get("report_date")
+            or row.get("报告期")
+            or row.get("报告日期")
+            or row.get("date")
+        )
+        if period_end is None:
+            continue
+        facts.append(
+            FundamentalFact(
+                instrument=instrument,
+                metric=metric,
+                period_end=period_end,
+                published_at=dataset.retrieved_at,
+                available_at=dataset.retrieved_at,
+                value=value,
+                currency="CNY",
+                revision=0,
+                source=dataset.source,
+                raw_data_hash=raw_hash,
+                batch_id=batch_id,
+                provider_dataset=dataset.dataset,
+                availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                trust_level=DataTrustLevel.LOW,
+            )
+        )
+    return facts
+
+
+def normalize_current_status_snapshot(
+    dataset: RawDataset,
+    *,
+    status: SecurityStatus,
+    is_tradable: bool,
+    batch_id: str,
+) -> list[InstrumentStatus]:
+    statuses: list[InstrumentStatus] = []
+    raw_hash = dataset.content_hash()
+    effective_from = dataset.retrieved_at.astimezone(SHANGHAI).date()
+    for row in dataset.frame.to_dict(orient="records"):
+        symbol = _row_symbol(row)
+        if symbol is None:
+            continue
+        statuses.append(
+            InstrumentStatus(
+                instrument=Instrument(
+                    symbol=symbol,
+                    market=Market.CHINA_A,
+                    name=str(row.get("名称") or row.get("股票简称") or symbol),
+                    asset_type=AssetType.EQUITY,
+                    currency="CNY",
+                    lot_size=100,
+                    exchange=infer_exchange(symbol),
+                    available_at=dataset.retrieved_at,
+                    source=dataset.source,
+                ),
+                effective_from=effective_from,
+                status=status,
+                is_tradable=is_tradable,
+                available_at=dataset.retrieved_at,
+                source=dataset.source,
+                raw_data_hash=raw_hash,
+                batch_id=batch_id,
+                provider_dataset=dataset.dataset,
+                availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                trust_level=DataTrustLevel.LOW,
+            )
+        )
+    return statuses
+
+
+def normalize_delisted_statuses(
+    dataset: RawDataset,
+    *,
+    batch_id: str,
+) -> list[InstrumentStatus]:
+    statuses: list[InstrumentStatus] = []
+    raw_hash = dataset.content_hash()
+    for row in dataset.frame.to_dict(orient="records"):
+        symbol = _row_symbol(row)
+        if symbol is None:
+            continue
+        effective_from = _optional_date(
+            row.get("终止上市日期")
+            or row.get("退市日期")
+            or row.get("摘牌日期")
+            or row.get("delist_date")
+        )
+        if effective_from is None:
+            effective_from = dataset.retrieved_at.astimezone(SHANGHAI).date()
+        statuses.append(
+            InstrumentStatus(
+                instrument=Instrument(
+                    symbol=symbol,
+                    market=Market.CHINA_A,
+                    name=str(row.get("证券简称") or row.get("股票简称") or symbol),
+                    asset_type=AssetType.EQUITY,
+                    currency="CNY",
+                    lot_size=100,
+                    exchange=infer_exchange(symbol),
+                    delisting_date=effective_from,
+                    available_at=dataset.retrieved_at,
+                    source=dataset.source,
+                ),
+                effective_from=effective_from,
+                status=SecurityStatus.DELISTED,
+                is_tradable=False,
+                available_at=dataset.retrieved_at,
+                source=dataset.source,
+                raw_data_hash=raw_hash,
+                batch_id=batch_id,
+                provider_dataset=dataset.dataset,
+                availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                trust_level=DataTrustLevel.MEDIUM,
+            )
+        )
+    return statuses
+
+
+def normalize_index_membership(
+    dataset: RawDataset,
+    *,
+    universe: str,
+    batch_id: str,
+) -> list[UniverseMembership]:
+    memberships: list[UniverseMembership] = []
+    raw_hash = dataset.content_hash()
+    for row in dataset.frame.to_dict(orient="records"):
+        symbol = _row_symbol(row)
+        if symbol is None:
+            continue
+        effective_from = _optional_date(row.get("日期") or row.get("date"))
+        if effective_from is None:
+            effective_from = dataset.retrieved_at.astimezone(SHANGHAI).date()
+        instrument = Instrument(
+            symbol=symbol,
+            market=Market.CHINA_A,
+            name=str(row.get("成分券名称") or row.get("品种名称") or symbol),
+            asset_type=AssetType.EQUITY,
+            currency="CNY",
+            lot_size=100,
+            exchange=infer_exchange(symbol),
+            available_at=dataset.retrieved_at,
+            source=dataset.source,
+        )
+        memberships.append(
+            UniverseMembership(
+                universe=universe,
+                instrument=instrument,
+                effective_from=effective_from,
+                available_at=dataset.retrieved_at,
+                source=dataset.source,
+                raw_data_hash=raw_hash,
+                batch_id=batch_id,
+                provider_dataset=dataset.dataset,
+                availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                trust_level=DataTrustLevel.MEDIUM,
+            )
+        )
+    return memberships
+
+
+def normalize_corporate_actions(
+    dataset: RawDataset,
+    instrument: Instrument,
+    *,
+    batch_id: str,
+) -> list[CorporateAction]:
+    actions: list[CorporateAction] = []
+    raw_hash = dataset.content_hash()
+    for row in dataset.frame.to_dict(orient="records"):
+        effective_date = _optional_date(
+            row.get("除权除息日") or row.get("除息日") or row.get("股权登记日")
+        )
+        if effective_date is None:
+            continue
+        cash = _optional_decimal(row.get("现金分红") or row.get("派息"))
+        ratio = _optional_decimal(row.get("送转股份") or row.get("转增") or row.get("送股"))
+        if cash is not None:
+            actions.append(
+                CorporateAction(
+                    instrument=instrument,
+                    action_type=CorporateActionType.DIVIDEND,
+                    effective_date=effective_date,
+                    available_at=dataset.retrieved_at,
+                    cash_amount=cash,
+                    currency="CNY",
+                    source=dataset.source,
+                    raw_data_hash=raw_hash,
+                    batch_id=batch_id,
+                    provider_dataset=dataset.dataset,
+                    availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                    trust_level=DataTrustLevel.MEDIUM,
+                )
+            )
+        if ratio is not None:
+            actions.append(
+                CorporateAction(
+                    instrument=instrument,
+                    action_type=CorporateActionType.SPLIT,
+                    effective_date=effective_date,
+                    available_at=dataset.retrieved_at,
+                    ratio=ratio,
+                    source=dataset.source,
+                    raw_data_hash=raw_hash,
+                    batch_id=batch_id,
+                    provider_dataset=dataset.dataset,
+                    availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                    trust_level=DataTrustLevel.MEDIUM,
+                )
+            )
+    return actions
+
+
 def build_index_instrument(symbol: str, retrieved_at: datetime) -> Instrument:
     return Instrument(
         symbol=symbol,
@@ -180,6 +424,20 @@ def _optional_decimal(value: Any) -> Decimal | None:
     if value is None or pd.isna(value):
         return None
     return _decimal(value)
+
+
+def _row_symbol(row: Mapping[object, Any]) -> str | None:
+    value = (
+        row.get("代码")
+        or row.get("股票代码")
+        or row.get("证券代码")
+        or row.get("成分券代码")
+        or row.get("品种代码")
+        or row.get("symbol")
+    )
+    if value is None or pd.isna(value):
+        return None
+    return str(value).split(".")[0].zfill(6)
 
 
 def _optional_text(value: Any) -> str | None:

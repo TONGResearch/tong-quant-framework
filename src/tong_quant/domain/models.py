@@ -6,6 +6,11 @@ from typing import Any
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
+    AvailabilityPrecision,
+    CorporateActionType,
+    DataTrustLevel,
+    FundSubtype,
+    InstrumentCategory,
     Market,
     Regime,
     SecurityStatus,
@@ -53,6 +58,8 @@ class Instrument:
     market: Market
     name: str
     asset_type: AssetType = AssetType.EQUITY
+    category: InstrumentCategory = InstrumentCategory.EQUITY
+    fund_subtype: FundSubtype | None = None
     currency: str = "CNY"
     lot_size: int = 1
     exchange: str | None = None
@@ -65,6 +72,8 @@ class Instrument:
     def __post_init__(self) -> None:
         if self.lot_size <= 0:
             raise ValueError("lot_size must be positive")
+        if self.category is InstrumentCategory.EQUITY and self.fund_subtype is not None:
+            raise ValueError("equity instruments must not carry a fund subtype")
         if self.available_at is not None:
             require_timezone(self.available_at, "available_at")
 
@@ -126,6 +135,11 @@ class FundamentalFact:
     currency: str | None = None
     unit: str = "absolute"
     revision: int = 0
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
 
     def __post_init__(self) -> None:
         require_timezone(self.published_at, "published_at")
@@ -136,6 +150,8 @@ class FundamentalFact:
             raise ValueError("period_start cannot follow period_end")
         if self.revision < 0:
             raise ValueError("revision cannot be negative")
+        if self.raw_data_hash and len(self.raw_data_hash) < 16:
+            raise ValueError("raw_data_hash is too short")
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +164,11 @@ class InstrumentStatus:
     source: str
     effective_to: date | None = None
     industry: str | None = None
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
 
     def __post_init__(self) -> None:
         require_timezone(self.available_at, "available_at")
@@ -168,6 +189,11 @@ class UniverseMembership:
     available_at: datetime
     source: str
     effective_to: date | None = None
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
 
     def __post_init__(self) -> None:
         require_timezone(self.available_at, "available_at")
@@ -175,6 +201,36 @@ class UniverseMembership:
             raise ValueError("universe must not be empty")
         if self.effective_to is not None and self.effective_to < self.effective_from:
             raise ValueError("effective_to cannot precede effective_from")
+
+
+@dataclass(frozen=True, slots=True)
+class CorporateAction:
+    instrument: Instrument
+    action_type: CorporateActionType
+    effective_date: date
+    available_at: datetime
+    source: str
+    value: Decimal | None = None
+    cash_amount: Decimal | None = None
+    ratio: Decimal | None = None
+    currency: str | None = None
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
+
+    def __post_init__(self) -> None:
+        require_timezone(self.available_at, "available_at")
+        if self.value is None and self.cash_amount is None and self.ratio is None:
+            raise ValueError("corporate action requires value, cash amount, or ratio")
+        for name, value in (
+            ("value", self.value),
+            ("cash_amount", self.cash_amount),
+            ("ratio", self.ratio),
+        ):
+            if value is not None and value < 0:
+                raise ValueError(f"{name} cannot be negative")
 
 
 @dataclass(frozen=True, slots=True)

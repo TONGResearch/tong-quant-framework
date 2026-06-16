@@ -24,6 +24,13 @@ Exit: a reproducible daily dataset can be rebuilt for a fixed universe and date.
 Status: implemented in V0.2. Historical security-master reconstruction and
 corporate-action datasets remain future data milestones.
 
+V0.6.2 update: selected AKShare fundamentals, ST/suspended snapshots,
+delistings, index membership, and corporate-action rows now populate the
+existing PIT structures with ingestion batches, raw hashes, trust levels,
+availability precision, provider limitations, and readiness assessments.
+Provider-backed completeness remains partial and must be quantified before
+historical replay.
+
 ## Milestone 1.5: Market Regime Engine
 
 - China factors: CSI 300, CSI All Share, rising stocks, turnover, and breadth
@@ -112,5 +119,6 @@ Exit: stable paper operation with no live credentials.
 - Intraday K-line subsystem
 - AI news scoring
 - Global market providers
+- Funds, ETFs, REITs, bond funds, money-market funds, and asset allocation
 - Live QMT/PTrade/IBKR/Moomoo integration
 - Fully automatic execution

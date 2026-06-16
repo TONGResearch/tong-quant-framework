@@ -5,6 +5,11 @@
 China A, US, Hong Kong, and Malaysia share the same workflow and domain
 contracts. They do not share every market policy or trading rule.
 
+V1.0 remains focused on individual equities. The domain model reserves broader
+`Instrument` and `TradableInstrument` language so future versions can add
+funds, ETFs, REITs, bond funds, money-market funds, and allocation research
+without renaming the current equity workflow.
+
 ```text
 Provider adapters
       |
@@ -140,6 +145,43 @@ These records use separate effective and availability timestamps. Effective
 dates describe when a fact or status applies; availability timestamps describe
 when the system was allowed to know it. Screening must consume these canonical
 queries rather than current company snapshots or today's listed-stock universe.
+
+V0.6.2 adds conservative PIT population around these contracts:
+
+```text
+AKShare raw response
+        |
+Raw schema validation + payload fingerprint
+        |
+Availability warning + provider limitation audit
+        |
+Normalized PIT facts / statuses / memberships / corporate actions
+        |
+PITReadinessAssessment
+```
+
+`AvailabilityPrecision` and `DataTrustLevel` are separate. A record can be
+available only at retrieval time while still carrying useful medium-trust
+content, or it can have an exact date with low confidence in completeness.
+HistoricalReplaySource must not begin until readiness assessments show which
+datasets are replay-capable.
+
+## Future Asset Classes
+
+The market package reserves this future structure:
+
+```text
+markets/
+  china_a/
+  us/
+  hong_kong/
+  malaysia/
+  funds/
+```
+
+The reserved fund branch is documentation and import-safe package scaffolding
+only. It does not contain fund screening, fund research, allocation, orders, or
+broker integration.
 
 ## V0.4 Screening Engine
 

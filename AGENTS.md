@@ -34,6 +34,11 @@ validation, risk management, and controlled execution.
   provider or broker adapters.
 - Never embed A-share assumptions in shared strategy logic.
 - Use point-in-time timestamps and reject future data.
+- Treat availability precision and data trust as separate concepts.
+- Research, Validation, and future HistoricalReplay consumers must inspect
+  both `AvailabilityPrecision` and `DataTrustLevel`.
+- Do not treat PIT data as replay-ready until a `PITReadinessAssessment`
+  supports that conclusion.
 - Missing data must not silently become a favorable result.
 - Hard-screen failures cannot be offset by favorable scores.
 - Research Score prioritizes research only; it is not an investment decision.
@@ -69,6 +74,11 @@ validation, risk management, and controlled execution.
 - In strict point-in-time mode, do not ingest provider-adjusted historical bars
   until dated corporate-action factors can reconstruct the adjustment visible
   at each decision time.
+- Never overwrite point-in-time facts, security-status history, universe
+  membership, or corporate actions silently. Use revisions, raw hashes, and
+  ingestion batches to preserve auditability.
+- AKShare provider limitations and missing publication timestamps must be
+  persisted as warnings instead of hidden inside normalizers.
 - Persist normalized market data through `SQLiteStore`; do not write ad hoc
   strategy-specific data files.
 - Screening, research, and validation must read historical data through
@@ -100,6 +110,10 @@ validation, risk management, and controlled execution.
 - Validation outputs only `REVIEW` Signals and must never create trade actions.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
+- V1.0 remains equity-focused. Reserve naming and interfaces for future funds,
+  ETFs, REITs, money-market funds, bond funds, and allocation research, but do
+  not implement fund research, portfolio allocation, or execution before an
+  approved milestone.
 
 ## Verification
 

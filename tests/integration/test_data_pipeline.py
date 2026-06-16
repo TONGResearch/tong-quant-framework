@@ -48,6 +48,61 @@ class FakeAkShareClient:
             }
         )
 
+    def stock_financial_benefit_new_ths(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "report_date": ["2023-12-31", "2023-12-31"],
+                "metric_name": ["revenue", "profit"],
+                "value": [100, 20],
+            }
+        )
+
+    def stock_financial_debt_new_ths(self, **kwargs: object) -> pd.DataFrame:
+        return self.stock_financial_benefit_new_ths(**kwargs)
+
+    def stock_financial_cash_new_ths(self, **kwargs: object) -> pd.DataFrame:
+        return self.stock_financial_benefit_new_ths(**kwargs)
+
+    def stock_zh_a_st_em(self) -> pd.DataFrame:
+        return pd.DataFrame({"代码": ["600000"], "名称": ["*ST 测试"]})
+
+    def stock_zh_a_stop_em(self) -> pd.DataFrame:
+        return pd.DataFrame({"代码": ["000001"], "名称": ["停牌测试"]})
+
+    def stock_info_sh_delist(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "代码": ["600001"],
+                "证券简称": ["退市测试"],
+                "终止上市日期": ["2024-01-04"],
+            }
+        )
+
+    def stock_info_sz_delist(self, **kwargs: object) -> pd.DataFrame:
+        return self.stock_info_sh_delist(**kwargs)
+
+    def index_stock_cons_csindex(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "日期": ["2024-01-04", "2024-01-04"],
+                "成分券代码": ["600000", "000001"],
+                "成分券名称": ["浦发银行", "平安银行"],
+            }
+        )
+
+    def stock_fhps_detail_em(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "除权除息日": ["2024-01-04"],
+                "现金分红": [0.5],
+                "送转股份": [0.0],
+            }
+        )
+
 
 @pytest.fixture
 def data_foundation(tmp_path: Path) -> tuple[
@@ -189,6 +244,52 @@ def test_index_calendar_company_and_universe_ingestion(
         date(2024, 1, 4),
         as_of=as_of,
     ) == [date(2024, 1, 2), date(2024, 1, 3)]
+
+
+@pytest.mark.integration
+def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
+    data_foundation: tuple[
+        FakeAkShareClient,
+        DataIngestionPipeline,
+        MarketDataService,
+        SQLiteStore,
+    ],
+) -> None:
+    _, pipeline, service, store = data_foundation
+
+    financial = pipeline.ingest_financial_statement("600000", "income")
+    st_status = pipeline.ingest_special_treatment_status()
+    suspended = pipeline.ingest_suspended_status()
+    delisted = pipeline.ingest_delisted_statuses("sh")
+    membership = pipeline.ingest_index_membership("000300")
+    actions = pipeline.ingest_corporate_actions("600000")
+
+    assert financial.accepted == 2
+    assert financial.batch_id
+    assert "publication timestamps" in " ".join(financial.warnings)
+    assert st_status.accepted == 1
+    assert suspended.accepted == 1
+    assert delisted.accepted == 1
+    assert membership.accepted == 2
+    assert actions.accepted >= 1
+    assert store.table_count("fundamental_facts") == 2
+    assert store.table_count("instrument_status_history") == 3
+    assert store.table_count("universe_memberships") == 2
+    assert store.table_count("corporate_actions") >= 1
+    assert store.table_count("ingestion_batches") == 6
+    assert store.table_count("raw_dataset_fingerprints") == 6
+    assert store.table_count("data_availability_warnings") >= 6
+    assert store.table_count("provider_limitations") == 3
+
+    visible = service.fundamental_facts(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        "revenue",
+        as_of=datetime(2024, 1, 6, tzinfo=UTC),
+    )
+    assert visible
+    assert visible[0].raw_data_hash
 
 
 def _daily_frame(*, include_symbol: bool) -> pd.DataFrame:
