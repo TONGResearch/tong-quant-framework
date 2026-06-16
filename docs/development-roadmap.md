@@ -42,9 +42,8 @@ not implemented here.
 - Research Queue with separate priority, urgency, and confidence
 - Seven dimensions: News, Industry, Survival, Growth, Valuation, Positioning,
   and Macro
-- Separate Research Score and Investment Score
+- Research Score for research-queue prioritization
 - Four market policy boundaries: China A, US, Hong Kong, and Malaysia
-- Market Regime as a weighted variable, not a hard switch
 - SQLite persistence for queue entries and scorecards
 
 Status: implemented in V0.4 as an explainable, point-in-time-safe framework.
@@ -59,8 +58,12 @@ Concrete provider-backed dimension models remain future research work.
 - Financial restatement awareness
 - Atomic Research Queue claiming
 - Research run, evidence, assessment, report, and Signal persistence
+- Single official ResearchReport contract
+- Post-research InvestmentAssessment and InvestmentScore
+- Mandatory InvestmentAssessmentStatus for score interpretation
 
-Status: implemented in V0.5 as a research-only engine. Provider-backed policy,
+Status: implemented in V0.5 and unified in V0.6.1 as a research-only engine.
+Provider-backed policy,
 sentiment, industry heat, and intraday evidence remain future data work.
 Backtesting and trade approval remain outside this milestone.
 

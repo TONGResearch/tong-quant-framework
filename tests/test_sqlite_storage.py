@@ -5,6 +5,7 @@ from pathlib import Path
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
     AssetType,
+    InvestmentAssessmentStatus,
     Market,
     SecurityStatus,
     SignalAction,
@@ -37,8 +38,10 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("research_evidence") == 0
     assert store.table_count("research_assessments") == 0
     assert store.table_count("research_reports") == 0
+    assert store.table_count("investment_assessments") == 0
+    assert store.table_count("investment_scores") == 0
     assert store.table_count("schema_metadata") == 1
-    assert store.schema_version() == "0.6.0"
+    assert store.schema_version() == "0.6.1"
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0
@@ -52,6 +55,39 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("validation_accuracy_history") == 0
     assert store.table_count("validation_integrity_checks") == 0
     assert store.table_count("validation_portfolio_risk") == 0
+
+
+def test_investment_assessment_tables_store_status_and_score(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "test.sqlite3")
+    store.initialize()
+    now = datetime(2026, 1, 2, tzinfo=UTC)
+
+    assessment_id = store.save_investment_assessment(
+        report_id="report-1",
+        instrument_id_value="china_a:equity:600000",
+        status=InvestmentAssessmentStatus.LOW_CONFIDENCE,
+        assessed_at=now,
+        score=92,
+        confidence=42,
+        components=[
+            {
+                "name": "value",
+                "score": 95,
+                "confidence": 40,
+                "weight": 1,
+                "contribution": 95,
+                "reasons": ["high growth but weak evidence"],
+            }
+        ],
+        reasons=("High score but low confidence",),
+        limitations=("Investment Score confidence is below threshold",),
+        market_regime=None,
+        model_version="investment-score-v0.6.1",
+    )
+
+    assert assessment_id
+    assert store.table_count("investment_assessments") == 1
+    assert store.table_count("investment_scores") == 1
 
 
 def test_point_in_time_queries_require_aware_timestamp(tmp_path: Path) -> None:

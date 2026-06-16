@@ -5,6 +5,10 @@ from tong_quant.research.engine import ResearchEngine
 from tong_quant.research.financial import FinancialResearchModule
 from tong_quant.research.industry import IndustryResearchModule
 from tong_quant.research.interfaces import ResearchModule, ResearchRepository
+from tong_quant.research.investment import (
+    InvestmentAssessmentBuilder,
+    InvestmentScoreConfig,
+)
 from tong_quant.research.pattern import PatternResearchModule
 from tong_quant.research.policy import PolicyResearchModule
 from tong_quant.research.reporting import DefaultResearchReportBuilder
@@ -54,4 +58,18 @@ def research_engine_from_settings(
     )
 
 
-__all__ = ["research_engine_from_settings"]
+def investment_assessment_builder_from_settings(
+    settings: ResearchSettings,
+) -> InvestmentAssessmentBuilder:
+    investment_score = settings.investment_score
+    return InvestmentAssessmentBuilder(
+        InvestmentScoreConfig(
+            weights=investment_score.weights,
+            model_version=investment_score.model_version,
+            maximum_component_weight=investment_score.maximum_component_weight,
+            require_all_components=investment_score.require_all_components,
+        )
+    )
+
+
+__all__ = ["investment_assessment_builder_from_settings", "research_engine_from_settings"]

@@ -32,3 +32,15 @@ def test_validation_has_no_execution_or_order_dependency() -> None:
             offenders.append(str(path))
 
     assert offenders == []
+
+
+def test_screening_does_not_own_research_outcome_or_investment_models() -> None:
+    screening_root = Path("src/tong_quant/screening")
+    offenders = []
+    forbidden = ("class ResearchOutcome", "class InvestmentAssessment", "assess_investment")
+    for path in screening_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if any(item in text for item in forbidden):
+            offenders.append(str(path))
+
+    assert offenders == []

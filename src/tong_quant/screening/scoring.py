@@ -41,23 +41,6 @@ def default_research_score_config() -> ScoreConfig:
     )
 
 
-def default_investment_score_config() -> ScoreConfig:
-    return ScoreConfig(
-        score_type=ScoreType.INVESTMENT,
-        weights={
-            ScreeningDimensionName.NEWS.value: 0.08,
-            ScreeningDimensionName.INDUSTRY.value: 0.12,
-            ScreeningDimensionName.SURVIVAL.value: 0.15,
-            ScreeningDimensionName.GROWTH.value: 0.13,
-            ScreeningDimensionName.VALUATION.value: 0.12,
-            ScreeningDimensionName.POSITIONING.value: 0.08,
-            ScreeningDimensionName.MACRO.value: 0.07,
-            "market_regime": 0.25,
-        },
-        model_version="investment-score-v0.4",
-    )
-
-
 @dataclass(frozen=True, slots=True)
 class WeightedScoreAggregator:
     config: ScoreConfig

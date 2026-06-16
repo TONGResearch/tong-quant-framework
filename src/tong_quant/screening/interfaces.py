@@ -9,9 +9,7 @@ from tong_quant.screening.models import (
     DimensionAssessment,
     HardScreenObservation,
     HardScreenResult,
-    InvestmentAssessment,
     OpportunityCandidate,
-    ResearchOutcome,
     ResearchQueueEntry,
     ScreeningOutcome,
     ScreeningRequest,
@@ -77,10 +75,3 @@ class ScreeningRepository(Protocol):
 
 class ScreeningApplication(Protocol):
     def run(self, request: ScreeningRequest) -> ScreeningRun: ...
-
-    def assess_investment(
-        self,
-        research: ResearchOutcome,
-        *,
-        regime: MarketRegime | None,
-    ) -> InvestmentAssessment: ...

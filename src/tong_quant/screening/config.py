@@ -18,15 +18,6 @@ def screening_engine_from_settings(settings: ScreeningSettings) -> ScreeningEngi
                 require_all_components=settings.research_score.require_all_components,
             )
         ),
-        investment_scorer=WeightedScoreAggregator(
-            ScoreConfig(
-                score_type=ScoreType.INVESTMENT,
-                weights=settings.investment_score.weights,
-                model_version=settings.investment_score.model_version,
-                maximum_component_weight=settings.investment_score.maximum_component_weight,
-                require_all_components=settings.investment_score.require_all_components,
-            )
-        ),
         prioritizer=WeightedQueuePrioritizer(
             research_weight=settings.research_queue.research_weight,
             urgency_weight=settings.research_queue.urgency_weight,

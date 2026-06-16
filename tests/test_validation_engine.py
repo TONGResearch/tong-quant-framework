@@ -59,8 +59,8 @@ def test_snapshot_hash_is_stable_and_records_required_versions() -> None:
 
     assert first == second
     assert snapshot.git_commit == "f7e9f903019688bcc874e7c913dcd99fb852365a"
-    assert snapshot.framework_version == "0.6.0"
-    assert snapshot.database_schema_version == "0.6.0"
+    assert snapshot.framework_version == "0.6.1"
+    assert snapshot.database_schema_version == "0.6.1"
 
 
 def test_outcome_registry_requires_pre_registered_definition() -> None:
@@ -444,11 +444,11 @@ def _definition() -> OutcomeDefinition:
 def _snapshot(configuration_hash: str) -> FrameworkSnapshot:
     return FrameworkSnapshot(
         git_commit="f7e9f903019688bcc874e7c913dcd99fb852365a",
-        framework_version="0.6.0",
+        framework_version="0.6.1",
         configuration_hash=configuration_hash,
         research_version="research-engine-v0.5",
         validation_version="validation-engine-v0.6",
-        database_schema_version="0.6.0",
+        database_schema_version="0.6.1",
         captured_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 

@@ -4,9 +4,11 @@ from decimal import Decimal
 
 from tong_quant.domain.enums import (
     EvidenceQuality,
+    InvestmentAssessmentStatus,
     ResearchConclusion,
     ResearchModuleName,
     ResearchRunStatus,
+    ScoreType,
 )
 from tong_quant.domain.models import Bar, FundamentalFact, Signal, require_timezone
 from tong_quant.market_regime.models import MarketRegime
@@ -257,3 +259,77 @@ class ResearchRun:
         require_timezone(self.completed_at, "completed_at")
         if self.completed_at < self.started_at:
             raise ValueError("research completion cannot precede start")
+
+
+@dataclass(frozen=True, slots=True)
+class InvestmentScoreComponent:
+    name: str
+    score: float
+    confidence: float
+    weight: float
+    contribution: float
+    reasons: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.name.strip():
+            raise ValueError("investment score component requires a name")
+        _require_percentage("investment component score", self.score)
+        _require_percentage("investment component confidence", self.confidence)
+        if not 0 < self.weight <= 1:
+            raise ValueError("investment component weight must be between 0 and 1")
+        if not self.reasons:
+            raise ValueError("investment score component must be explainable")
+
+
+@dataclass(frozen=True, slots=True)
+class InvestmentScore:
+    score: float
+    confidence: float
+    calculated_at: datetime
+    components: tuple[InvestmentScoreComponent, ...]
+    reasons: tuple[str, ...]
+    model_version: str
+    score_type: ScoreType = ScoreType.INVESTMENT
+
+    def __post_init__(self) -> None:
+        _require_percentage("investment score", self.score)
+        _require_percentage("investment score confidence", self.confidence)
+        require_timezone(self.calculated_at, "calculated_at")
+        if self.score_type is not ScoreType.INVESTMENT:
+            raise ValueError("InvestmentScore must use investment score type")
+        if not self.components:
+            raise ValueError("InvestmentScore requires components")
+        if not self.reasons:
+            raise ValueError("InvestmentScore must be explainable")
+
+
+@dataclass(frozen=True, slots=True)
+class InvestmentAssessment:
+    report: ResearchReport
+    status: InvestmentAssessmentStatus
+    assessed_at: datetime
+    investment_score: InvestmentScore | None
+    market_regime: MarketRegime | None
+    reasons: tuple[str, ...]
+    limitations: tuple[str, ...]
+    model_version: str
+
+    def __post_init__(self) -> None:
+        require_timezone(self.assessed_at, "assessed_at")
+        if self.assessed_at < self.report.available_at:
+            raise ValueError("investment assessment cannot precede report availability")
+        if self.report.status is not ResearchRunStatus.COMPLETED:
+            if self.status is not InvestmentAssessmentStatus.INCOMPLETE:
+                raise ValueError("non-completed reports can only produce incomplete assessments")
+            if self.investment_score is not None:
+                raise ValueError("incomplete investment assessments must not carry a score")
+        elif self.status in {
+            InvestmentAssessmentStatus.COMPLETED,
+            InvestmentAssessmentStatus.LOW_CONFIDENCE,
+        }:
+            if self.investment_score is None:
+                raise ValueError("scored investment assessments require InvestmentScore")
+        elif self.investment_score is not None:
+            raise ValueError("unscored investment assessments must not carry InvestmentScore")
+        if not self.reasons:
+            raise ValueError("investment assessment must be explainable")

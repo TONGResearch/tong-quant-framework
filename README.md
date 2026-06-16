@@ -11,7 +11,7 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.6 Scope
+## V0.6.1 Scope
 
 V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 
@@ -39,7 +39,9 @@ V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 - Research Queue persistence
 - Separate priority, urgency, and confidence scores
 - Research Score for queue prioritization
-- Investment Score for researched opportunities
+- `ResearchReport` as the single official research report contract
+- Post-research Investment Assessment and Investment Score
+- Mandatory `InvestmentAssessmentStatus` for score interpretation
 - Market Regime as a high-weight Investment Score variable, never a hard switch
 - Research Queue consumption with atomic claim protection
 - Policy, Financial, Industry, Value, Technical, Trend, and A-share Pattern research
@@ -47,6 +49,7 @@ V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 - Confidence based on evidence quality, completeness, agreement, and PIT integrity
 - Financial restatement awareness and revision-history access
 - Research run, evidence, assessment, report, and Signal persistence
+- Investment assessment and score persistence
 - Pre-registered historical outcome definitions
 - Historical, walk-forward, and final out-of-sample validation
 - Market Regime, thesis, factor contribution, and research-accuracy validation

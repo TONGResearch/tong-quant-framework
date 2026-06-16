@@ -17,6 +17,22 @@ can only emit `REVIEW`; Research cannot emit strategy entry or exit actions.
 
 GitHub Actions now runs Pytest, Ruff, and mypy on pushes and pull requests.
 
+## Resolved During V0.6.1
+
+### Research model unification
+
+`research.models.ResearchReport` is now the single official research report
+contract. Screening owns Discovery, Hard Screening, Watchlist, and Research
+Queue only.
+
+Investment assessment moved behind the Research boundary and consumes completed
+`ResearchReport` objects. The old Screening-owned `ResearchOutcome` and
+`InvestmentAssessment` path was removed.
+
+`InvestmentAssessmentStatus` is mandatory. A high score with weak evidence is
+stored as `LOW_CONFIDENCE`, and incomplete or insufficient-data reports cannot
+carry an interpretable Investment Score.
+
 ## Priority 1
 
 ### Historical data contracts exist, but ingestion is incomplete
@@ -31,18 +47,6 @@ constructed automatically.
 Recommended next step: add versioned ingestion adapters for fundamentals,
 security lifecycle, and historical universe membership before trusting broad
 historical results.
-
-### V0.4 and V0.5 research models overlap
-
-Screening still owns the older `ResearchOutcome` and `InvestmentAssessment`,
-while V0.5 introduced `ResearchReport` and `ResearchAssessment`.
-
-Impact: the path from the V0.5 Research Engine into Investment Score is not a
-single canonical contract.
-
-Recommended next step: move post-research investment assessment into a shared
-application service that consumes `ResearchReport`, then deprecate the V0.4
-compatibility models.
 
 ### Historical replay is an interface, not an implemented pipeline
 
@@ -72,7 +76,7 @@ persistence while retaining explicit failed-run diagnostics.
 
 ### Schema versioning is not a migration system
 
-`schema_metadata` records V0.6, but `initialize()` uses `CREATE TABLE IF NOT
+`schema_metadata` records V0.6.1, but `initialize()` uses `CREATE TABLE IF NOT
 EXISTS` and updates the version directly.
 
 Impact: future column or constraint changes could label a partially migrated
@@ -124,7 +128,8 @@ approval and strategy-action compatibility mandatory construction inputs.
 
 - Split the growing SQLite storage module into market-data, research, and
   validation repositories behind one transaction manager.
-- Add read APIs for stored ResearchReport and ValidationReport reconstruction.
+- Add read APIs for stored ResearchReport, InvestmentAssessment, and
+  ValidationReport reconstruction.
 - Add test coverage thresholds and property-based tests for time ordering,
   split isolation, and concentration arithmetic.
 - Add provider-backed policy, sentiment, industry heat, and intraday evidence.
@@ -132,8 +137,8 @@ approval and strategy-action compatibility mandatory construction inputs.
 
 ## Recommended Sequence
 
-1. Historical replay and missing point-in-time ingestion
-2. Canonical ResearchReport-to-Investment-Score contract
+1. Missing point-in-time ingestion
+2. Historical replay builder
 3. SQLite migrations, foreign keys, and unit-of-work persistence
 4. Runtime-verified framework snapshots
 5. Provider availability calibration and corporate-action factors

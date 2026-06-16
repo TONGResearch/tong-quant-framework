@@ -11,6 +11,7 @@ from uuid import uuid4
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
+    InvestmentAssessmentStatus,
     Market,
     ResearchQueueStatus,
     ResearchRunStatus,
@@ -28,7 +29,7 @@ from tong_quant.domain.models import (
     UniverseMembership,
 )
 
-SCHEMA_VERSION = "0.6.0"
+SCHEMA_VERSION = "0.6.1"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_metadata (
@@ -303,6 +304,41 @@ CREATE TABLE IF NOT EXISTS research_reports (
 
 CREATE INDEX IF NOT EXISTS idx_research_reports_pit
 ON research_reports (instrument_id, available_at);
+
+CREATE TABLE IF NOT EXISTS investment_assessments (
+    assessment_id TEXT PRIMARY KEY,
+    report_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    assessed_at TEXT NOT NULL,
+    score REAL,
+    confidence REAL,
+    reasons_json TEXT NOT NULL,
+    limitations_json TEXT NOT NULL,
+    market_regime_json TEXT,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_investment_assessments_pit
+ON investment_assessments (instrument_id, assessed_at);
+
+CREATE TABLE IF NOT EXISTS investment_scores (
+    score_id TEXT PRIMARY KEY,
+    assessment_id TEXT NOT NULL,
+    report_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    calculated_at TEXT NOT NULL,
+    score REAL NOT NULL,
+    confidence REAL NOT NULL,
+    components_json TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_investment_scores_pit
+ON investment_scores (instrument_id, calculated_at);
 
 CREATE TABLE IF NOT EXISTS validation_runs (
     run_id TEXT PRIMARY KEY,
@@ -1411,6 +1447,83 @@ class SQLiteStore:
                 ),
             )
 
+    def save_investment_assessment(
+        self,
+        *,
+        report_id: str,
+        instrument_id_value: str,
+        status: InvestmentAssessmentStatus,
+        assessed_at: datetime,
+        score: float | None,
+        confidence: float | None,
+        components: list[dict[str, object]],
+        reasons: tuple[str, ...],
+        limitations: tuple[str, ...],
+        market_regime: dict[str, object] | None,
+        model_version: str,
+    ) -> str:
+        self._require_aware(assessed_at)
+        if status in {
+            InvestmentAssessmentStatus.COMPLETED,
+            InvestmentAssessmentStatus.LOW_CONFIDENCE,
+        } and (score is None or confidence is None or not components):
+            raise ValueError("scored investment assessments require a score record")
+        if status in {
+            InvestmentAssessmentStatus.INCOMPLETE,
+            InvestmentAssessmentStatus.INSUFFICIENT_DATA,
+        } and (score is not None or confidence is not None or components):
+            raise ValueError("unscored investment assessments must not carry scores")
+        assessment_id = str(uuid4())
+        ingested_at = _datetime_text(datetime.now(UTC))
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO investment_assessments (
+                    assessment_id, report_id, instrument_id, status, assessed_at,
+                    score, confidence, reasons_json, limitations_json,
+                    market_regime_json, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    report_id,
+                    instrument_id_value,
+                    status.value,
+                    _datetime_text(assessed_at),
+                    score,
+                    confidence,
+                    json.dumps(reasons),
+                    json.dumps(limitations),
+                    None if market_regime is None else _json_dumps(market_regime),
+                    model_version,
+                    ingested_at,
+                ),
+            )
+            if score is not None and confidence is not None:
+                connection.execute(
+                    """
+                    INSERT INTO investment_scores (
+                        score_id, assessment_id, report_id, instrument_id,
+                        calculated_at, score, confidence, components_json,
+                        reasons_json, model_version, ingested_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        str(uuid4()),
+                        assessment_id,
+                        report_id,
+                        instrument_id_value,
+                        _datetime_text(assessed_at),
+                        score,
+                        confidence,
+                        _json_dumps(components),
+                        json.dumps(reasons),
+                        model_version,
+                        ingested_at,
+                    ),
+                )
+        return assessment_id
+
     def complete_research_run(
         self,
         *,
@@ -2083,6 +2196,8 @@ class SQLiteStore:
             "research_evidence",
             "research_assessments",
             "research_reports",
+            "investment_assessments",
+            "investment_scores",
             "schema_metadata",
             "validation_runs",
             "validation_oos_usage",

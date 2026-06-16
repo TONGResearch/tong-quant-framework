@@ -72,6 +72,13 @@ class ResearchRunStatus(StrEnum):
     FAILED_POINT_IN_TIME_CHECK = "failed_point_in_time_check"
 
 
+class InvestmentAssessmentStatus(StrEnum):
+    COMPLETED = "completed"
+    INCOMPLETE = "incomplete"
+    LOW_CONFIDENCE = "low_confidence"
+    INSUFFICIENT_DATA = "insufficient_data"
+
+
 class ValidationModuleName(StrEnum):
     HISTORICAL = "historical"
     WALK_FORWARD = "walk_forward"

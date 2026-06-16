@@ -9,7 +9,6 @@ from tong_quant.domain.enums import (
     ScreeningDimensionName,
 )
 from tong_quant.domain.models import Instrument, InstrumentStatus, Signal, require_timezone
-from tong_quant.market_regime.models import MarketRegime
 
 
 def screening_instrument_id(instrument: Instrument) -> str:
@@ -176,26 +175,6 @@ class ResearchQueueEntry:
 
 
 @dataclass(frozen=True, slots=True)
-class ResearchOutcome:
-    queue_entry: ResearchQueueEntry
-    completed_at: datetime
-    available_at: datetime
-    thesis: str
-    risks: tuple[str, ...]
-    assessments: tuple[DimensionAssessment, ...]
-    confidence_score: float
-
-    def __post_init__(self) -> None:
-        require_timezone(self.completed_at, "completed_at")
-        require_timezone(self.available_at, "available_at")
-        if self.available_at < self.completed_at:
-            raise ValueError("research available_at cannot precede completed_at")
-        if not self.thesis.strip():
-            raise ValueError("research thesis must not be empty")
-        _require_score("research confidence_score", self.confidence_score)
-
-
-@dataclass(frozen=True, slots=True)
 class ScreeningRequest:
     market: Market
     as_of: datetime
@@ -245,14 +224,3 @@ class ScreeningRun:
         require_timezone(self.as_of, "as_of")
         if self.watchlist.market is not self.market or self.watchlist.as_of != self.as_of:
             raise ValueError("watchlist does not match screening run")
-
-
-@dataclass(frozen=True, slots=True)
-class InvestmentAssessment:
-    research: ResearchOutcome
-    investment_score: CompositeScore
-    market_regime: MarketRegime | None
-
-    def __post_init__(self) -> None:
-        if self.investment_score.score_type is not ScoreType.INVESTMENT:
-            raise ValueError("investment assessment requires an Investment Score")

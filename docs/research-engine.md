@@ -13,11 +13,47 @@ Policy + Financial + Industry + Value + Technical + Trend + Pattern
       |
 ResearchReport + ResearchAssessment + RESEARCH Signal
       |
+InvestmentAssessment + InvestmentAssessmentStatus
+      |
 Future Validation
 ```
 
 The engine evaluates and documents opportunities. It does not backtest, approve
 trades, create orders, or connect to brokers.
+
+## V0.6.1 Investment Assessment
+
+`ResearchReport` is the single official research output contract. Screening no
+longer owns research outcome or investment assessment models.
+
+Investment assessment is a research-side, post-report decision-support layer:
+
+```text
+ResearchQueueEntry
+      |
+ResearchReport
+      |
+InvestmentAssessment
+      |
+InvestmentScore
+      |
+Validation
+```
+
+Investment Score can only be derived from a completed `ResearchReport`. It
+uses research module assessments and Market Regime as weighted variables.
+Market Regime is never a hard switch.
+
+Every `InvestmentAssessment` has a required status:
+
+- `COMPLETED`
+- `INCOMPLETE`
+- `LOW_CONFIDENCE`
+- `INSUFFICIENT_DATA`
+
+The status is part of the meaning of the score. A high score with low
+confidence remains a low-confidence opportunity. Incomplete or
+insufficient-data assessments do not carry an interpretable Investment Score.
 
 ## Required Report Contract
 
@@ -122,6 +158,11 @@ V0.5 adds:
 - `research_evidence`
 - `research_assessments`
 - `research_reports`
+
+V0.6.1 adds:
+
+- `investment_assessments`
+- `investment_scores`
 
 Queue claiming is atomic: only a `pending` entry can transition to
 `in_research`. A completed or incomplete research run transitions the queue

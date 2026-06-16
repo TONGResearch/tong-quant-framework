@@ -65,21 +65,6 @@ valuation = 0.10
 positioning = 0.10
 macro = 0.15
 
-[screening.investment_score]
-model_version = "investment-score-v0.4"
-maximum_component_weight = 0.35
-require_all_components = true
-
-[screening.investment_score.weights]
-news = 0.08
-industry = 0.12
-survival = 0.15
-growth = 0.13
-valuation = 0.12
-positioning = 0.08
-macro = 0.07
-market_regime = 0.25
-
 [screening.research_queue]
 research_weight = 0.65
 urgency_weight = 0.25
@@ -88,6 +73,21 @@ confidence_weight = 0.10
 [research]
 enabled = true
 model_version = "research-engine-v0.5"
+
+[research.investment_score]
+model_version = "investment-score-v0.6.1"
+maximum_component_weight = 0.35
+require_all_components = false
+
+[research.investment_score.weights]
+policy = 0.08
+financial = 0.12
+industry = 0.12
+value = 0.15
+technical = 0.10
+trend = 0.10
+pattern = 0.08
+market_regime = 0.25
 
 [research.technical]
 short_ma_period = 50

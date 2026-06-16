@@ -2,10 +2,7 @@ from dataclasses import dataclass
 
 from tong_quant.domain.enums import Market, SignalAction, SignalStage
 from tong_quant.domain.models import Signal
-from tong_quant.market_regime.models import MarketRegime
 from tong_quant.screening.models import (
-    InvestmentAssessment,
-    ResearchOutcome,
     ResearchQueueEntry,
     ScreeningOutcome,
     ScreeningRequest,
@@ -22,7 +19,6 @@ from tong_quant.screening.scoring import WeightedScoreAggregator
 class ScreeningEngine:
     policies: dict[Market, ScreeningPolicy]
     research_scorer: WeightedScoreAggregator
-    investment_scorer: WeightedScoreAggregator
     prioritizer: WeightedQueuePrioritizer
     source_id: str = "screening.engine"
     model_version: str = "v0.4"
@@ -128,21 +124,4 @@ class ScreeningEngine:
                 candidates=accepted,
             ),
             research_queue=queue,
-        )
-
-    def assess_investment(
-        self,
-        research: ResearchOutcome,
-        *,
-        regime: MarketRegime | None,
-    ) -> InvestmentAssessment:
-        score = self.investment_scorer.aggregate(
-            research.assessments,
-            calculated_at=research.available_at,
-            regime=regime,
-        )
-        return InvestmentAssessment(
-            research=research,
-            investment_score=score,
-            market_regime=regime,
         )

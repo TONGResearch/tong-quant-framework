@@ -14,8 +14,8 @@
 
 The required workflow is:
 
-> Discovery -> Hard Screening -> Research Queue -> Scoring -> Research ->
-> Validation -> Execution
+> Discovery -> Hard Screening -> Research Queue -> Research ->
+> Investment Scoring -> Validation -> Execution
 
 Tong Quant is not a pure quantitative, technical-analysis, or AI system. It
 combines opportunity discovery, traditional investment research, quantitative
@@ -37,8 +37,13 @@ validation, risk management, and controlled execution.
 - Missing data must not silently become a favorable result.
 - Hard-screen failures cannot be offset by favorable scores.
 - Research Score prioritizes research only; it is not an investment decision.
-- Investment Score supports researched opportunities before validation; it is
-  not an order or automatic approval.
+- Screening owns Discovery, Hard Screening, Watchlist, and Research Queue only.
+- `research.models.ResearchReport` is the single official research report
+  contract.
+- Investment Score must consume a completed ResearchReport and must be read
+  together with `InvestmentAssessmentStatus`.
+- A high Investment Score with low confidence remains a low-confidence
+  opportunity; it is not an order or automatic approval.
 - Priority, urgency, and confidence are separate Research Queue concepts.
 - Every Research Report requires a thesis, counter thesis, and explicit
   falsifiable invalidation conditions.

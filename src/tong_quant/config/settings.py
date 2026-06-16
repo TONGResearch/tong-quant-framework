@@ -66,7 +66,6 @@ class ResearchQueueSettings:
 class ScreeningSettings:
     enabled: bool
     research_score: ScoreModelSettings
-    investment_score: ScoreModelSettings
     research_queue: ResearchQueueSettings
 
 
@@ -95,6 +94,7 @@ class PatternResearchSettings:
 class ResearchSettings:
     enabled: bool
     model_version: str
+    investment_score: ScoreModelSettings
     technical: TechnicalResearchSettings
     trend: TrendResearchSettings
     pattern: PatternResearchSettings
@@ -192,6 +192,12 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
     if environment:
         raw = _merge(raw, {"project": {"environment": environment}})
 
+    investment_score_raw = raw["research"].get("investment_score")
+    if investment_score_raw is None:
+        investment_score_raw = raw["screening"].get("investment_score")
+    if investment_score_raw is None:
+        raise ValueError("research investment_score configuration is required")
+
     settings = Settings(
         project=ProjectSettings(**raw["project"]),
         data=DataSettings(
@@ -215,12 +221,12 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         screening=ScreeningSettings(
             enabled=raw["screening"]["enabled"],
             research_score=ScoreModelSettings(**raw["screening"]["research_score"]),
-            investment_score=ScoreModelSettings(**raw["screening"]["investment_score"]),
             research_queue=ResearchQueueSettings(**raw["screening"]["research_queue"]),
         ),
         research=ResearchSettings(
             enabled=raw["research"]["enabled"],
             model_version=raw["research"]["model_version"],
+            investment_score=ScoreModelSettings(**investment_score_raw),
             technical=TechnicalResearchSettings(**raw["research"]["technical"]),
             trend=TrendResearchSettings(**raw["research"]["trend"]),
             pattern=PatternResearchSettings(**raw["research"]["pattern"]),
@@ -260,10 +266,7 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
     ):
         if not regime_model.weights:
             raise ValueError("market regime weights cannot be empty")
-    for score_model in (
-        settings.screening.research_score,
-        settings.screening.investment_score,
-    ):
+    for score_model in (settings.screening.research_score,):
         if not score_model.weights:
             raise ValueError("screening score weights cannot be empty")
         if not 0 < score_model.maximum_component_weight < 1:
@@ -275,6 +278,18 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             score_model.maximum_component_weight
         ):
             raise ValueError("a screening score component exceeds the maximum weight")
+    score_model = settings.research.investment_score
+    if not score_model.weights:
+        raise ValueError("investment score weights cannot be empty")
+    if not 0 < score_model.maximum_component_weight < 1:
+        raise ValueError("maximum_component_weight must be between zero and one")
+    total = sum(score_model.weights.values())
+    if total <= 0 or any(weight <= 0 for weight in score_model.weights.values()):
+        raise ValueError("investment score weights must be positive")
+    if max(weight / total for weight in score_model.weights.values()) > (
+        score_model.maximum_component_weight
+    ):
+        raise ValueError("an investment score component exceeds the maximum weight")
     queue_weights = (
         settings.screening.research_queue.research_weight,
         settings.screening.research_queue.urgency_weight,

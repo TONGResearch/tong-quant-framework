@@ -3,6 +3,7 @@ from typing import Protocol
 
 from tong_quant.domain.enums import ResearchModuleName
 from tong_quant.research.models import (
+    InvestmentAssessment,
     PolicyAssessment,
     ResearchAssessment,
     ResearchContext,
@@ -46,6 +47,10 @@ class ResearchRepository(Protocol):
         *,
         reason: str,
     ) -> None: ...
+
+
+class InvestmentAssessmentRepository(Protocol):
+    def save_assessment(self, assessment: InvestmentAssessment) -> str: ...
 
 
 class ResearchApplication(Protocol):

@@ -156,17 +156,13 @@ Research Score
         |
 Research Queue Entry + RESEARCH Signal
         |
-Completed Research
-        |
-Investment Score + Market Regime contribution
-        |
 Future Validation
 ```
 
 Research Queue `priority_score`, `urgency_score`, and `confidence_score` remain
-separate values. Research Score helps allocate research attention. Investment
-Score is calculated only after research and includes Market Regime as a
-high-weight component. Neither score creates orders or bypasses validation.
+separate values. Research Score helps allocate research attention and remains a
+Screening concern. Screening does not own research outcomes or investment
+assessment models.
 
 Shared screening orchestration lives in `screening/`. China A, US, Hong Kong,
 and Malaysia inject separate market policies for status eligibility, risk
@@ -187,6 +183,8 @@ Research Queue -> ResearchContext -> Module dependency graph
                                     |
                       universal RESEARCH Signal
                                     |
+                 InvestmentAssessment + status
+                                    |
                        Future Validation
 ```
 
@@ -195,6 +193,11 @@ conditions. Confidence combines evidence quality, completeness, module
 agreement, and point-in-time integrity with a weakest-link cap. Market Regime
 is retained as a research variable rather than a gate. See
 `docs/research-engine.md`.
+
+Investment Score is calculated only after a completed `ResearchReport` and
+must be interpreted together with `InvestmentAssessmentStatus`. A high score
+with low confidence remains a low-confidence opportunity. Incomplete or
+insufficient-data assessments do not carry an interpretable score.
 
 ## V0.6 Validation Engine
 

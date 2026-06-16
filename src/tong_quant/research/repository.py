@@ -2,11 +2,12 @@ from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from tong_quant.data.storage.sqlite import SQLiteStore
-from tong_quant.research.models import ResearchRequest, ResearchRun
+from tong_quant.research.investment import investment_assessment_to_record
+from tong_quant.research.models import InvestmentAssessment, ResearchRequest, ResearchRun
 
 
 @dataclass(slots=True)
@@ -126,6 +127,27 @@ class SQLiteResearchRepository:
         )
 
 
+@dataclass(slots=True)
+class SQLiteInvestmentAssessmentRepository:
+    store: SQLiteStore
+
+    def save_assessment(self, assessment: InvestmentAssessment) -> str:
+        record = investment_assessment_to_record(assessment)
+        return self.store.save_investment_assessment(
+            report_id=str(record["report_id"]),
+            instrument_id_value=str(record["instrument_id"]),
+            status=assessment.status,
+            assessed_at=assessment.assessed_at,
+            score=cast(float | None, record["score"]),
+            confidence=cast(float | None, record["confidence"]),
+            components=cast(list[dict[str, object]], record["components"]),
+            reasons=assessment.reasons,
+            limitations=assessment.limitations,
+            market_regime=cast(dict[str, object] | None, record["market_regime"]),
+            model_version=assessment.model_version,
+        )
+
+
 def _jsonable(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
@@ -140,4 +162,4 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
-__all__ = ["SQLiteResearchRepository"]
+__all__ = ["SQLiteInvestmentAssessmentRepository", "SQLiteResearchRepository"]
