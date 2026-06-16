@@ -71,7 +71,7 @@ def test_replay_builds_deterministic_hash_and_request(tmp_path: Path) -> None:
     )
 
     assert request.samples[0].sample_id == first.samples[0].sample_id
-    assert request.framework_snapshot.database_schema_version == "0.6.3"
+    assert request.framework_snapshot.database_schema_version == "0.7.0"
 
 
 def test_replay_rejects_future_research_and_keeps_incomplete_visible(

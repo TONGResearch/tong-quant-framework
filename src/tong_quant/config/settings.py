@@ -101,11 +101,30 @@ class ResearchSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class PortfolioSettings:
+    enabled: bool
+    model_version: str
+    base_currency: str
+    minimum_cash_weight: float
+    maximum_single_position_weight: float
+    target_volatility: float
+
+
+@dataclass(frozen=True, slots=True)
 class RiskSettings:
     max_position_weight: float
     max_sector_weight: float
     max_portfolio_drawdown: float
     risk_per_trade: float
+    total_risk_budget: float
+    per_position_risk_budget: float
+    per_sector_risk_budget: float
+    per_theme_risk_budget: float
+    maximum_country_weight: float
+    maximum_theme_weight: float
+    minimum_liquidity_score: float
+    maximum_average_correlation: float
+    stress_loss_limit: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +176,7 @@ class Settings:
     market_regime: MarketRegimeSettings
     screening: ScreeningSettings
     research: ResearchSettings
+    portfolio: PortfolioSettings
     risk: RiskSettings
     execution: ExecutionSettings
     validation: ValidationSettings
@@ -231,6 +251,7 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             trend=TrendResearchSettings(**raw["research"]["trend"]),
             pattern=PatternResearchSettings(**raw["research"]["pattern"]),
         ),
+        portfolio=PortfolioSettings(**raw["portfolio"]),
         risk=RiskSettings(**raw["risk"]),
         execution=ExecutionSettings(**raw["execution"]),
         validation=ValidationSettings(
@@ -254,6 +275,22 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
     _validate_fraction("max_sector_weight", settings.risk.max_sector_weight)
     _validate_fraction("max_portfolio_drawdown", settings.risk.max_portfolio_drawdown)
     _validate_fraction("risk_per_trade", settings.risk.risk_per_trade)
+    _validate_fraction("minimum_cash_weight", settings.portfolio.minimum_cash_weight)
+    _validate_fraction(
+        "portfolio maximum_single_position_weight",
+        settings.portfolio.maximum_single_position_weight,
+    )
+    _validate_fraction("portfolio target_volatility", settings.portfolio.target_volatility)
+    _validate_fraction("total_risk_budget", settings.risk.total_risk_budget)
+    _validate_fraction("per_position_risk_budget", settings.risk.per_position_risk_budget)
+    _validate_fraction("per_sector_risk_budget", settings.risk.per_sector_risk_budget)
+    _validate_fraction("per_theme_risk_budget", settings.risk.per_theme_risk_budget)
+    _validate_fraction("maximum_country_weight", settings.risk.maximum_country_weight)
+    _validate_fraction("maximum_theme_weight", settings.risk.maximum_theme_weight)
+    _validate_fraction("maximum_average_correlation", settings.risk.maximum_average_correlation)
+    _validate_fraction("stress_loss_limit", settings.risk.stress_loss_limit)
+    if not 0 <= settings.risk.minimum_liquidity_score <= 100:
+        raise ValueError("minimum_liquidity_score must be between 0 and 100")
     if settings.market.default not in settings.market.enabled:
         raise ValueError("default market must be enabled")
     if settings.execution.allow_live_orders and settings.execution.mode in {"research", "paper"}:

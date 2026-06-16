@@ -104,11 +104,28 @@ confirmation_threshold = 60.0
 rising_stocks_threshold = 3000
 volume_period = 20
 
+[portfolio]
+enabled = true
+model_version = "portfolio-proposal-v0.7"
+base_currency = "CNY"
+minimum_cash_weight = 0.05
+maximum_single_position_weight = 0.10
+target_volatility = 0.15
+
 [risk]
 max_position_weight = 0.10
 max_sector_weight = 0.30
 max_portfolio_drawdown = 0.15
 risk_per_trade = 0.01
+total_risk_budget = 0.12
+per_position_risk_budget = 0.03
+per_sector_risk_budget = 0.06
+per_theme_risk_budget = 0.05
+maximum_country_weight = 0.60
+maximum_theme_weight = 0.35
+minimum_liquidity_score = 60.0
+maximum_average_correlation = 0.70
+stress_loss_limit = 0.12
 
 [execution]
 mode = "paper"

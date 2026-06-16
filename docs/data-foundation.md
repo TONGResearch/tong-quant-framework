@@ -127,11 +127,16 @@ This is a readiness gate only. It does not implement HistoricalReplaySource.
 - `pit_readiness_assessments`
 - `historical_replay_manifests`
 - `historical_replay_samples`
+- `portfolio_proposals`
+- `position_proposals`
+- `risk_assessments`
+- `portfolio_exposures`
+- `portfolio_constraints`
 - `signals`
 - `screening_results`
 
-Signals and screening results exist to provide the future persistence contract.
-V0.2 does not implement screening or trading strategies.
+Portfolio and risk tables persist research artifacts only. They do not contain
+orders, fills, broker requests, or execution instructions.
 
 ## Cache
 

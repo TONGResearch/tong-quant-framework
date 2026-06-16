@@ -117,6 +117,20 @@ integrity failures without creating an execution decision.
 Status: implemented in V0.6.3 as sample reconstruction only. It does not
 simulate orders, allocate portfolios, send notifications, or connect brokers.
 
+## Milestone 3.5: Portfolio And Risk Proposals
+
+- Portfolio consumes InvestmentScore outputs only
+- PortfolioCandidate enforces Research and Validation provenance
+- PortfolioProposal and PositionProposal remain research artifacts
+- RiskAssessment covers concentration, exposure, correlation, volatility,
+  drawdown, liquidity, risk budget, and scenario stress
+- Cash is supported as a formal allocation bucket
+- Fund category is reserved for future architecture
+
+Status: implemented in V0.7 as proposal-only portfolio construction. It does
+not create recommendations, trade plans, orders, broker requests, fills, paper
+trading, or auto rebalancing.
+
 ## Milestone 4: Paper Trading
 
 - Paper broker

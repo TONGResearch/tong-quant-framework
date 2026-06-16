@@ -144,6 +144,33 @@ class DecisionDisposition(StrEnum):
     NO_ACTION = "no_action"
 
 
+class PortfolioAssetCategory(StrEnum):
+    EQUITY = "equity"
+    FUND = "fund"
+    CASH = "cash"
+
+
+class PortfolioProposalStatus(StrEnum):
+    PROPOSED = "proposed"
+    CONDITIONAL = "conditional"
+    REJECTED = "rejected"
+    INCOMPLETE = "incomplete"
+
+
+class RiskAssessmentStatus(StrEnum):
+    ACCEPTABLE = "acceptable"
+    CONDITIONAL = "conditional"
+    REJECTED = "rejected"
+    INCOMPLETE = "incomplete"
+
+
+class StressScenarioType(StrEnum):
+    BROAD_MARKET = "broad_market"
+    SECTOR = "sector"
+    CURRENCY = "currency"
+    SINGLE_INSTRUMENT = "single_instrument"
+
+
 class EvidenceQuality(StrEnum):
     PRIMARY = "primary"
     VERIFIED_SECONDARY = "verified_secondary"

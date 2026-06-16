@@ -41,7 +41,7 @@ from tong_quant.domain.models import (
     UniverseMembership,
 )
 
-SCHEMA_VERSION = "0.6.3"
+SCHEMA_VERSION = "0.7.0"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_metadata (
@@ -497,6 +497,85 @@ CREATE TABLE IF NOT EXISTS investment_scores (
 
 CREATE INDEX IF NOT EXISTS idx_investment_scores_pit
 ON investment_scores (instrument_id, calculated_at);
+
+CREATE TABLE IF NOT EXISTS portfolio_proposals (
+    proposal_id TEXT PRIMARY KEY,
+    as_of TEXT NOT NULL,
+    base_currency TEXT NOT NULL,
+    status TEXT NOT NULL,
+    cash_weight REAL NOT NULL,
+    target_volatility REAL NOT NULL,
+    expected_portfolio_volatility REAL NOT NULL,
+    expected_max_drawdown REAL NOT NULL,
+    concentration_summary_json TEXT NOT NULL,
+    exposure_summary_json TEXT NOT NULL,
+    correlation_summary_json TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    limitations_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS position_proposals (
+    position_id TEXT PRIMARY KEY,
+    proposal_id TEXT NOT NULL,
+    instrument_id TEXT,
+    asset_category TEXT NOT NULL,
+    proposed_weight REAL NOT NULL,
+    min_weight REAL NOT NULL,
+    max_weight REAL NOT NULL,
+    confidence REAL NOT NULL,
+    liquidity_score REAL NOT NULL,
+    volatility_estimate REAL NOT NULL,
+    expected_role TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    risk_flags_json TEXT NOT NULL,
+    constraints_applied_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS risk_assessments (
+    assessment_id TEXT PRIMARY KEY,
+    proposal_id TEXT NOT NULL,
+    assessed_at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    score REAL NOT NULL,
+    confidence REAL NOT NULL,
+    risk_budget_json TEXT NOT NULL,
+    concentration_risk REAL NOT NULL,
+    correlation_risk REAL NOT NULL,
+    volatility_risk REAL NOT NULL,
+    drawdown_risk REAL NOT NULL,
+    liquidity_risk REAL NOT NULL,
+    scenario_results_json TEXT NOT NULL,
+    reasons_json TEXT NOT NULL,
+    required_adjustments_json TEXT NOT NULL,
+    limitations_json TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_exposures (
+    exposure_id TEXT PRIMARY KEY,
+    proposal_id TEXT NOT NULL,
+    dimension TEXT NOT NULL,
+    exposures_json TEXT NOT NULL,
+    max_allowed REAL NOT NULL,
+    breached INTEGER NOT NULL,
+    reasons_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_constraints (
+    constraint_id TEXT PRIMARY KEY,
+    proposal_id TEXT NOT NULL,
+    constraint_name TEXT NOT NULL,
+    constraint_value REAL NOT NULL,
+    breached INTEGER NOT NULL,
+    reasons_json TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS validation_runs (
     run_id TEXT PRIMARY KEY,
@@ -2084,6 +2163,225 @@ class SQLiteStore:
                 )
         return assessment_id
 
+    def save_portfolio_proposal(
+        self,
+        *,
+        proposal_id: str,
+        as_of: datetime,
+        base_currency: str,
+        status: str,
+        cash_weight: float,
+        target_volatility: float,
+        expected_portfolio_volatility: float,
+        expected_max_drawdown: float,
+        concentration_summary: dict[str, float],
+        exposure_summary: dict[str, dict[str, float]],
+        correlation_summary: dict[str, float],
+        reasons: tuple[str, ...],
+        limitations: tuple[str, ...],
+        metadata: dict[str, str | float | int | bool | None],
+        model_version: str,
+    ) -> None:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO portfolio_proposals (
+                    proposal_id, as_of, base_currency, status, cash_weight,
+                    target_volatility, expected_portfolio_volatility,
+                    expected_max_drawdown, concentration_summary_json,
+                    exposure_summary_json, correlation_summary_json,
+                    reasons_json, limitations_json, metadata_json,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    proposal_id,
+                    _datetime_text(as_of),
+                    base_currency,
+                    status,
+                    cash_weight,
+                    target_volatility,
+                    expected_portfolio_volatility,
+                    expected_max_drawdown,
+                    _json_dumps(concentration_summary),
+                    _json_dumps(exposure_summary),
+                    _json_dumps(correlation_summary),
+                    json.dumps(reasons),
+                    json.dumps(limitations),
+                    _json_dumps(metadata),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_position_proposal(
+        self,
+        *,
+        proposal_id: str,
+        instrument_id_value: str | None,
+        asset_category: str,
+        proposed_weight: float,
+        min_weight: float,
+        max_weight: float,
+        confidence: float,
+        liquidity_score: float,
+        volatility_estimate: float,
+        expected_role: str,
+        reasons: tuple[str, ...],
+        risk_flags: tuple[str, ...],
+        constraints_applied: tuple[str, ...],
+    ) -> str:
+        position_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO position_proposals (
+                    position_id, proposal_id, instrument_id, asset_category,
+                    proposed_weight, min_weight, max_weight, confidence,
+                    liquidity_score, volatility_estimate, expected_role,
+                    reasons_json, risk_flags_json, constraints_applied_json,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    position_id,
+                    proposal_id,
+                    instrument_id_value,
+                    asset_category,
+                    proposed_weight,
+                    min_weight,
+                    max_weight,
+                    confidence,
+                    liquidity_score,
+                    volatility_estimate,
+                    expected_role,
+                    json.dumps(reasons),
+                    json.dumps(risk_flags),
+                    json.dumps(constraints_applied),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return position_id
+
+    def save_risk_assessment(
+        self,
+        *,
+        assessment_id: str,
+        proposal_id: str,
+        assessed_at: datetime,
+        status: str,
+        score: float,
+        confidence: float,
+        risk_budget: dict[str, float],
+        concentration_risk: float,
+        correlation_risk: float,
+        volatility_risk: float,
+        drawdown_risk: float,
+        liquidity_risk: float,
+        scenario_results: list[dict[str, object]],
+        reasons: tuple[str, ...],
+        required_adjustments: tuple[str, ...],
+        limitations: tuple[str, ...],
+        model_version: str,
+    ) -> None:
+        self._require_aware(assessed_at)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO risk_assessments (
+                    assessment_id, proposal_id, assessed_at, status, score,
+                    confidence, risk_budget_json, concentration_risk,
+                    correlation_risk, volatility_risk, drawdown_risk,
+                    liquidity_risk, scenario_results_json, reasons_json,
+                    required_adjustments_json, limitations_json, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    proposal_id,
+                    _datetime_text(assessed_at),
+                    status,
+                    score,
+                    confidence,
+                    _json_dumps(risk_budget),
+                    concentration_risk,
+                    correlation_risk,
+                    volatility_risk,
+                    drawdown_risk,
+                    liquidity_risk,
+                    _json_dumps(scenario_results),
+                    json.dumps(reasons),
+                    json.dumps(required_adjustments),
+                    json.dumps(limitations),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_portfolio_exposure(
+        self,
+        *,
+        proposal_id: str,
+        dimension: str,
+        exposures: dict[str, float],
+        max_allowed: float,
+        breached: bool,
+        reasons: tuple[str, ...],
+    ) -> str:
+        exposure_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO portfolio_exposures (
+                    exposure_id, proposal_id, dimension, exposures_json,
+                    max_allowed, breached, reasons_json, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    exposure_id,
+                    proposal_id,
+                    dimension,
+                    _json_dumps(exposures),
+                    max_allowed,
+                    int(breached),
+                    json.dumps(reasons),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return exposure_id
+
+    def save_portfolio_constraint(
+        self,
+        *,
+        proposal_id: str,
+        constraint_name: str,
+        constraint_value: float,
+        breached: bool,
+        reasons: tuple[str, ...],
+    ) -> str:
+        constraint_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO portfolio_constraints (
+                    constraint_id, proposal_id, constraint_name,
+                    constraint_value, breached, reasons_json, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    constraint_id,
+                    proposal_id,
+                    constraint_name,
+                    constraint_value,
+                    int(breached),
+                    json.dumps(reasons),
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return constraint_id
+
     def complete_research_run(
         self,
         *,
@@ -2881,6 +3179,11 @@ class SQLiteStore:
             "research_reports",
             "investment_assessments",
             "investment_scores",
+            "portfolio_proposals",
+            "position_proposals",
+            "risk_assessments",
+            "portfolio_exposures",
+            "portfolio_constraints",
             "schema_metadata",
             "validation_runs",
             "validation_oos_usage",

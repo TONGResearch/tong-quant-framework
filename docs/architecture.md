@@ -289,3 +289,26 @@ Validation Engine
 ReplayConfidence measures the quality of reconstruction, not research
 correctness. ST, suspended, delisted, low-trust, provider-limited, and
 incomplete samples remain visible with warnings.
+
+## V0.7 Portfolio And Risk
+
+Portfolio and Risk extend validated research into proposal-only portfolio
+construction:
+
+```text
+InvestmentAssessment + InvestmentScore + Validation evidence
+        |
+PortfolioCandidate
+        |
+PortfolioProposal + PositionProposal
+        |
+RiskAssessment
+```
+
+PortfolioProposal is a research artifact. It is not decision authorization,
+execution instruction, or live connectivity request.
+
+RiskAssessment covers concentration, sector, country, theme, correlation,
+volatility targeting, drawdown, liquidity, risk budgets, and scenario stress
+tests. It can mark a proposal acceptable, conditional, rejected, or incomplete,
+but it cannot create orders.

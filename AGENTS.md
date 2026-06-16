@@ -116,6 +116,13 @@ validation, risk management, and controlled execution.
 - Validation outputs only `REVIEW` Signals and must never create trade actions.
 - Replay samples with missing data, low trust, ST/suspended/delisted status, or
   provider limitations must remain visible with warnings.
+- Portfolio consumes InvestmentScore outputs only and must not bypass Research
+  or Validation.
+- PortfolioProposal and PositionProposal are research artifacts only. Do not
+  use advice-oriented or execution-oriented names for them.
+- RiskAssessment may constrain or reject a PortfolioProposal, but it must not
+  create orders, broker requests, fills, trades, paper-trading actions, or
+  auto-rebalancing instructions.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,

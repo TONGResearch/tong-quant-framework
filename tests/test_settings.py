@@ -19,6 +19,11 @@ def test_default_configuration_is_safe() -> None:
     assert settings.research.investment_score.weights["market_regime"] == 0.25
     assert settings.research.trend.atr_period == 14
     assert settings.research.pattern.rising_stocks_threshold == 3000
+    assert settings.portfolio.enabled is True
+    assert settings.portfolio.minimum_cash_weight == 0.05
+    assert settings.risk.total_risk_budget == 0.12
+    assert settings.risk.per_theme_risk_budget == 0.05
+    assert settings.risk.minimum_liquidity_score == 60.0
     assert settings.validation.enabled is True
     assert settings.validation.splits.embargo_days == 20
     assert settings.validation.portfolio.maximum_category_weight == 0.35

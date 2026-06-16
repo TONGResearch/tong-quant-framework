@@ -50,8 +50,13 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("research_reports") == 0
     assert store.table_count("investment_assessments") == 0
     assert store.table_count("investment_scores") == 0
+    assert store.table_count("portfolio_proposals") == 0
+    assert store.table_count("position_proposals") == 0
+    assert store.table_count("risk_assessments") == 0
+    assert store.table_count("portfolio_exposures") == 0
+    assert store.table_count("portfolio_constraints") == 0
     assert store.table_count("schema_metadata") == 1
-    assert store.schema_version() == "0.6.3"
+    assert store.schema_version() == "0.7.0"
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0
