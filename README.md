@@ -11,7 +11,7 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.6.2 Scope
+## V0.6.3 Scope
 
 V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 
@@ -62,6 +62,8 @@ V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 - Explicit `DataTrustLevel` and `AvailabilityPrecision` metadata
 - Audited ingestion batches, raw dataset fingerprints, and availability warnings
 - Corporate action, provider limitation, and PIT readiness persistence
+- PIT-safe HistoricalReplaySource with manifest and sample replay hashes
+- ReplayConfidence to separate weak reconstruction from weak research
 - Fund and asset-allocation extension points reserved without implementation
 
 It intentionally does not implement order-level backtesting, trade approval,

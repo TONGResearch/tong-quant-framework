@@ -8,6 +8,7 @@ from tong_quant.validation.models import (
     ValidationRun,
     ValidationSplit,
 )
+from tong_quant.validation.replay.models import HistoricalReplayResult, ReplayQuery
 
 
 class ValidationModule(Protocol):
@@ -44,7 +45,7 @@ class ValidationRepository(Protocol):
 
 
 class HistoricalReplaySource(Protocol):
-    def reconstruct(self, request: ValidationRequest) -> ValidationRequest: ...
+    def build(self, query: ReplayQuery) -> HistoricalReplayResult: ...
 
 
 class ValidationApplication(Protocol):

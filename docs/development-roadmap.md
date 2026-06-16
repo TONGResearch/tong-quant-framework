@@ -105,6 +105,18 @@ Order-level event-driven backtesting remains a future, separate milestone.
 Exit: a versioned ValidationReport explains reliability, limitations, and
 integrity failures without creating an execution decision.
 
+## Milestone 3.1: Historical Replay Source
+
+- ReplayQuery for universe/instrument reconstruction
+- HistoricalReplayBuilder for PIT-safe decision and outcome context
+- ReplayManifest with input hashes, versions, trust, limitations, and warnings
+- ReplayValidationSample with missing flags and replay hash
+- ReplayConfidence for reconstruction quality
+- ValidationRequest generation from complete replay samples
+
+Status: implemented in V0.6.3 as sample reconstruction only. It does not
+simulate orders, allocate portfolios, send notifications, or connect brokers.
+
 ## Milestone 4: Paper Trading
 
 - Paper broker

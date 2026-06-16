@@ -38,6 +38,8 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("data_availability_warnings") == 0
     assert store.table_count("provider_limitations") == 0
     assert store.table_count("pit_readiness_assessments") == 0
+    assert store.table_count("historical_replay_manifests") == 0
+    assert store.table_count("historical_replay_samples") == 0
     assert store.table_count("signals") == 0
     assert store.table_count("screening_results") == 0
     assert store.table_count("research_queue") == 0
@@ -49,7 +51,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("investment_assessments") == 0
     assert store.table_count("investment_scores") == 0
     assert store.table_count("schema_metadata") == 1
-    assert store.schema_version() == "0.6.2"
+    assert store.schema_version() == "0.6.3"
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0

@@ -267,3 +267,25 @@ industry, theme, and style; it is not portfolio return backtesting.
 Every run carries a reproducibility snapshot containing the Git commit,
 framework version, configuration hash, research version, validation version,
 and database schema version. See `docs/validation-engine.md`.
+
+## V0.6.3 Historical Replay
+
+Historical replay is the bridge from PIT storage to validation samples:
+
+```text
+SQLite PIT records
+        |
+ReplayQuery
+        |
+HistoricalReplayBuilder
+        |
+ReplayManifest + ReplayValidationSample
+        |
+ValidationRequestFactory
+        |
+Validation Engine
+```
+
+ReplayConfidence measures the quality of reconstruction, not research
+correctness. ST, suspended, delisted, low-trust, provider-limited, and
+incomplete samples remain visible with warnings.

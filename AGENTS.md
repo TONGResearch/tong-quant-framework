@@ -39,6 +39,12 @@ validation, risk management, and controlled execution.
   both `AvailabilityPrecision` and `DataTrustLevel`.
 - Do not treat PIT data as replay-ready until a `PITReadinessAssessment`
   supports that conclusion.
+- HistoricalReplaySource reconstructs validation samples only. It must not
+  backtest orders, allocate capital, connect to brokers, or make trade
+  decisions.
+- `ReplayConfidence` measures historical reconstruction quality separately
+  from research correctness. Weak replay confidence must not be interpreted as
+  proof that the research thesis was wrong.
 - Missing data must not silently become a favorable result.
 - Hard-screen failures cannot be offset by favorable scores.
 - Research Score prioritizes research only; it is not an investment decision.
@@ -108,6 +114,8 @@ validation, risk management, and controlled execution.
 - Portfolio validation may measure research concentration but must not simulate
   portfolio returns or orders.
 - Validation outputs only `REVIEW` Signals and must never create trade actions.
+- Replay samples with missing data, low trust, ST/suspended/delisted status, or
+  provider limitations must remain visible with warnings.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,

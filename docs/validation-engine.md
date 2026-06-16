@@ -63,6 +63,46 @@ Measures historical research correctness over resolved point-in-time samples.
 Provider-backed historical reconstruction is exposed through a
 `HistoricalReplaySource` boundary and remains separate from validation logic.
 
+## V0.6.3 Historical Replay
+
+V0.6.3 implements the database-backed replay boundary:
+
+```text
+ReplayQuery
+    |
+HistoricalReplayBuilder
+    |
+ReplayManifest + ReplayValidationSample
+    |
+ValidationRequestFactory
+    |
+Existing Validation Engine
+```
+
+Replay reconstructs decision context at `decision_as_of` and outcome context
+at `outcome_as_of`. Outcome data is never allowed into research reconstruction.
+Incomplete samples remain persisted and visible with missing-data flags instead
+of being silently dropped.
+
+`ReplayConfidence` evaluates reconstruction quality from:
+
+- DataTrustLevel
+- PITReadiness
+- MissingDataRatio
+- ProviderLimitations
+
+This separates poor research outcomes from insufficient historical
+reconstruction quality.
+
+Replay persists:
+
+- `historical_replay_manifests`
+- `historical_replay_samples`
+
+Manifests include query hashes, input hashes, dataset versions, schema version,
+framework version, configuration hash, Git commit, provider limitations,
+missing-data warnings, data trust summary, and ReplayConfidence.
+
 ### Walk-Forward
 
 Creates training and validation windows with an explicit embargo. Configuration

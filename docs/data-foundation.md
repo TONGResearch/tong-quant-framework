@@ -125,6 +125,8 @@ This is a readiness gate only. It does not implement HistoricalReplaySource.
 - `data_availability_warnings`
 - `provider_limitations`
 - `pit_readiness_assessments`
+- `historical_replay_manifests`
+- `historical_replay_samples`
 - `signals`
 - `screening_results`
 

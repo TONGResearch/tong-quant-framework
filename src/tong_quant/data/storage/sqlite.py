@@ -41,7 +41,7 @@ from tong_quant.domain.models import (
     UniverseMembership,
 )
 
-SCHEMA_VERSION = "0.6.2"
+SCHEMA_VERSION = "0.6.3"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_metadata (
@@ -263,6 +263,47 @@ CREATE TABLE IF NOT EXISTS pit_readiness_assessments (
     model_version TEXT NOT NULL,
     ingested_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS historical_replay_manifests (
+    manifest_id TEXT PRIMARY KEY,
+    query_hash TEXT NOT NULL,
+    input_hashes_json TEXT NOT NULL,
+    dataset_versions_json TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    framework_version TEXT NOT NULL,
+    configuration_hash TEXT NOT NULL,
+    git_commit TEXT NOT NULL,
+    data_trust_summary_json TEXT NOT NULL,
+    provider_limitations_json TEXT NOT NULL,
+    missing_data_warnings_json TEXT NOT NULL,
+    replay_confidence_json TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS historical_replay_samples (
+    sample_id TEXT PRIMARY KEY,
+    manifest_id TEXT NOT NULL,
+    instrument_id TEXT NOT NULL,
+    decision_as_of TEXT NOT NULL,
+    outcome_as_of TEXT NOT NULL,
+    replay_hash TEXT NOT NULL,
+    replay_confidence_json TEXT NOT NULL,
+    decision_context_json TEXT NOT NULL,
+    outcome_context_json TEXT NOT NULL,
+    evidence_references_json TEXT NOT NULL,
+    missing_data_flags_json TEXT NOT NULL,
+    provider_limitations_json TEXT NOT NULL,
+    data_trust_summary_json TEXT NOT NULL,
+    validation_sample_json TEXT,
+    is_complete INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    ingested_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_historical_replay_samples_manifest
+ON historical_replay_samples (manifest_id, instrument_id);
 
 CREATE TABLE IF NOT EXISTS signals (
     signal_id TEXT PRIMARY KEY,
@@ -1139,6 +1180,146 @@ class SQLiteStore:
                 ),
             )
         return assessment_id
+
+    def provider_limitations(
+        self,
+        datasets: tuple[str, ...] = (),
+    ) -> list[ProviderLimitation]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM provider_limitations
+                ORDER BY provider, dataset, limitation_code
+                """
+            ).fetchall()
+        limitations = [_provider_limitation_from_row(row) for row in rows]
+        if not datasets:
+            return limitations
+        allowed = set(datasets)
+        return [limitation for limitation in limitations if limitation.dataset in allowed]
+
+    def latest_pit_readiness(
+        self,
+        dataset: str,
+    ) -> PITReadinessAssessment | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM pit_readiness_assessments
+                WHERE dataset = ?
+                ORDER BY assessed_at DESC, ingested_at DESC
+                LIMIT 1
+                """,
+                (dataset,),
+            ).fetchone()
+        return None if row is None else _pit_readiness_from_row(row)
+
+    def save_historical_replay_manifest(
+        self,
+        *,
+        manifest_id: str,
+        query_hash: str,
+        input_hashes: dict[str, str],
+        dataset_versions: dict[str, str],
+        schema_version: str,
+        framework_version: str,
+        configuration_hash: str,
+        git_commit: str,
+        data_trust_summary: dict[str, int],
+        provider_limitations: tuple[str, ...],
+        missing_data_warnings: tuple[str, ...],
+        replay_confidence: dict[str, object],
+        generated_at: datetime,
+        model_version: str,
+    ) -> None:
+        self._require_aware(generated_at)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO historical_replay_manifests (
+                    manifest_id, query_hash, input_hashes_json,
+                    dataset_versions_json, schema_version, framework_version,
+                    configuration_hash, git_commit, data_trust_summary_json,
+                    provider_limitations_json, missing_data_warnings_json,
+                    replay_confidence_json, generated_at, model_version,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    manifest_id,
+                    query_hash,
+                    _json_dumps(input_hashes),
+                    _json_dumps(dataset_versions),
+                    schema_version,
+                    framework_version,
+                    configuration_hash,
+                    git_commit,
+                    _json_dumps(data_trust_summary),
+                    json.dumps(provider_limitations),
+                    json.dumps(missing_data_warnings),
+                    _json_dumps(replay_confidence),
+                    _datetime_text(generated_at),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def save_historical_replay_sample(
+        self,
+        *,
+        sample_id: str,
+        manifest_id: str,
+        instrument_id_value: str,
+        decision_as_of: datetime,
+        outcome_as_of: datetime,
+        replay_hash: str,
+        replay_confidence: dict[str, object],
+        decision_context: dict[str, object],
+        outcome_context: dict[str, object],
+        evidence_references: tuple[str, ...],
+        missing_data_flags: tuple[str, ...],
+        provider_limitations: tuple[str, ...],
+        data_trust_summary: dict[str, int],
+        validation_sample: dict[str, object] | None,
+        is_complete: bool,
+        model_version: str,
+    ) -> None:
+        self._require_aware(decision_as_of)
+        self._require_aware(outcome_as_of)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO historical_replay_samples (
+                    sample_id, manifest_id, instrument_id, decision_as_of,
+                    outcome_as_of, replay_hash, replay_confidence_json,
+                    decision_context_json, outcome_context_json,
+                    evidence_references_json, missing_data_flags_json,
+                    provider_limitations_json, data_trust_summary_json,
+                    validation_sample_json, is_complete, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    sample_id,
+                    manifest_id,
+                    instrument_id_value,
+                    _datetime_text(decision_as_of),
+                    _datetime_text(outcome_as_of),
+                    replay_hash,
+                    _json_dumps(replay_confidence),
+                    _json_dumps(decision_context),
+                    _json_dumps(outcome_context),
+                    json.dumps(evidence_references),
+                    json.dumps(missing_data_flags),
+                    json.dumps(provider_limitations),
+                    _json_dumps(data_trust_summary),
+                    None if validation_sample is None else _json_dumps(validation_sample),
+                    int(is_complete),
+                    model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
 
     def get_instrument(
         self,
@@ -2559,6 +2740,121 @@ class SQLiteStore:
             ).fetchone()
         return cast(sqlite3.Row | None, row)
 
+    def screening_results_for_replay(
+        self,
+        instrument: Instrument,
+        *,
+        as_of: datetime,
+    ) -> list[sqlite3.Row]:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                WITH visible AS (
+                    SELECT result.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY result.instrument_id, result.dimension
+                               ORDER BY result.available_at DESC,
+                                        result.evaluated_at DESC
+                           ) AS version_rank
+                    FROM screening_results AS result
+                    WHERE result.instrument_id = ?
+                      AND result.available_at <= ?
+                )
+                SELECT *
+                FROM visible
+                WHERE version_rank = 1
+                ORDER BY dimension
+                """,
+                (instrument_id(instrument), _datetime_text(as_of)),
+            ).fetchall()
+        return list(rows)
+
+    def fundamental_facts_for_replay(
+        self,
+        instrument: Instrument,
+        *,
+        as_of: datetime,
+    ) -> list[sqlite3.Row]:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                WITH visible AS (
+                    SELECT fact.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY fact.instrument_id,
+                                            fact.metric,
+                                            fact.period_end
+                               ORDER BY fact.available_at DESC,
+                                        fact.revision DESC,
+                                        fact.published_at DESC
+                           ) AS version_rank
+                    FROM fundamental_facts AS fact
+                    WHERE fact.instrument_id = ?
+                      AND fact.available_at <= ?
+                      AND fact.period_end <= ?
+                )
+                SELECT *
+                FROM visible
+                WHERE version_rank = 1
+                ORDER BY metric, period_end
+                """,
+                (
+                    instrument_id(instrument),
+                    _datetime_text(as_of),
+                    as_of.date().isoformat(),
+                ),
+            ).fetchall()
+        return list(rows)
+
+    def latest_research_report_for_replay(
+        self,
+        instrument: Instrument,
+        *,
+        as_of: datetime,
+    ) -> sqlite3.Row | None:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM research_reports
+                WHERE instrument_id = ?
+                  AND available_at <= ?
+                ORDER BY available_at DESC, generated_at DESC
+                LIMIT 1
+                """,
+                (instrument_id(instrument), _datetime_text(as_of)),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def research_assessments_for_report(self, report_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM research_assessments
+                WHERE report_id = ?
+                ORDER BY module, evaluated_at
+                """,
+                (report_id,),
+            ).fetchall()
+        return list(rows)
+
+    def research_evidence_for_run(self, run_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM research_evidence
+                WHERE run_id = ?
+                ORDER BY module, evidence_id
+                """,
+                (run_id,),
+            ).fetchall()
+        return list(rows)
+
     def table_count(self, table: str) -> int:
         if table not in {
             "instruments",
@@ -2573,6 +2869,8 @@ class SQLiteStore:
             "data_availability_warnings",
             "provider_limitations",
             "pit_readiness_assessments",
+            "historical_replay_manifests",
+            "historical_replay_samples",
             "signals",
             "screening_results",
             "research_queue",
@@ -2704,6 +3002,30 @@ def _instrument_status_from_row(
         trust_level=DataTrustLevel(row["trust_level"]),
         available_at=datetime.fromisoformat(row["available_at"]),
         source=row["source"],
+    )
+
+
+def _provider_limitation_from_row(row: sqlite3.Row) -> ProviderLimitation:
+    return ProviderLimitation(
+        provider=row["provider"],
+        dataset=row["dataset"],
+        limitation_code=row["limitation_code"],
+        description=row["description"],
+        trust_level=DataTrustLevel(row["trust_level"]),
+        documented_at=datetime.fromisoformat(row["documented_at"]),
+    )
+
+
+def _pit_readiness_from_row(row: sqlite3.Row) -> PITReadinessAssessment:
+    return PITReadinessAssessment(
+        dataset=row["dataset"],
+        assessed_at=datetime.fromisoformat(row["assessed_at"]),
+        coverage_ratio=float(row["coverage_ratio"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+        missing_critical_fields=tuple(json.loads(row["missing_critical_fields_json"])),
+        warnings=tuple(json.loads(row["warnings_json"])),
+        ready_for_historical_replay=bool(row["ready_for_historical_replay"]),
+        model_version=row["model_version"],
     )
 
 
