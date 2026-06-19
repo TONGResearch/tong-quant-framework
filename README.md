@@ -11,11 +11,11 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.7.1 Scope
+## V0.8 Scope
 
 The framework includes the data foundation, Market Regime, Screening,
-Research, Validation, Historical Replay, Portfolio, Risk, and hardening
-boundaries:
+Research, Validation, Historical Replay, Portfolio, Risk, Notification, and
+hardening boundaries:
 
 - Clean package architecture
 - Shared market-independent interfaces
@@ -76,10 +76,17 @@ boundaries:
 - Framework, database, research, validation, and replay versions are centralized
 - Notification compatibility is artifact-oriented: ResearchReport,
   ValidationReport, PortfolioProposal, and RiskAssessment only
+- Notification mode defaults to `disabled`, with explicit `preview` and
+  `enabled` modes
+- SQLite outbox separates notification generation from later delivery
+- Artifact hashes and channel/recipient deduplication make generation idempotent
+- Telegram, WeChat, and Email adapters read credentials from environment
+  variables only
+- Every rendered message carries a research-only, no-advice, no-execution
+  disclaimer
 
-It intentionally does not implement Notification Engine, Paper Trading,
-order-level backtesting, trade approval, orders, execution logic, or live
-brokerage.
+It intentionally does not implement Paper Trading, order-level backtesting,
+trade approval, orders, execution logic, live brokerage, or auto rebalancing.
 
 ## Quick Start
 
@@ -103,5 +110,6 @@ python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,
 `docs/research-engine.md`, `docs/validation-engine.md`, and
-`docs/development-roadmap.md`. The current cross-project risk review is
+`docs/notification-engine.md`, and `docs/development-roadmap.md`. The current
+cross-project risk review is
 `docs/project-review-v0.6.md`.

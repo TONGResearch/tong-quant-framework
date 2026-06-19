@@ -1,23 +1,50 @@
-from __future__ import annotations
+from datetime import datetime
+from typing import Protocol
 
-from typing import TYPE_CHECKING, Protocol
-
-if TYPE_CHECKING:
-    from tong_quant.portfolio.models import PortfolioProposal
-    from tong_quant.research.models import ResearchReport
-    from tong_quant.risk.models import RiskAssessment
-    from tong_quant.validation.models import ValidationReport
+from tong_quant.notifications.models import (
+    DeliveryReceipt,
+    DeliveryRecord,
+    NotificationMessage,
+    NotificationRecord,
+)
 
 
 class NotificationChannel(Protocol):
     channel_id: str
 
-    def send_research_report(self, report: ResearchReport) -> str: ...
+    def send(self, message: NotificationMessage) -> DeliveryReceipt: ...
 
-    def send_validation_report(self, report: ValidationReport) -> str: ...
 
-    def send_portfolio_proposal(self, proposal: PortfolioProposal) -> str: ...
+class NotificationOutboxRepository(Protocol):
+    def enqueue(self, record: NotificationRecord) -> NotificationRecord: ...
 
-    def send_risk_assessment(self, assessment: RiskAssessment) -> str: ...
+    def get_by_dedup_key(self, dedup_key: str) -> NotificationRecord | None: ...
 
-    def send_message(self, subject: str, body: str) -> str: ...
+    def pending(self, *, as_of: datetime, limit: int) -> tuple[NotificationRecord, ...]: ...
+
+    def claim(
+        self,
+        notification_id: str,
+        *,
+        claimed_at: datetime,
+    ) -> NotificationRecord | None: ...
+
+    def mark_delivered(
+        self,
+        record: NotificationRecord,
+        receipt: DeliveryReceipt,
+    ) -> DeliveryRecord: ...
+
+    def mark_failed(
+        self,
+        record: NotificationRecord,
+        *,
+        attempted_at: datetime,
+        error_code: str,
+        retry_at: datetime | None,
+    ) -> DeliveryRecord: ...
+
+    def deliveries(self, notification_id: str) -> tuple[DeliveryRecord, ...]: ...
+
+
+__all__ = ["NotificationChannel", "NotificationOutboxRepository"]

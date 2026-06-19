@@ -11,6 +11,7 @@ def main() -> None:
     print(f"{settings.project.name} v{__version__}")
     print(f"Environment: {settings.project.environment}")
     print(f"Default market: {rules.market.value}")
+    print(f"Notification mode: {settings.notifications.mode}")
     print(f"Execution mode: {settings.execution.mode}")
 
 

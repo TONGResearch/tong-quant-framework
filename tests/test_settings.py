@@ -24,6 +24,9 @@ def test_default_configuration_is_safe() -> None:
     assert settings.risk.total_risk_budget == 0.12
     assert settings.risk.per_theme_risk_budget == 0.05
     assert settings.risk.minimum_liquidity_score == 60.0
+    assert settings.notifications.mode == "disabled"
+    assert settings.notifications.max_attempts == 3
+    assert settings.notifications.batch_size == 100
     assert settings.validation.enabled is True
     assert settings.validation.splits.embargo_days == 20
     assert settings.validation.portfolio.maximum_category_weight == 0.35
@@ -37,4 +40,5 @@ def test_research_override_preserves_default_values() -> None:
 
     assert settings.project.environment == "research"
     assert settings.data.provider == "akshare"
+    assert settings.notifications.mode == "disabled"
     assert settings.execution.mode == "research"

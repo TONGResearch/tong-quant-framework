@@ -147,6 +147,21 @@ Status: implemented as a pre-V0.8 hardening milestone. It does not implement
 Notification Engine, Paper Trading, Execution Engine, brokers, live orders, or
 asset allocation.
 
+## Milestone 3.7: V0.8 Notification Engine
+
+- ResearchReport, ValidationReport, PortfolioProposal, and RiskAssessment only
+- Disabled, preview, and enabled modes; disabled by default
+- SQLite outbox and delivery audit history
+- Deterministic artifact/channel/recipient deduplication
+- Deferred dispatcher with retry state
+- Telegram, WeChat, and Email environment-only credential loading
+- Mandatory research-only disclaimer and sensitive-text redaction
+- Fake-channel integration coverage; live provider tests opt in explicitly
+
+Status: implemented as a research-information system. It does not implement
+Paper Trading, execution, broker connectivity, orders, fills, trades, or auto
+rebalancing.
+
 ## Milestone 4: Paper Trading
 
 - Paper simulation boundary
@@ -155,8 +170,8 @@ asset allocation.
 - Market-rule and calendar-aware simulation
 - Research notification review path
 
-Entry condition: V0.7.1 hardening is complete and execution remains disabled by
-default.
+Entry condition: V0.8 notification boundaries remain isolated and execution
+remains disabled by default.
 
 Exit: stable paper simulation with no live credentials.
 

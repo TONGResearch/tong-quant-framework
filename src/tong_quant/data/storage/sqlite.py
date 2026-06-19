@@ -578,6 +578,49 @@ CREATE TABLE IF NOT EXISTS portfolio_constraints (
     ingested_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS notification_outbox (
+    notification_id TEXT PRIMARY KEY,
+    artifact_type TEXT NOT NULL,
+    artifact_id TEXT NOT NULL,
+    artifact_hash TEXT NOT NULL,
+    artifact_version TEXT NOT NULL,
+    artifact_occurred_at TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    recipient TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    template_version TEXT NOT NULL,
+    dedup_key TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL,
+    attempt_count INTEGER NOT NULL,
+    max_attempts INTEGER NOT NULL,
+    next_attempt_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    last_error_code TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_outbox_dispatch
+ON notification_outbox (status, next_attempt_at, created_at);
+
+CREATE TABLE IF NOT EXISTS notification_deliveries (
+    delivery_id TEXT PRIMARY KEY,
+    notification_id TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    recipient TEXT NOT NULL,
+    status TEXT NOT NULL,
+    attempt_number INTEGER NOT NULL,
+    attempted_at TEXT NOT NULL,
+    delivered_at TEXT,
+    provider_message_id TEXT NOT NULL DEFAULT '',
+    error_code TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (notification_id) REFERENCES notification_outbox (notification_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_deliveries_notification
+ON notification_deliveries (notification_id, attempt_number);
+
 CREATE TABLE IF NOT EXISTS validation_runs (
     run_id TEXT PRIMARY KEY,
     validation_id TEXT NOT NULL,
@@ -2383,6 +2426,254 @@ class SQLiteStore:
             )
         return constraint_id
 
+    def save_notification_outbox(
+        self,
+        *,
+        notification_id: str,
+        artifact_type: str,
+        artifact_id: str,
+        artifact_hash: str,
+        artifact_version: str,
+        artifact_occurred_at: datetime,
+        channel: str,
+        recipient: str,
+        subject: str,
+        body: str,
+        priority: str,
+        template_version: str,
+        dedup_key: str,
+        status: str,
+        attempt_count: int,
+        max_attempts: int,
+        next_attempt_at: datetime | None,
+        created_at: datetime,
+        updated_at: datetime,
+        last_error_code: str,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO notification_outbox (
+                    notification_id, artifact_type, artifact_id, artifact_hash,
+                    artifact_version, artifact_occurred_at, channel, recipient,
+                    subject, body, priority, template_version, dedup_key, status,
+                    attempt_count, max_attempts, next_attempt_at, created_at,
+                    updated_at, last_error_code
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (dedup_key) DO NOTHING
+                """,
+                (
+                    notification_id,
+                    artifact_type,
+                    artifact_id,
+                    artifact_hash,
+                    artifact_version,
+                    _datetime_text(artifact_occurred_at),
+                    channel,
+                    recipient,
+                    subject,
+                    body,
+                    priority,
+                    template_version,
+                    dedup_key,
+                    status,
+                    attempt_count,
+                    max_attempts,
+                    (
+                        None
+                        if next_attempt_at is None
+                        else _datetime_text(next_attempt_at)
+                    ),
+                    _datetime_text(created_at),
+                    _datetime_text(updated_at),
+                    last_error_code,
+                ),
+            )
+
+    def notification_outbox_by_dedup_key(
+        self,
+        dedup_key: str,
+    ) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM notification_outbox WHERE dedup_key = ?",
+                (dedup_key,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def pending_notification_outbox(
+        self,
+        *,
+        as_of: datetime,
+        limit: int,
+    ) -> list[sqlite3.Row]:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM notification_outbox
+                WHERE status IN ('pending', 'retry')
+                  AND attempt_count < max_attempts
+                  AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+                ORDER BY created_at, notification_id
+                LIMIT ?
+                """,
+                (_datetime_text(as_of), limit),
+            ).fetchall()
+        return list(rows)
+
+    def claim_notification_outbox(
+        self,
+        notification_id: str,
+        *,
+        claimed_at: datetime,
+    ) -> sqlite3.Row | None:
+        self._require_aware(claimed_at)
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE notification_outbox
+                SET status = 'dispatching',
+                    attempt_count = attempt_count + 1,
+                    updated_at = ?,
+                    next_attempt_at = NULL
+                WHERE notification_id = ?
+                  AND status IN ('pending', 'retry')
+                  AND attempt_count < max_attempts
+                """,
+                (_datetime_text(claimed_at), notification_id),
+            )
+            if updated.rowcount != 1:
+                return None
+            row = connection.execute(
+                "SELECT * FROM notification_outbox WHERE notification_id = ?",
+                (notification_id,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def complete_notification_delivery(
+        self,
+        *,
+        notification_id: str,
+        channel: str,
+        recipient: str,
+        attempt_number: int,
+        attempted_at: datetime,
+        delivered_at: datetime,
+        provider_message_id: str,
+    ) -> sqlite3.Row:
+        delivery_id = str(uuid4())
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE notification_outbox
+                SET status = 'delivered', updated_at = ?, last_error_code = ''
+                WHERE notification_id = ? AND status = 'dispatching'
+                """,
+                (_datetime_text(delivered_at), notification_id),
+            )
+            if updated.rowcount != 1:
+                raise ValueError("notification is not in dispatching state")
+            connection.execute(
+                """
+                INSERT INTO notification_deliveries (
+                    delivery_id, notification_id, channel, recipient, status,
+                    attempt_number, attempted_at, delivered_at,
+                    provider_message_id, error_code
+                ) VALUES (?, ?, ?, ?, 'delivered', ?, ?, ?, ?, '')
+                """,
+                (
+                    delivery_id,
+                    notification_id,
+                    channel,
+                    recipient,
+                    attempt_number,
+                    _datetime_text(attempted_at),
+                    _datetime_text(delivered_at),
+                    provider_message_id,
+                ),
+            )
+            row = connection.execute(
+                "SELECT * FROM notification_deliveries WHERE delivery_id = ?",
+                (delivery_id,),
+            ).fetchone()
+        if row is None:
+            raise ValueError("notification delivery was not persisted")
+        return cast(sqlite3.Row, row)
+
+    def fail_notification_delivery(
+        self,
+        *,
+        notification_id: str,
+        channel: str,
+        recipient: str,
+        attempt_number: int,
+        attempted_at: datetime,
+        error_code: str,
+        retry_at: datetime | None,
+    ) -> sqlite3.Row:
+        delivery_id = str(uuid4())
+        next_status = "retry" if retry_at is not None else "failed"
+        next_attempt_at = None if retry_at is None else _datetime_text(retry_at)
+        safe_code = error_code[:120]
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE notification_outbox
+                SET status = ?, updated_at = ?, next_attempt_at = ?,
+                    last_error_code = ?
+                WHERE notification_id = ? AND status = 'dispatching'
+                """,
+                (
+                    next_status,
+                    _datetime_text(attempted_at),
+                    next_attempt_at,
+                    safe_code,
+                    notification_id,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise ValueError("notification is not in dispatching state")
+            connection.execute(
+                """
+                INSERT INTO notification_deliveries (
+                    delivery_id, notification_id, channel, recipient, status,
+                    attempt_number, attempted_at, delivered_at,
+                    provider_message_id, error_code
+                ) VALUES (?, ?, ?, ?, 'failed', ?, ?, NULL, '', ?)
+                """,
+                (
+                    delivery_id,
+                    notification_id,
+                    channel,
+                    recipient,
+                    attempt_number,
+                    _datetime_text(attempted_at),
+                    safe_code,
+                ),
+            )
+            row = connection.execute(
+                "SELECT * FROM notification_deliveries WHERE delivery_id = ?",
+                (delivery_id,),
+            ).fetchone()
+        if row is None:
+            raise ValueError("notification delivery failure was not persisted")
+        return cast(sqlite3.Row, row)
+
+    def notification_delivery_rows(self, notification_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM notification_deliveries
+                WHERE notification_id = ?
+                ORDER BY attempt_number, attempted_at
+                """,
+                (notification_id,),
+            ).fetchall()
+        return list(rows)
+
     def get_instrument_by_id(
         self,
         instrument_id_value: str,
@@ -3264,6 +3555,8 @@ class SQLiteStore:
             "risk_assessments",
             "portfolio_exposures",
             "portfolio_constraints",
+            "notification_outbox",
+            "notification_deliveries",
             "schema_metadata",
             "validation_runs",
             "validation_oos_usage",

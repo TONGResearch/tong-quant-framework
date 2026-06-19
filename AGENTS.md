@@ -129,6 +129,11 @@ validation, risk management, and controlled execution.
 - Notification is a research notification boundary only. It may consume
   ResearchReport, ValidationReport, PortfolioProposal, and RiskAssessment. It
   must not consume Order, Trade, Broker, Fill, or Execution objects.
+- Notification mode defaults to `disabled`. Generation writes to the SQLite
+  outbox; delivery must occur later through the dispatcher.
+- Channel credentials must come from environment variables and must never be
+  persisted, logged, rendered, or placed in tests.
+- Every notification must carry the mandatory research-only disclaimer.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,

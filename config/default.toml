@@ -127,6 +127,11 @@ minimum_liquidity_score = 60.0
 maximum_average_correlation = 0.70
 stress_loss_limit = 0.12
 
+[notifications]
+mode = "disabled"
+max_attempts = 3
+batch_size = 100
+
 [execution]
 mode = "disabled"
 allow_live_orders = false

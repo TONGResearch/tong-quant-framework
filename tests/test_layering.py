@@ -51,9 +51,12 @@ def test_notifications_do_not_depend_on_execution_or_order_models() -> None:
     offenders = []
     forbidden = (
         "tong_quant.execution",
+        "Signal",
         "Order",
         "Trade",
         "Broker",
+        "Fill",
+        "send_signal",
         "submit_order",
         "create_order",
     )
@@ -65,11 +68,21 @@ def test_notifications_do_not_depend_on_execution_or_order_models() -> None:
     assert offenders == []
 
 
-def test_notification_channel_is_research_artifact_oriented() -> None:
+def test_notification_service_is_research_artifact_oriented() -> None:
+    text = Path("src/tong_quant/notifications/service.py").read_text(encoding="utf-8")
+
+    assert "generate_research_report" in text
+    assert "generate_validation_report" in text
+    assert "generate_portfolio_proposal" in text
+    assert "generate_risk_assessment" in text
+    assert "send_signal" not in text
+
+
+def test_notification_channels_only_consume_rendered_messages() -> None:
     text = Path("src/tong_quant/notifications/base.py").read_text(encoding="utf-8")
 
-    assert "send_research_report" in text
-    assert "send_validation_report" in text
-    assert "send_portfolio_proposal" in text
-    assert "send_risk_assessment" in text
-    assert "send_signal" not in text
+    assert "def send(self, message: NotificationMessage)" in text
+    assert "ResearchReport" not in text
+    assert "ValidationReport" not in text
+    assert "PortfolioProposal" not in text
+    assert "RiskAssessment" not in text

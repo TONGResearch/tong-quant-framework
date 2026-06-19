@@ -136,6 +136,13 @@ class ExecutionSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class NotificationSettings:
+    mode: str
+    max_attempts: int
+    batch_size: int
+
+
+@dataclass(frozen=True, slots=True)
 class ValidationSplitSettings:
     training_days: int
     validation_days: int
@@ -178,6 +185,7 @@ class Settings:
     research: ResearchSettings
     portfolio: PortfolioSettings
     risk: RiskSettings
+    notifications: NotificationSettings
     execution: ExecutionSettings
     validation: ValidationSettings
 
@@ -253,6 +261,7 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         ),
         portfolio=PortfolioSettings(**raw["portfolio"]),
         risk=RiskSettings(**raw["risk"]),
+        notifications=NotificationSettings(**raw["notifications"]),
         execution=ExecutionSettings(**raw["execution"]),
         validation=ValidationSettings(
             enabled=raw["validation"]["enabled"],
@@ -302,6 +311,13 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         "paper",
     }:
         raise ValueError("disabled, research, and paper modes cannot allow live orders")
+    notification_modes = {"disabled", "preview", "enabled"}
+    if settings.notifications.mode not in notification_modes:
+        raise ValueError("notification mode is unsupported")
+    if settings.notifications.max_attempts <= 0:
+        raise ValueError("notification max_attempts must be positive")
+    if settings.notifications.batch_size <= 0:
+        raise ValueError("notification batch_size must be positive")
     if settings.data.cache_ttl_seconds < 0:
         raise ValueError("cache_ttl_seconds cannot be negative")
     for regime_model in (

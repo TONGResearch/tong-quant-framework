@@ -21,10 +21,11 @@ Discovery -> Screening -> Research -> Validation
                          universal Signals
                                |
                     Portfolio -> RiskAssessment
-                               |
-                     Execution disabled
-                               |
-                         Broker adapter
+                               +------> Notification outbox
+                                            |
+                                    Deferred delivery
+
+                     Execution remains disabled
       ^
 MarketRules + calendar + fees + currency + corporate actions
 ```
@@ -331,3 +332,33 @@ V0.7.1 hardens the boundary before any V0.8 work:
   ResearchReport, ValidationReport, PortfolioProposal, and RiskAssessment.
   Notification code must not import Execution, Order, Broker, Trade, or Fill
   concepts.
+
+## V0.8 Notification Engine
+
+V0.8 adds research-information delivery without changing execution boundaries:
+
+```text
+ResearchReport / ValidationReport / PortfolioProposal / RiskAssessment
+                               |
+                    Artifact-specific renderer
+                               |
+               NotificationRecord + deterministic dedup key
+                               |
+                       SQLite notification_outbox
+                               |
+                     Deferred dispatcher claim
+                               |
+                  Telegram / WeChat / Email channel
+                               |
+                 notification_deliveries audit history
+```
+
+`disabled` mode produces no records. `preview` persists rendered records that
+cannot be dispatched. `enabled` persists pending records; only the separate
+dispatcher may claim and deliver them. Channels receive `NotificationMessage`
+objects and never receive domain artifacts directly.
+
+The dedup key is derived from artifact hash, channel, and recipient. Provider
+credentials are read from environment variables only and never enter rendered
+content, SQLite, or delivery errors. Every message contains the mandatory
+research-information disclaimer. See `docs/notification-engine.md`.
