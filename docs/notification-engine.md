@@ -23,6 +23,8 @@ Artifact -> Renderer -> NotificationRecord -> SQLite outbox
                                   NotificationMessage -> Channel
                                                 |
                                       DeliveryRecord audit
+                                                |
+                                  terminal failure -> dead letter
 ```
 
 Generation and delivery are separate operations. `NotificationService` renders
@@ -56,15 +58,26 @@ new notification record.
 dispatch state, attempt counters, and safe error codes.
 
 `notification_deliveries` stores each delivery attempt and provider receipt.
-Neither table contains provider tokens, passwords, webhook URLs, or SMTP
-credentials.
+`notification_dead_letters` stores terminal failure metadata and references the
+outbox through a foreign key. These tables contain no credential columns.
+
+## Lease And Crash Recovery
+
+Every dispatch claim has a finite lease. A later dispatcher recovers expired
+claims after a process crash. Recoverable claims return to retry without hiding
+the failed attempt; exhausted claims become dead letters. This gives at-least-once
+delivery, not exactly-once delivery. Providers may still need idempotency keys or
+reconciliation if a process crashes after an external send succeeds but before
+the local receipt commits.
 
 ## Security
 
 Telegram, WeChat, and Email adapters read credentials only when sending and
 only from environment variables. Provider exceptions are reduced to exception
-class names before persistence. Rendered text applies sensitive-assignment
-redaction and always includes:
+class names before persistence. Domain, repository, and low-level SQLite entry
+points reject assignments containing `token`, `api_key`, `secret`, `password`,
+or `webhook_url`. Rendered text applies sensitive-assignment redaction and always
+includes:
 
 ```text
 This is research information only.

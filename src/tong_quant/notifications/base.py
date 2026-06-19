@@ -2,10 +2,12 @@ from datetime import datetime
 from typing import Protocol
 
 from tong_quant.notifications.models import (
+    DeadLetterRecord,
     DeliveryReceipt,
     DeliveryRecord,
     NotificationMessage,
     NotificationRecord,
+    OutboxRecoverySummary,
 )
 
 
@@ -27,7 +29,10 @@ class NotificationOutboxRepository(Protocol):
         notification_id: str,
         *,
         claimed_at: datetime,
+        lease_expires_at: datetime,
     ) -> NotificationRecord | None: ...
+
+    def recover_orphaned(self, *, as_of: datetime) -> OutboxRecoverySummary: ...
 
     def mark_delivered(
         self,
@@ -45,6 +50,8 @@ class NotificationOutboxRepository(Protocol):
     ) -> DeliveryRecord: ...
 
     def deliveries(self, notification_id: str) -> tuple[DeliveryRecord, ...]: ...
+
+    def dead_letters(self, notification_id: str) -> tuple[DeadLetterRecord, ...]: ...
 
 
 __all__ = ["NotificationChannel", "NotificationOutboxRepository"]

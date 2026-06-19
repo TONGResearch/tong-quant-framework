@@ -131,6 +131,8 @@ stress_loss_limit = 0.12
 mode = "disabled"
 max_attempts = 3
 batch_size = 100
+lease_timeout_seconds = 300
+retry_delay_seconds = 300
 
 [execution]
 mode = "disabled"

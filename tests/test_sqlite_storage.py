@@ -1,8 +1,10 @@
+import sqlite3
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
-from tong_quant.data.storage.sqlite import SQLiteStore
+from tong_quant.data.storage.migrations import MIGRATION_HEAD
+from tong_quant.data.storage.sqlite import SCHEMA, SQLiteStore
 from tong_quant.domain.enums import (
     AssetType,
     AvailabilityPrecision,
@@ -58,8 +60,16 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("portfolio_constraints") == 0
     assert store.table_count("notification_outbox") == 0
     assert store.table_count("notification_deliveries") == 0
-    assert store.table_count("schema_metadata") == 1
+    assert store.table_count("notification_dead_letters") == 0
+    assert store.table_count("schema_metadata") == 2
+    assert store.table_count("schema_migrations") == 1
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
+    assert store.migration_head() == MIGRATION_HEAD
+    with sqlite3.connect(store.path) as connection:
+        dead_letter_foreign_keys = connection.execute(
+            "PRAGMA foreign_key_list(notification_dead_letters)"
+        ).fetchall()
+    assert any(row[2] == "notification_outbox" for row in dead_letter_foreign_keys)
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0
@@ -73,6 +83,65 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("validation_accuracy_history") == 0
     assert store.table_count("validation_integrity_checks") == 0
     assert store.table_count("validation_portfolio_risk") == 0
+
+
+def test_sqlite_transaction_rolls_back_multi_step_writes(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "test.sqlite3")
+    store.initialize()
+    instrument = Instrument(
+        symbol="600000",
+        market=Market.CHINA_A,
+        name="Synthetic Equity",
+        asset_type=AssetType.EQUITY,
+        available_at=datetime(2026, 1, 2, tzinfo=UTC),
+        source="test",
+    )
+
+    try:
+        with store.transaction():
+            store.upsert_instruments((instrument,))
+            raise RuntimeError("synthetic rollback")
+    except RuntimeError:
+        pass
+
+    assert store.table_count("instruments") == 0
+
+
+def test_initialize_migrates_pre_ledger_database(tmp_path: Path) -> None:
+    path = tmp_path / "legacy.sqlite3"
+    with sqlite3.connect(path) as connection:
+        connection.executescript(SCHEMA)
+
+    store = SQLiteStore(path)
+    store.initialize()
+
+    with sqlite3.connect(path) as connection:
+        outbox_columns = {
+            str(row[1])
+            for row in connection.execute(
+                "PRAGMA table_info(notification_outbox)"
+            ).fetchall()
+        }
+    assert {"lease_expires_at", "dead_lettered_at"} <= outbox_columns
+    assert store.migration_head() == MIGRATION_HEAD
+
+
+def test_migration_checksum_mismatch_fails_closed(tmp_path: Path) -> None:
+    path = tmp_path / "test.sqlite3"
+    store = SQLiteStore(path)
+    store.initialize()
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE schema_migrations SET checksum = 'tampered' WHERE migration_id = ?",
+            (MIGRATION_HEAD,),
+        )
+
+    try:
+        store.initialize()
+    except RuntimeError as error:
+        assert "checksum mismatch" in str(error)
+    else:
+        raise AssertionError("tampered migration checksum must fail closed")
 
 
 def test_investment_assessment_tables_store_status_and_score(tmp_path: Path) -> None:

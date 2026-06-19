@@ -28,8 +28,8 @@ V0.6.2 update: selected AKShare fundamentals, ST/suspended snapshots,
 delistings, index membership, and corporate-action rows now populate the
 existing PIT structures with ingestion batches, raw hashes, trust levels,
 availability precision, provider limitations, and readiness assessments.
-Provider-backed completeness remains partial and must be quantified before
-historical replay.
+Provider-backed completeness remains partial and must constrain ReplayConfidence
+and every historical interpretation.
 
 ## Milestone 1.5: Market Regime Engine
 
@@ -162,18 +162,24 @@ Status: implemented as a research-information system. It does not implement
 Paper Trading, execution, broker connectivity, orders, fills, trades, or auto
 rebalancing.
 
-## Milestone 4: Paper Trading
+Engineering stabilization adds expiring dispatch leases, orphan recovery,
+persistent dead letters, repository-level credential rejection, ordered database
+migrations, and atomic Research/Validation final writes. See
+`engineering-stabilization-review.md`.
 
-- Paper simulation boundary
-- PortfolioProposal and RiskAssessment consumption
-- Approval and decision journal linkage
-- Market-rule and calendar-aware simulation
-- Research notification review path
+## Reserved Review: Paper Trading Architecture
+
+- Review hypothetical-ledger ownership and isolation.
+- Review PortfolioProposal and RiskAssessment consumption.
+- Review approval and Decision Journal linkage.
+- Review market rules, calendars, fees, slippage, suspensions, and partial fills.
+- Define evidence gates without implementing a simulator.
 
 Entry condition: V0.8 notification boundaries remain isolated and execution
 remains disabled by default.
 
-Exit: stable paper simulation with no live credentials.
+Status: design review only after stabilization evidence. No Paper Trading
+implementation is approved.
 
 ## Deferred
 

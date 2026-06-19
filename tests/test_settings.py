@@ -27,6 +27,8 @@ def test_default_configuration_is_safe() -> None:
     assert settings.notifications.mode == "disabled"
     assert settings.notifications.max_attempts == 3
     assert settings.notifications.batch_size == 100
+    assert settings.notifications.lease_timeout_seconds == 300
+    assert settings.notifications.retry_delay_seconds == 300
     assert settings.validation.enabled is True
     assert settings.validation.splits.embargo_days == 20
     assert settings.validation.portfolio.maximum_category_weight == 0.35

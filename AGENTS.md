@@ -131,9 +131,20 @@ validation, risk management, and controlled execution.
   must not consume Order, Trade, Broker, Fill, or Execution objects.
 - Notification mode defaults to `disabled`. Generation writes to the SQLite
   outbox; delivery must occur later through the dispatcher.
+- Notification dispatch claims must use finite leases. Expired claims must be
+  recovered or dead-lettered; never leave `dispatching` records permanently
+  orphaned.
 - Channel credentials must come from environment variables and must never be
   persisted, logged, rendered, or placed in tests.
+- Credential-like assignments must be rejected at domain, repository, and
+  low-level persistence boundaries.
 - Every notification must carry the mandatory research-only disclaimer.
+- Database schema changes must use ordered checksum-verified migrations. Do not
+  update schema metadata without completing the migration.
+- Multi-step final Research and Validation writes must use one transaction
+  boundary.
+- `docs/data-trust-matrix.md` is authoritative for AKShare PIT suitability. Do
+  not promote a dataset without new provenance and coverage evidence.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,

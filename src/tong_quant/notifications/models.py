@@ -39,6 +39,7 @@ class NotificationStatus(StrEnum):
     RETRY = "retry"
     DELIVERED = "delivered"
     FAILED = "failed"
+    DEAD_LETTER = "dead_letter"
 
 
 class DeliveryStatus(StrEnum):
@@ -113,12 +114,18 @@ class NotificationRecord:
     updated_at: datetime
     next_attempt_at: datetime | None = None
     last_error_code: str = ""
+    lease_expires_at: datetime | None = None
+    dead_lettered_at: datetime | None = None
 
     def __post_init__(self) -> None:
         require_timezone(self.created_at, "notification created_at")
         require_timezone(self.updated_at, "notification updated_at")
         if self.next_attempt_at is not None:
             require_timezone(self.next_attempt_at, "notification next_attempt_at")
+        if self.lease_expires_at is not None:
+            require_timezone(self.lease_expires_at, "notification lease_expires_at")
+        if self.dead_lettered_at is not None:
+            require_timezone(self.dead_lettered_at, "notification dead_lettered_at")
         values = (
             self.notification_id,
             self.channel,
@@ -135,6 +142,8 @@ class NotificationRecord:
             raise ValueError("notification record must contain the research disclaimer")
         if contains_sensitive_assignment(f"{self.subject}\n{self.body}"):
             raise ValueError("notification record contains an unredacted sensitive value")
+        if contains_sensitive_assignment(self.last_error_code):
+            raise ValueError("notification error contains credential-like data")
         if len(self.dedup_key) != 64:
             raise ValueError("dedup_key must be a SHA-256 digest")
         if self.max_attempts <= 0 or not 0 <= self.attempt_count <= self.max_attempts:
@@ -179,6 +188,8 @@ class DeliveryReceipt:
         require_timezone(self.delivered_at, "notification delivered_at")
         if not self.provider_message_id.strip():
             raise ValueError("delivery receipt requires provider_message_id")
+        if contains_sensitive_assignment(self.provider_message_id):
+            raise ValueError("provider message id contains credential-like data")
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,6 +215,48 @@ class DeliveryRecord:
             raise ValueError("delivered notification requires provider message id")
         if self.status is DeliveryStatus.FAILED and not self.error_code:
             raise ValueError("failed notification requires error code")
+        if contains_sensitive_assignment(self.provider_message_id):
+            raise ValueError("provider message id contains credential-like data")
+        if contains_sensitive_assignment(self.error_code):
+            raise ValueError("delivery error contains credential-like data")
+
+
+@dataclass(frozen=True, slots=True)
+class DeadLetterRecord:
+    dead_letter_id: str
+    notification_id: str
+    final_attempt_number: int
+    error_code: str
+    reason: str
+    dead_lettered_at: datetime
+
+    def __post_init__(self) -> None:
+        require_timezone(self.dead_lettered_at, "notification dead_lettered_at")
+        if self.final_attempt_number <= 0:
+            raise ValueError("dead letter attempt number must be positive")
+        values = (
+            self.dead_letter_id,
+            self.notification_id,
+            self.error_code,
+            self.reason,
+        )
+        if any(not value.strip() for value in values):
+            raise ValueError("dead letter fields must not be empty")
+        if contains_sensitive_assignment(f"{self.error_code}\n{self.reason}"):
+            raise ValueError("dead letter contains credential-like data")
+
+
+@dataclass(frozen=True, slots=True)
+class OutboxRecoverySummary:
+    recovered: int
+    retried: int
+    dead_lettered: int
+
+    def __post_init__(self) -> None:
+        if min(self.recovered, self.retried, self.dead_lettered) < 0:
+            raise ValueError("recovery counters must not be negative")
+        if self.recovered != self.retried + self.dead_lettered:
+            raise ValueError("recovery counters are inconsistent")
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,10 +265,13 @@ class DispatchSummary:
     delivered: int
     failed: int
     deferred: int
+    recovered: int = 0
+    dead_lettered: int = 0
 
 
 __all__ = [
     "ArtifactReference",
+    "DeadLetterRecord",
     "DeliveryReceipt",
     "DeliveryRecord",
     "DeliveryStatus",
@@ -228,5 +284,6 @@ __all__ = [
     "NotificationRecord",
     "NotificationStatus",
     "NotificationTarget",
+    "OutboxRecoverySummary",
     "RESEARCH_DISCLAIMER",
 ]

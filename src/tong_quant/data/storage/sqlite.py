@@ -1,13 +1,17 @@
 import json
 import sqlite3
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
+from contextlib import AbstractContextManager, contextmanager
+from contextvars import ContextVar
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
+from types import TracebackType
 from typing import cast
 from uuid import uuid4
 
+from tong_quant.core.security import reject_sensitive_persistence
 from tong_quant.data.models import (
     DataAvailabilityWarning,
     IngestionBatch,
@@ -15,6 +19,7 @@ from tong_quant.data.models import (
     ProviderLimitation,
     RawDatasetFingerprint,
 )
+from tong_quant.data.storage.migrations import MIGRATION_HEAD, run_migrations
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
@@ -807,14 +812,43 @@ CREATE TABLE IF NOT EXISTS validation_portfolio_risk (
 """
 
 
+class _ConnectionScope(AbstractContextManager[sqlite3.Connection]):
+    def __init__(self, connection: sqlite3.Connection, *, owns_connection: bool) -> None:
+        self._connection = connection
+        self._owns_connection = owns_connection
+
+    def __enter__(self) -> sqlite3.Connection:
+        return self._connection
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if not self._owns_connection:
+            return
+        try:
+            if exc_type is None:
+                self._connection.commit()
+            else:
+                self._connection.rollback()
+        finally:
+            self._connection.close()
+
+
 class SQLiteStore:
     def __init__(self, path: Path) -> None:
         self.path = path
+        self._transaction_connection: ContextVar[sqlite3.Connection | None] = (
+            ContextVar(f"sqlite_transaction_{id(self)}", default=None)
+        )
 
     def initialize(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             connection.executescript(SCHEMA)
+            run_migrations(connection)
             connection.execute(
                 """
                 INSERT INTO schema_metadata (key, value, updated_at)
@@ -825,6 +859,33 @@ class SQLiteStore:
                 """,
                 (SCHEMA_VERSION, _datetime_text(datetime.now(UTC))),
             )
+            connection.execute(
+                """
+                INSERT INTO schema_metadata (key, value, updated_at)
+                VALUES ('migration_head', ?, ?)
+                ON CONFLICT (key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                (MIGRATION_HEAD, _datetime_text(datetime.now(UTC))),
+            )
+
+    @contextmanager
+    def transaction(self) -> Iterator["SQLiteStore"]:
+        if self._transaction_connection.get() is not None:
+            raise RuntimeError("nested SQLiteStore transactions are not supported")
+        connection = self._new_connection()
+        token = self._transaction_connection.set(connection)
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            yield self
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            self._transaction_connection.reset(token)
+            connection.close()
 
     def upsert_instruments(self, instruments: Iterable[Instrument]) -> int:
         rows = []
@@ -2450,6 +2511,14 @@ class SQLiteStore:
         updated_at: datetime,
         last_error_code: str,
     ) -> None:
+        reject_sensitive_persistence(
+            {
+                "recipient": recipient,
+                "subject": subject,
+                "body": body,
+                "last_error_code": last_error_code,
+            }
+        )
         with self._connect() as connection:
             connection.execute(
                 """
@@ -2528,8 +2597,12 @@ class SQLiteStore:
         notification_id: str,
         *,
         claimed_at: datetime,
+        lease_expires_at: datetime,
     ) -> sqlite3.Row | None:
         self._require_aware(claimed_at)
+        self._require_aware(lease_expires_at)
+        if lease_expires_at <= claimed_at:
+            raise ValueError("notification lease must expire after it is claimed")
         with self._connect() as connection:
             updated = connection.execute(
                 """
@@ -2537,12 +2610,17 @@ class SQLiteStore:
                 SET status = 'dispatching',
                     attempt_count = attempt_count + 1,
                     updated_at = ?,
-                    next_attempt_at = NULL
+                    next_attempt_at = NULL,
+                    lease_expires_at = ?
                 WHERE notification_id = ?
                   AND status IN ('pending', 'retry')
                   AND attempt_count < max_attempts
                 """,
-                (_datetime_text(claimed_at), notification_id),
+                (
+                    _datetime_text(claimed_at),
+                    _datetime_text(lease_expires_at),
+                    notification_id,
+                ),
             )
             if updated.rowcount != 1:
                 return None
@@ -2551,6 +2629,63 @@ class SQLiteStore:
                 (notification_id,),
             ).fetchone()
         return cast(sqlite3.Row | None, row)
+
+    def recover_notification_outbox(self, *, as_of: datetime) -> tuple[int, int]:
+        self._require_aware(as_of)
+        recovered = dead_lettered = 0
+        as_of_text = _datetime_text(as_of)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT notification_id, attempt_count, max_attempts
+                FROM notification_outbox
+                WHERE status = 'dispatching'
+                  AND lease_expires_at IS NOT NULL
+                  AND lease_expires_at <= ?
+                ORDER BY lease_expires_at, notification_id
+                """,
+                (as_of_text,),
+            ).fetchall()
+            for row in rows:
+                notification_id = str(row["notification_id"])
+                attempts = int(row["attempt_count"])
+                if attempts < int(row["max_attempts"]):
+                    updated = connection.execute(
+                        """
+                        UPDATE notification_outbox
+                        SET status = 'retry', next_attempt_at = ?, updated_at = ?,
+                            lease_expires_at = NULL,
+                            last_error_code = 'LeaseExpired'
+                        WHERE notification_id = ? AND status = 'dispatching'
+                        """,
+                        (as_of_text, as_of_text, notification_id),
+                    )
+                    if updated.rowcount == 1:
+                        recovered += 1
+                    continue
+                updated = connection.execute(
+                    """
+                    UPDATE notification_outbox
+                    SET status = 'dead_letter', next_attempt_at = NULL,
+                        updated_at = ?, lease_expires_at = NULL,
+                        dead_lettered_at = ?, last_error_code = 'LeaseExpired'
+                    WHERE notification_id = ? AND status = 'dispatching'
+                    """,
+                    (as_of_text, as_of_text, notification_id),
+                )
+                if updated.rowcount != 1:
+                    continue
+                _insert_dead_letter(
+                    connection,
+                    notification_id=notification_id,
+                    final_attempt_number=attempts,
+                    error_code="LeaseExpired",
+                    reason="lease_expired_after_final_attempt",
+                    dead_lettered_at=as_of,
+                )
+                recovered += 1
+                dead_lettered += 1
+        return recovered, dead_lettered
 
     def complete_notification_delivery(
         self,
@@ -2563,12 +2698,19 @@ class SQLiteStore:
         delivered_at: datetime,
         provider_message_id: str,
     ) -> sqlite3.Row:
+        reject_sensitive_persistence(
+            {
+                "recipient": recipient,
+                "provider_message_id": provider_message_id,
+            }
+        )
         delivery_id = str(uuid4())
         with self._connect() as connection:
             updated = connection.execute(
                 """
                 UPDATE notification_outbox
-                SET status = 'delivered', updated_at = ?, last_error_code = ''
+                SET status = 'delivered', updated_at = ?, last_error_code = '',
+                    lease_expires_at = NULL
                 WHERE notification_id = ? AND status = 'dispatching'
                 """,
                 (_datetime_text(delivered_at), notification_id),
@@ -2613,8 +2755,11 @@ class SQLiteStore:
         error_code: str,
         retry_at: datetime | None,
     ) -> sqlite3.Row:
+        reject_sensitive_persistence(
+            {"recipient": recipient, "error_code": error_code}
+        )
         delivery_id = str(uuid4())
-        next_status = "retry" if retry_at is not None else "failed"
+        next_status = "retry" if retry_at is not None else "dead_letter"
         next_attempt_at = None if retry_at is None else _datetime_text(retry_at)
         safe_code = error_code[:120]
         with self._connect() as connection:
@@ -2622,7 +2767,8 @@ class SQLiteStore:
                 """
                 UPDATE notification_outbox
                 SET status = ?, updated_at = ?, next_attempt_at = ?,
-                    last_error_code = ?
+                    last_error_code = ?, lease_expires_at = NULL,
+                    dead_lettered_at = ?
                 WHERE notification_id = ? AND status = 'dispatching'
                 """,
                 (
@@ -2630,6 +2776,7 @@ class SQLiteStore:
                     _datetime_text(attempted_at),
                     next_attempt_at,
                     safe_code,
+                    None if retry_at is not None else _datetime_text(attempted_at),
                     notification_id,
                 ),
             )
@@ -2653,6 +2800,15 @@ class SQLiteStore:
                     safe_code,
                 ),
             )
+            if retry_at is None:
+                _insert_dead_letter(
+                    connection,
+                    notification_id=notification_id,
+                    final_attempt_number=attempt_number,
+                    error_code=safe_code,
+                    reason="permanent_delivery_failure",
+                    dead_lettered_at=attempted_at,
+                )
             row = connection.execute(
                 "SELECT * FROM notification_deliveries WHERE delivery_id = ?",
                 (delivery_id,),
@@ -2669,6 +2825,22 @@ class SQLiteStore:
                 FROM notification_deliveries
                 WHERE notification_id = ?
                 ORDER BY attempt_number, attempted_at
+                """,
+                (notification_id,),
+            ).fetchall()
+        return list(rows)
+
+    def notification_dead_letter_rows(
+        self,
+        notification_id: str,
+    ) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM notification_dead_letters
+                WHERE notification_id = ?
+                ORDER BY dead_lettered_at, dead_letter_id
                 """,
                 (notification_id,),
             ).fetchall()
@@ -3382,6 +3554,15 @@ class SQLiteStore:
             raise ValueError("database schema version is unavailable")
         return str(row["value"])
 
+    def migration_head(self) -> str:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value FROM schema_metadata WHERE key = 'migration_head'"
+            ).fetchone()
+        if row is None:
+            raise ValueError("database migration head is unavailable")
+        return str(row["value"])
+
     def latest_screening_score(
         self,
         instrument: Instrument,
@@ -3557,7 +3738,9 @@ class SQLiteStore:
             "portfolio_constraints",
             "notification_outbox",
             "notification_deliveries",
+            "notification_dead_letters",
             "schema_metadata",
+            "schema_migrations",
             "validation_runs",
             "validation_oos_usage",
             "validation_splits",
@@ -3577,7 +3760,13 @@ class SQLiteStore:
             row = connection.execute(f"SELECT COUNT(*) AS count FROM {table}").fetchone()
         return int(row["count"])
 
-    def _connect(self) -> sqlite3.Connection:
+    def _connect(self) -> _ConnectionScope:
+        active = self._transaction_connection.get()
+        if active is not None:
+            return _ConnectionScope(active, owns_connection=False)
+        return _ConnectionScope(self._new_connection(), owns_connection=True)
+
+    def _new_connection(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
@@ -3588,6 +3777,35 @@ class SQLiteStore:
     def _require_aware(value: datetime) -> None:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("as_of timestamps must be timezone-aware")
+
+
+def _insert_dead_letter(
+    connection: sqlite3.Connection,
+    *,
+    notification_id: str,
+    final_attempt_number: int,
+    error_code: str,
+    reason: str,
+    dead_lettered_at: datetime,
+) -> None:
+    reject_sensitive_persistence({"error_code": error_code, "reason": reason})
+    connection.execute(
+        """
+        INSERT INTO notification_dead_letters (
+            dead_letter_id, notification_id, final_attempt_number,
+            error_code, reason, dead_lettered_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (notification_id) DO NOTHING
+        """,
+        (
+            str(uuid4()),
+            notification_id,
+            final_attempt_number,
+            error_code,
+            reason,
+            _datetime_text(dead_lettered_at),
+        ),
+    )
 
 
 def instrument_id(instrument: Instrument) -> str:

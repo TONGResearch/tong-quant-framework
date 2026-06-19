@@ -37,6 +37,10 @@ class SQLiteValidationRepository:
         return run_id
 
     def save_run(self, run: ValidationRun) -> None:
+        with self.store.transaction():
+            self._save_run(run)
+
+    def _save_run(self, run: ValidationRun) -> None:
         request = run.request
         report = run.report
         for definition in request.outcome_definitions:

@@ -140,6 +140,8 @@ class NotificationSettings:
     mode: str
     max_attempts: int
     batch_size: int
+    lease_timeout_seconds: int
+    retry_delay_seconds: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -318,6 +320,10 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("notification max_attempts must be positive")
     if settings.notifications.batch_size <= 0:
         raise ValueError("notification batch_size must be positive")
+    if settings.notifications.lease_timeout_seconds <= 0:
+        raise ValueError("notification lease_timeout_seconds must be positive")
+    if settings.notifications.retry_delay_seconds <= 0:
+        raise ValueError("notification retry_delay_seconds must be positive")
     if settings.data.cache_ttl_seconds < 0:
         raise ValueError("cache_ttl_seconds cannot be negative")
     for regime_model in (

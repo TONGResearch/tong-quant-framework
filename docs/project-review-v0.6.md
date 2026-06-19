@@ -1,5 +1,10 @@
 # Project Review After V0.6
 
+> Historical review: this document records the state immediately after V0.6.
+> HistoricalReplaySource was implemented in V0.6.3, Portfolio/Risk in V0.7,
+> architecture hardening in V0.7.1, and Notification in V0.8. Current status and
+> risks live in `architecture.md` and `engineering-stabilization-review.md`.
+
 ## Resolved During V0.6
 
 ### Provider-adjusted price leakage
@@ -35,11 +40,12 @@ carry an interpretable Investment Score.
 
 ## Priority 1
 
-### Historical data contracts exist, but ingestion is incomplete
+### Historical data ingestion remained incomplete
 
-SQLite can store fundamental revisions, security status, and universe
-membership, but the active AKShare pipeline does not populate those histories.
-Current universe ingestion only stores instrument snapshots.
+V0.6.2 later added conservative population for fundamentals, statuses,
+memberships, and corporate actions. The original concern remains only in a more
+precise form: coverage and publication timing are provider-limited and are not
+complete historical truth. See `data-trust-matrix.md`.
 
 Impact: full historical replay and survivorship-safe validation cannot yet be
 constructed automatically.
@@ -48,11 +54,10 @@ Recommended next step: add versioned ingestion adapters for fundamentals,
 security lifecycle, and historical universe membership before trusting broad
 historical results.
 
-### Historical replay is an interface, not an implemented pipeline
+### Historical replay was not yet implemented
 
-V0.6 validates supplied `ValidationSample` objects and defines a
-`HistoricalReplaySource`, but no repository currently reconstructs samples from
-stored Discovery, Screening, Research, market, and outcome records.
+Resolved in V0.6.3. The replay builder now reconstructs point-in-time samples,
+manifests, confidence, warnings, and Validation requests from stored records.
 
 Impact: validation is reproducible after samples are assembled, but assembling
 the samples still requires an external application layer.

@@ -1,4 +1,8 @@
-# V0.1 Architecture
+# Tong Quant Architecture Overview
+
+This is the canonical current architecture for the V0.8 research platform and
+its engineering-stabilization work. Milestone documents provide detail but must
+not override the boundaries in this document.
 
 ## Design Decision
 
@@ -65,8 +69,8 @@ Only the execution package may turn an approved Signal into an Order.
 
 ### Validation
 
-Validation converts signals into simulated portfolio outcomes using the same
-market rules, costs, calendars, and risk checks intended for paper/live modes.
+Validation audits point-in-time Research and decision outcomes. It does not
+simulate orders, fills, Paper Trading, or live execution.
 
 ### Risk and Portfolio
 
@@ -166,8 +170,9 @@ PITReadinessAssessment
 `AvailabilityPrecision` and `DataTrustLevel` are separate. A record can be
 available only at retrieval time while still carrying useful medium-trust
 content, or it can have an exact date with low confidence in completeness.
-HistoricalReplaySource must not begin until readiness assessments show which
-datasets are replay-capable.
+HistoricalReplaySource consumes readiness assessments and preserves incomplete
+or low-trust reconstruction with warnings; readiness never silently upgrades
+provider data.
 
 ## Future Asset Classes
 
@@ -362,3 +367,24 @@ The dedup key is derived from artifact hash, channel, and recipient. Provider
 credentials are read from environment variables only and never enter rendered
 content, SQLite, or delivery errors. Every message contains the mandatory
 research-information disclaimer. See `docs/notification-engine.md`.
+
+## Engineering Stabilization
+
+The hardened Notification outbox uses expiring claims. Orphaned dispatching
+records return to retry when attempts remain and move to a persistent dead-letter
+record after the final attempt. Delivery remains at-least-once: a process crash
+after a provider accepts a message but before the receipt commits can cause a
+duplicate, so future channels need provider idempotency or reconciliation.
+
+SQLite uses an ordered checksum-verified migration ledger. Research and
+Validation final-run writes use one transaction boundary. Existing analytical
+foreign keys will be added only through staged table rebuilds after orphan
+audits; this phase does not perform a global schema rewrite.
+
+The authoritative AKShare quality classifications are in
+`docs/data-trust-matrix.md`. Current snapshots and provider-limited histories
+must not be treated as stronger evidence than that matrix allows.
+
+Execution remains disabled. No Paper Trading, Broker integration, Order, Fill,
+automatic rebalancing, or asset-allocation implementation is part of this
+stabilization phase.

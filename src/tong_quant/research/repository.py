@@ -29,6 +29,10 @@ class SQLiteResearchRepository:
         return run_id
 
     def save_run(self, run: ResearchRun) -> None:
+        with self.store.transaction():
+            self._save_run(run)
+
+    def _save_run(self, run: ResearchRun) -> None:
         all_evidence = {
             evidence.evidence_id: evidence
             for evidence in (

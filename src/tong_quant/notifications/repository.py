@@ -2,9 +2,11 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
+from tong_quant.core.security import reject_sensitive_persistence
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.notifications.models import (
     ArtifactReference,
+    DeadLetterRecord,
     DeliveryReceipt,
     DeliveryRecord,
     DeliveryStatus,
@@ -12,6 +14,7 @@ from tong_quant.notifications.models import (
     NotificationPriority,
     NotificationRecord,
     NotificationStatus,
+    OutboxRecoverySummary,
 )
 
 
@@ -20,6 +23,14 @@ class SQLiteNotificationRepository:
     store: SQLiteStore
 
     def enqueue(self, record: NotificationRecord) -> NotificationRecord:
+        reject_sensitive_persistence(
+            {
+                "recipient": record.recipient,
+                "subject": record.subject,
+                "body": record.body,
+                "last_error_code": record.last_error_code,
+            }
+        )
         self.store.save_notification_outbox(
             notification_id=record.notification_id,
             artifact_type=record.reference.artifact_type.value,
@@ -60,18 +71,31 @@ class SQLiteNotificationRepository:
         notification_id: str,
         *,
         claimed_at: datetime,
+        lease_expires_at: datetime,
     ) -> NotificationRecord | None:
         row = self.store.claim_notification_outbox(
             notification_id,
             claimed_at=claimed_at,
+            lease_expires_at=lease_expires_at,
         )
         return None if row is None else _notification_from_row(row)
+
+    def recover_orphaned(self, *, as_of: datetime) -> OutboxRecoverySummary:
+        recovered, dead_lettered = self.store.recover_notification_outbox(as_of=as_of)
+        return OutboxRecoverySummary(
+            recovered=recovered,
+            retried=recovered - dead_lettered,
+            dead_lettered=dead_lettered,
+        )
 
     def mark_delivered(
         self,
         record: NotificationRecord,
         receipt: DeliveryReceipt,
     ) -> DeliveryRecord:
+        reject_sensitive_persistence(
+            {"provider_message_id": receipt.provider_message_id}
+        )
         row = self.store.complete_notification_delivery(
             notification_id=record.notification_id,
             channel=record.channel,
@@ -91,6 +115,7 @@ class SQLiteNotificationRepository:
         error_code: str,
         retry_at: datetime | None,
     ) -> DeliveryRecord:
+        reject_sensitive_persistence({"error_code": error_code})
         row = self.store.fail_notification_delivery(
             notification_id=record.notification_id,
             channel=record.channel,
@@ -105,6 +130,10 @@ class SQLiteNotificationRepository:
     def deliveries(self, notification_id: str) -> tuple[DeliveryRecord, ...]:
         rows = self.store.notification_delivery_rows(notification_id)
         return tuple(_delivery_from_row(row) for row in rows)
+
+    def dead_letters(self, notification_id: str) -> tuple[DeadLetterRecord, ...]:
+        rows = self.store.notification_dead_letter_rows(notification_id)
+        return tuple(_dead_letter_from_row(row) for row in rows)
 
 
 def _notification_from_row(row: sqlite3.Row) -> NotificationRecord:
@@ -135,6 +164,16 @@ def _notification_from_row(row: sqlite3.Row) -> NotificationRecord:
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         last_error_code=row["last_error_code"],
+        lease_expires_at=(
+            None
+            if row["lease_expires_at"] is None
+            else datetime.fromisoformat(row["lease_expires_at"])
+        ),
+        dead_lettered_at=(
+            None
+            if row["dead_lettered_at"] is None
+            else datetime.fromisoformat(row["dead_lettered_at"])
+        ),
     )
 
 
@@ -154,6 +193,17 @@ def _delivery_from_row(row: sqlite3.Row) -> DeliveryRecord:
         ),
         provider_message_id=row["provider_message_id"],
         error_code=row["error_code"],
+    )
+
+
+def _dead_letter_from_row(row: sqlite3.Row) -> DeadLetterRecord:
+    return DeadLetterRecord(
+        dead_letter_id=row["dead_letter_id"],
+        notification_id=row["notification_id"],
+        final_attempt_number=int(row["final_attempt_number"]),
+        error_code=row["error_code"],
+        reason=row["reason"],
+        dead_lettered_at=datetime.fromisoformat(row["dead_lettered_at"]),
     )
 
 

@@ -109,7 +109,9 @@ historical replay. It records:
 - Warnings
 - `ready_for_historical_replay`
 
-This is a readiness gate only. It does not implement HistoricalReplaySource.
+HistoricalReplaySource is implemented and consumes this readiness assessment.
+Low readiness lowers replay confidence and preserves warnings; it does not
+silently discard the sample or reinterpret the dataset as PIT-safe.
 
 ## SQLite Tables
 
@@ -132,6 +134,10 @@ This is a readiness gate only. It does not implement HistoricalReplaySource.
 - `risk_assessments`
 - `portfolio_exposures`
 - `portfolio_constraints`
+- `notification_outbox`
+- `notification_deliveries`
+- `notification_dead_letters`
+- `schema_migrations`
 - `signals`
 - `screening_results`
 
@@ -156,3 +162,7 @@ default expiry is 24 hours and is configurable in `config/default.toml`.
 - Exact exchange holidays beyond the ingested source are not synthesized.
 - Point-in-time-safe corporate-action and adjustment-factor ingestion is not
   implemented. Strict mode therefore accepts unadjusted bars only.
+
+The dataset-by-dataset classification is maintained in
+`docs/data-trust-matrix.md` and takes precedence over broad statements of
+support in this document.

@@ -1,6 +1,6 @@
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -178,6 +178,77 @@ def test_failed_delivery_records_safe_error_and_schedules_retry(tmp_path: Path) 
     assert deliveries[0].error_code == "RuntimeError"
 
 
+def test_expired_dispatch_lease_is_recovered_after_process_crash(
+    tmp_path: Path,
+) -> None:
+    _, repository = _repository(tmp_path)
+    service = NotificationService(
+        repository=repository,
+        mode=NotificationMode.ENABLED,
+        max_attempts=2,
+        clock=lambda: NOW,
+    )
+    queued = service.generate_research_report(_research_report(), (_target(),))[0]
+    claimed = repository.claim(
+        queued.notification_id,
+        claimed_at=NOW,
+        lease_expires_at=NOW + timedelta(minutes=1),
+    )
+    assert claimed is not None
+    assert claimed.status is NotificationStatus.DISPATCHING
+
+    channel = _FakeChannel()
+    summary = NotificationDispatcher(
+        repository=repository,
+        channels={channel.channel_id: channel},
+        mode=NotificationMode.ENABLED,
+        clock=lambda: NOW + timedelta(minutes=2),
+    ).dispatch_pending()
+
+    assert summary.recovered == 1
+    assert summary.attempted == 1
+    assert summary.delivered == 1
+    assert len(channel.messages) == 1
+    stored = repository.get_by_dedup_key(queued.dedup_key)
+    assert stored is not None
+    assert stored.status is NotificationStatus.DELIVERED
+    assert stored.attempt_count == 2
+
+
+def test_expired_final_lease_moves_notification_to_dead_letter(tmp_path: Path) -> None:
+    store, repository = _repository(tmp_path)
+    service = NotificationService(
+        repository=repository,
+        mode=NotificationMode.ENABLED,
+        max_attempts=1,
+        clock=lambda: NOW,
+    )
+    queued = service.generate_research_report(_research_report(), (_target(),))[0]
+    claimed = repository.claim(
+        queued.notification_id,
+        claimed_at=NOW,
+        lease_expires_at=NOW + timedelta(minutes=1),
+    )
+    assert claimed is not None
+
+    summary = NotificationDispatcher(
+        repository=repository,
+        channels={},
+        mode=NotificationMode.ENABLED,
+        clock=lambda: NOW + timedelta(minutes=2),
+    ).dispatch_pending()
+
+    assert summary.recovered == 1
+    assert summary.dead_lettered == 1
+    assert summary.attempted == 0
+    stored = repository.get_by_dedup_key(queued.dedup_key)
+    assert stored is not None
+    assert stored.status is NotificationStatus.DEAD_LETTER
+    assert store.table_count("notification_dead_letters") == 1
+    dead_letters = repository.dead_letters(queued.notification_id)
+    assert dead_letters[0].error_code == "LeaseExpired"
+
+
 def test_notification_schema_has_no_credential_columns(tmp_path: Path) -> None:
     store, _ = _repository(tmp_path)
     forbidden = ("credential", "password", "secret", "token", "webhook")
@@ -211,6 +282,50 @@ def test_webhook_url_cannot_be_persisted_as_recipient() -> None:
         NotificationTarget(channel="wechat", recipient="https://provider.invalid/hook")
 
 
+@pytest.mark.parametrize(
+    "field_name",
+    ("token", "api_key", "secret", "password", "webhook_url"),
+)
+def test_low_level_outbox_persistence_rejects_credential_assignments(
+    tmp_path: Path,
+    field_name: str,
+) -> None:
+    store, _ = _repository(tmp_path)
+    with pytest.raises(ValueError, match="credential-like data"):
+        _save_outbox_directly(
+            store,
+            body=f"{field_name}=synthetic-value\n\n{RESEARCH_DISCLAIMER}",
+        )
+
+
+def test_low_level_delivery_persistence_rejects_credential_assignment(
+    tmp_path: Path,
+) -> None:
+    store, repository = _repository(tmp_path)
+    queued = NotificationService(
+        repository=repository,
+        mode=NotificationMode.ENABLED,
+        clock=lambda: NOW,
+    ).generate_research_report(_research_report(), (_target(),))[0]
+    claimed = repository.claim(
+        queued.notification_id,
+        claimed_at=NOW,
+        lease_expires_at=NOW + timedelta(minutes=1),
+    )
+    assert claimed is not None
+
+    with pytest.raises(ValueError, match="credential-like data"):
+        store.complete_notification_delivery(
+            notification_id=claimed.notification_id,
+            channel=claimed.channel,
+            recipient=claimed.recipient,
+            attempt_number=claimed.attempt_count,
+            attempted_at=NOW,
+            delivered_at=NOW,
+            provider_message_id="api_key=synthetic-value",
+        )
+
+
 @dataclass(slots=True)
 class _FakeChannel:
     channel_id: str = "fake"
@@ -228,6 +343,31 @@ def _repository(tmp_path: Path) -> tuple[SQLiteStore, SQLiteNotificationReposito
     store = SQLiteStore(tmp_path / "notifications.sqlite3")
     store.initialize()
     return store, SQLiteNotificationRepository(store)
+
+
+def _save_outbox_directly(store: SQLiteStore, *, body: str) -> None:
+    store.save_notification_outbox(
+        notification_id="notification-direct",
+        artifact_type="research_report",
+        artifact_id="report-direct",
+        artifact_hash="a" * 64,
+        artifact_version="test",
+        artifact_occurred_at=NOW,
+        channel="fake",
+        recipient="research-desk",
+        subject="Research information",
+        body=body,
+        priority="normal",
+        template_version="test",
+        dedup_key="b" * 64,
+        status="pending",
+        attempt_count=0,
+        max_attempts=3,
+        next_attempt_at=None,
+        created_at=NOW,
+        updated_at=NOW,
+        last_error_code="",
+    )
 
 
 def _target() -> NotificationTarget:

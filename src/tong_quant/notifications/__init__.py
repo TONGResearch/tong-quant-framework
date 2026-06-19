@@ -5,6 +5,7 @@ from tong_quant.notifications.dispatcher import NotificationDispatcher
 from tong_quant.notifications.models import (
     RESEARCH_DISCLAIMER,
     ArtifactReference,
+    DeadLetterRecord,
     DeliveryReceipt,
     DeliveryRecord,
     DeliveryStatus,
@@ -17,12 +18,14 @@ from tong_quant.notifications.models import (
     NotificationRecord,
     NotificationStatus,
     NotificationTarget,
+    OutboxRecoverySummary,
 )
 from tong_quant.notifications.repository import SQLiteNotificationRepository
 from tong_quant.notifications.service import NotificationService
 
 __all__ = [
     "ArtifactReference",
+    "DeadLetterRecord",
     "DeliveryReceipt",
     "DeliveryRecord",
     "DeliveryStatus",
@@ -39,6 +42,7 @@ __all__ = [
     "NotificationService",
     "NotificationStatus",
     "NotificationTarget",
+    "OutboxRecoverySummary",
     "RESEARCH_DISCLAIMER",
     "SQLiteNotificationRepository",
 ]
