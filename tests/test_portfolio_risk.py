@@ -139,13 +139,25 @@ def test_portfolio_repository_persists_research_artifacts(tmp_path: Path) -> Non
         as_of=datetime(2026, 1, 2, tzinfo=UTC),
     )
 
-    SQLitePortfolioRepository(store).save_proposal(proposal)
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
 
     assert store.table_count("portfolio_proposals") == 1
     assert store.table_count("position_proposals") == 2
     assert store.table_count("risk_assessments") == 1
     assert store.table_count("portfolio_exposures") == 3
     assert store.table_count("portfolio_constraints") == 4
+
+    loaded = repository.get_proposal(proposal.proposal_id)
+    assert loaded is not None
+    assert loaded.proposal_id == proposal.proposal_id
+    assert len(loaded.positions) == 2
+    assert loaded.risk_assessment is not None
+    assert proposal.risk_assessment is not None
+    assert loaded.risk_assessment.assessment_id == proposal.risk_assessment.assessment_id
+    assert len(loaded.risk_assessment.scenario_results) == 4
+    assert repository.get_exposures(proposal.proposal_id)
+    assert len(repository.get_constraints(proposal.proposal_id)) == 4
 
 
 def _candidate(

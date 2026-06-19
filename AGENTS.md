@@ -123,6 +123,12 @@ validation, risk management, and controlled execution.
 - RiskAssessment may constrain or reject a PortfolioProposal, but it must not
   create orders, broker requests, fills, trades, paper-trading actions, or
   auto-rebalancing instructions.
+- Execution defaults to `disabled`. Future OrderFactory, Broker, or execution
+  entry points must be protected by ExecutionDisabledGuard and
+  ExecutionReadinessGate.
+- Notification is a research notification boundary only. It may consume
+  ResearchReport, ValidationReport, PortfolioProposal, and RiskAssessment. It
+  must not consume Order, Trade, Broker, Fill, or Execution objects.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,

@@ -40,8 +40,9 @@ from tong_quant.domain.models import (
     TradingSession,
     UniverseMembership,
 )
+from tong_quant.version import DATABASE_SCHEMA_VERSION
 
-SCHEMA_VERSION = "0.7.0"
+SCHEMA_VERSION = DATABASE_SCHEMA_VERSION
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schema_metadata (
@@ -2381,6 +2382,85 @@ class SQLiteStore:
                 ),
             )
         return constraint_id
+
+    def get_instrument_by_id(
+        self,
+        instrument_id_value: str,
+        *,
+        as_of: datetime,
+    ) -> Instrument | None:
+        market_value, asset_type_value, symbol = instrument_id_value.split(":", 2)
+        return self.get_instrument(
+            symbol,
+            Market(market_value),
+            AssetType(asset_type_value),
+            as_of=as_of,
+        )
+
+    def portfolio_proposal_row(self, proposal_id: str) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM portfolio_proposals
+                WHERE proposal_id = ?
+                """,
+                (proposal_id,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def position_proposal_rows(self, proposal_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM position_proposals
+                WHERE proposal_id = ?
+                ORDER BY asset_category, position_id
+                """,
+                (proposal_id,),
+            ).fetchall()
+        return list(rows)
+
+    def risk_assessment_row(self, proposal_id: str) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM risk_assessments
+                WHERE proposal_id = ?
+                ORDER BY assessed_at DESC
+                LIMIT 1
+                """,
+                (proposal_id,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def portfolio_exposure_rows(self, proposal_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM portfolio_exposures
+                WHERE proposal_id = ?
+                ORDER BY dimension, exposure_id
+                """,
+                (proposal_id,),
+            ).fetchall()
+        return list(rows)
+
+    def portfolio_constraint_rows(self, proposal_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM portfolio_constraints
+                WHERE proposal_id = ?
+                ORDER BY constraint_name, constraint_id
+                """,
+                (proposal_id,),
+            ).fetchall()
+        return list(rows)
 
     def complete_research_run(
         self,

@@ -3,11 +3,11 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from tong_quant.domain.enums import RiskAssessmentStatus, StressScenarioType
-from tong_quant.portfolio.models import PositionProposal
 from tong_quant.risk.models import (
     ExposureBreakdown,
     RiskAssessment,
     RiskBudget,
+    RiskPositionInput,
     StressScenario,
     StressScenarioResult,
 )
@@ -59,7 +59,7 @@ class RiskAssessmentEngine:
         self,
         *,
         proposal_id: str,
-        positions: tuple[PositionProposal, ...],
+        positions: tuple[RiskPositionInput, ...],
         risk_budget: RiskBudget,
         as_of: datetime | None = None,
     ) -> RiskAssessment:
@@ -142,21 +142,19 @@ class RiskAssessmentEngine:
 
 def _exposure(
     dimension: str,
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     maximum: float,
 ) -> ExposureBreakdown:
     exposures: dict[str, float] = {}
     for position in positions:
-        if position.asset_category.value == "cash":
+        if position.is_cash:
             key = "cash"
         elif dimension == "sector":
-            instrument = position.instrument
-            key = "unknown" if instrument is None else str(instrument.industry or "unknown")
+            key = position.sector
         elif dimension == "country":
-            instrument = position.instrument
-            key = "unknown" if instrument is None else instrument.market.value
+            key = position.country
         elif dimension == "theme":
-            key = position.expected_role
+            key = position.theme
         else:
             key = "unknown"
         exposures[key] = exposures.get(key, 0.0) + position.proposed_weight
@@ -175,29 +173,28 @@ def _exposure(
 
 
 def _concentration_risk(
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     maximum_single_position_weight: float,
 ) -> float:
     risky = [
         max(0.0, position.proposed_weight - maximum_single_position_weight)
         for position in positions
-        if position.instrument is not None
+        if not position.is_cash
     ]
     return max(risky, default=0.0)
 
 
-def _weighted_average_correlation(positions: tuple[PositionProposal, ...]) -> float:
+def _weighted_average_correlation(positions: tuple[RiskPositionInput, ...]) -> float:
     values = [
-        position.proposed_weight
-        * float(position.risk_flags[0].split("=", 1)[1])
+        position.proposed_weight * position.average_correlation
         for position in positions
-        if position.risk_flags and position.risk_flags[0].startswith("correlation=")
+        if not position.is_cash
     ]
     return sum(values)
 
 
 def _liquidity_risk(
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     minimum_liquidity_score: float,
 ) -> float:
     risks = [
@@ -205,14 +202,14 @@ def _liquidity_risk(
         * max(0.0, minimum_liquidity_score - position.liquidity_score)
         / minimum_liquidity_score
         for position in positions
-        if position.instrument is not None
+        if not position.is_cash
     ]
     return min(1.0, sum(risks))
 
 
 def _stress_result(
     scenario: StressScenario,
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     stress_loss_limit: float,
 ) -> StressScenarioResult:
     affected = _affected_weight(scenario, positions)
@@ -228,9 +225,9 @@ def _stress_result(
 
 def _affected_weight(
     scenario: StressScenario,
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
 ) -> float:
-    non_cash = tuple(position for position in positions if position.instrument is not None)
+    non_cash = tuple(position for position in positions if not position.is_cash)
     if scenario.scenario_type is StressScenarioType.BROAD_MARKET:
         return sum(position.proposed_weight for position in non_cash)
     if scenario.scenario_type is StressScenarioType.SINGLE_INSTRUMENT:
@@ -240,11 +237,9 @@ def _affected_weight(
     if scenario.scenario_type is StressScenarioType.SECTOR:
         exposures: dict[str, float] = {}
         for position in non_cash:
-            instrument = position.instrument
-            if instrument is None:
-                continue
-            sector = str(instrument.industry or "unknown")
-            exposures[sector] = exposures.get(sector, 0.0) + position.proposed_weight
+            exposures[position.sector] = (
+                exposures.get(position.sector, 0.0) + position.proposed_weight
+            )
         return max(exposures.values(), default=0.0)
     return 0.0
 
@@ -292,10 +287,10 @@ def _required_adjustments(
 
 
 def _risk_budget_adjustments(
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     risk_budget: RiskBudget,
 ) -> tuple[str, ...]:
-    non_cash = tuple(position for position in positions if position.instrument is not None)
+    non_cash = tuple(position for position in positions if not position.is_cash)
     total_risk = sum(
         position.proposed_weight * position.volatility_estimate for position in non_cash
     )
@@ -315,24 +310,26 @@ def _risk_budget_adjustments(
     return tuple(adjustments)
 
 
-def _position_key(position: PositionProposal) -> str:
-    if position.instrument is None:
+def _position_key(position: RiskPositionInput) -> str:
+    if position.is_cash:
         return "cash"
-    return position.instrument.symbol
+    if position.symbol is None:
+        return position.position_id
+    return position.symbol
 
 
 def _risk_by_dimension(
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
     dimension: str,
 ) -> dict[str, float]:
     values: dict[str, float] = {}
     for position in positions:
-        if position.instrument is None:
+        if position.is_cash:
             continue
         if dimension == "sector":
-            key = str(position.instrument.industry or "unknown")
+            key = position.sector
         elif dimension == "theme":
-            key = position.expected_role
+            key = position.theme
         else:
             key = "unknown"
         values[key] = values.get(key, 0.0) + (
@@ -360,7 +357,7 @@ def _risk_reasons(
     )
 
 
-def _risk_confidence(positions: tuple[PositionProposal, ...]) -> float:
+def _risk_confidence(positions: tuple[RiskPositionInput, ...]) -> float:
     total = sum(position.proposed_weight for position in positions)
     if total <= 0:
         return 0.0

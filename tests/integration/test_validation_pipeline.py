@@ -43,6 +43,12 @@ from tong_quant.validation.repository import SQLiteValidationRepository
 from tong_quant.validation.research_accuracy import (
     ResearchAccuracyValidationModule,
 )
+from tong_quant.version import (
+    DATABASE_SCHEMA_VERSION,
+    FRAMEWORK_VERSION,
+    RESEARCH_ENGINE_VERSION,
+    VALIDATION_ENGINE_VERSION,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -72,7 +78,9 @@ def test_validation_run_persists_reproducible_audit_chain(tmp_path: Path) -> Non
 
     run = engine.run(request)
 
-    assert run.report.reproducibility_manifest["database_schema_version"] == "0.7.0"
+    assert run.report.reproducibility_manifest[
+        "database_schema_version"
+    ] == DATABASE_SCHEMA_VERSION
     assert store.table_count("validation_runs") == 1
     assert store.table_count("validation_oos_usage") == 1
     assert store.table_count("validation_splits") >= 1
@@ -130,11 +138,11 @@ def _request(instrument: Instrument) -> ValidationRequest:
     decision_at = datetime(2025, 6, 1, tzinfo=UTC)
     snapshot = FrameworkSnapshot(
         git_commit="f7e9f903019688bcc874e7c913dcd99fb852365a",
-        framework_version="0.7.0",
+        framework_version=FRAMEWORK_VERSION,
         configuration_hash="a" * 64,
-        research_version="research-engine-v0.5",
-        validation_version="validation-engine-v0.6",
-        database_schema_version="0.7.0",
+        research_version=RESEARCH_ENGINE_VERSION,
+        validation_version=VALIDATION_ENGINE_VERSION,
+        database_schema_version=DATABASE_SCHEMA_VERSION,
         captured_at=datetime(2025, 1, 1, tzinfo=UTC),
     )
     report = _report(decision_at)

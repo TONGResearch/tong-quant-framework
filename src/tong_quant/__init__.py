@@ -1,3 +1,7 @@
 """Tong Quant Framework public package."""
 
-__version__ = "0.7.0"
+from tong_quant.version import FRAMEWORK_VERSION
+
+__version__ = FRAMEWORK_VERSION
+
+__all__ = ["__version__"]

@@ -9,10 +9,11 @@ from tong_quant.portfolio.models import (
     PortfolioProposal,
     PositionProposal,
 )
-from tong_quant.portfolio.repository import SQLitePortfolioRepository
+from tong_quant.portfolio.repository import PortfolioConstraintRecord, SQLitePortfolioRepository
 
 __all__ = [
     "PortfolioCandidate",
+    "PortfolioConstraintRecord",
     "PortfolioConstructionConfig",
     "PortfolioProposal",
     "PortfolioProposalEngine",

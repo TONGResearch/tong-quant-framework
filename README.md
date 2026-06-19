@@ -11,9 +11,11 @@ The framework combines traditional investment research, quantitative validation,
 trend analysis, market analysis, and controlled execution. AI assists research
 but never directly authorizes trades.
 
-## V0.7 Scope
+## V0.7.1 Scope
 
-V0.6 includes the data foundation, Market Regime, Screening, Research, and:
+The framework includes the data foundation, Market Regime, Screening,
+Research, Validation, Historical Replay, Portfolio, Risk, and hardening
+boundaries:
 
 - Clean package architecture
 - Shared market-independent interfaces
@@ -67,9 +69,17 @@ V0.6 includes the data foundation, Market Regime, Screening, Research, and:
 - PortfolioProposal and PositionProposal research artifacts
 - RiskAssessment with risk budgets and scenario stress tests
 - Fund and asset-allocation extension points reserved without implementation
+- `ExecutionDisabledGuard` and `ExecutionReadinessGate` fail closed by default
+- Default execution mode is `disabled`
+- Risk consumes generic `RiskPositionInput`, not Portfolio-specific models
+- Portfolio/Risk read-side repositories reconstruct research artifacts by id
+- Framework, database, research, validation, and replay versions are centralized
+- Notification compatibility is artifact-oriented: ResearchReport,
+  ValidationReport, PortfolioProposal, and RiskAssessment only
 
-It intentionally does not implement order-level backtesting, trade approval,
-orders, execution logic, or live brokerage.
+It intentionally does not implement Notification Engine, Paper Trading,
+order-level backtesting, trade approval, orders, execution logic, or live
+brokerage.
 
 ## Quick Start
 

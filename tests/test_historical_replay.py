@@ -30,6 +30,7 @@ from tong_quant.validation.models import (
 from tong_quant.validation.replay import HistoricalReplayBuilder, ReplayQuery
 from tong_quant.validation.replay.repository import SQLiteHistoricalReplayRepository
 from tong_quant.validation.replay.request_factory import ValidationRequestFactory
+from tong_quant.version import DATABASE_SCHEMA_VERSION
 
 
 def test_replay_builds_deterministic_hash_and_request(tmp_path: Path) -> None:
@@ -71,7 +72,7 @@ def test_replay_builds_deterministic_hash_and_request(tmp_path: Path) -> None:
     )
 
     assert request.samples[0].sample_id == first.samples[0].sample_id
-    assert request.framework_snapshot.database_schema_version == "0.7.0"
+    assert request.framework_snapshot.database_schema_version == DATABASE_SCHEMA_VERSION
 
 
 def test_replay_rejects_future_research_and_keeps_incomplete_visible(

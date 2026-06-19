@@ -4,6 +4,11 @@ from datetime import datetime
 from tong_quant.domain.enums import DataTrustLevel, Market
 from tong_quant.domain.models import Instrument, require_timezone
 from tong_quant.validation.models import OutcomeDefinition, ValidationSample
+from tong_quant.version import (
+    FRAMEWORK_VERSION,
+    HISTORICAL_REPLAY_VERSION,
+    REPLAY_CONFIDENCE_VERSION,
+)
 
 
 def _require_percentage(name: str, value: float) -> None:
@@ -19,7 +24,7 @@ class ReplayConfidence:
     provider_limitation_score: float
     confidence: float
     reasons: tuple[str, ...]
-    model_version: str = "replay-confidence-v0.6.3"
+    model_version: str = REPLAY_CONFIDENCE_VERSION
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -48,7 +53,7 @@ class ReplayQuery:
     provider_limitation_datasets: tuple[str, ...] = ()
     include_incomplete_samples: bool = True
     configuration_hash: str = ""
-    framework_version: str = "0.6.3"
+    framework_version: str = FRAMEWORK_VERSION
     git_commit: str = "unknown"
 
     def __post_init__(self) -> None:
@@ -83,7 +88,7 @@ class ReplayManifest:
     missing_data_warnings: tuple[str, ...]
     replay_confidence: ReplayConfidence
     generated_at: datetime
-    model_version: str = "historical-replay-v0.6.3"
+    model_version: str = HISTORICAL_REPLAY_VERSION
 
     def __post_init__(self) -> None:
         require_timezone(self.generated_at, "generated_at")

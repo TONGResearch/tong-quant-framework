@@ -50,6 +50,12 @@ from tong_quant.validation.snapshot import stable_configuration_hash
 from tong_quant.validation.splits import walk_forward_splits
 from tong_quant.validation.thesis import ThesisValidationModule
 from tong_quant.validation.walk_forward import WalkForwardValidationModule
+from tong_quant.version import (
+    DATABASE_SCHEMA_VERSION,
+    FRAMEWORK_VERSION,
+    RESEARCH_ENGINE_VERSION,
+    VALIDATION_ENGINE_VERSION,
+)
 
 
 def test_snapshot_hash_is_stable_and_records_required_versions() -> None:
@@ -59,8 +65,8 @@ def test_snapshot_hash_is_stable_and_records_required_versions() -> None:
 
     assert first == second
     assert snapshot.git_commit == "f7e9f903019688bcc874e7c913dcd99fb852365a"
-    assert snapshot.framework_version == "0.7.0"
-    assert snapshot.database_schema_version == "0.7.0"
+    assert snapshot.framework_version == FRAMEWORK_VERSION
+    assert snapshot.database_schema_version == DATABASE_SCHEMA_VERSION
 
 
 def test_outcome_registry_requires_pre_registered_definition() -> None:
@@ -444,11 +450,11 @@ def _definition() -> OutcomeDefinition:
 def _snapshot(configuration_hash: str) -> FrameworkSnapshot:
     return FrameworkSnapshot(
         git_commit="f7e9f903019688bcc874e7c913dcd99fb852365a",
-        framework_version="0.7.0",
+        framework_version=FRAMEWORK_VERSION,
         configuration_hash=configuration_hash,
-        research_version="research-engine-v0.5",
-        validation_version="validation-engine-v0.6",
-        database_schema_version="0.7.0",
+        research_version=RESEARCH_ENGINE_VERSION,
+        validation_version=VALIDATION_ENGINE_VERSION,
+        database_schema_version=DATABASE_SCHEMA_VERSION,
         captured_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 

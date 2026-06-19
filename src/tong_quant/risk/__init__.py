@@ -5,6 +5,7 @@ from tong_quant.risk.models import (
     ExposureBreakdown,
     RiskAssessment,
     RiskBudget,
+    RiskPositionInput,
     StressScenario,
     StressScenarioResult,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "RiskAssessment",
     "RiskAssessmentEngine",
     "RiskBudget",
+    "RiskPositionInput",
     "RiskConstraintConfig",
     "StressScenario",
     "StressScenarioResult",

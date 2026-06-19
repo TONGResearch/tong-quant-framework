@@ -1,7 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Protocol
 
 from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
@@ -56,10 +55,6 @@ def default_investment_score_config() -> InvestmentScoreConfig:
         model_version="investment-score-v0.6.1",
         require_all_components=False,
     )
-
-
-class InvestmentAssessmentRepository(Protocol):
-    def save_assessment(self, assessment: InvestmentAssessment) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -275,7 +270,6 @@ def investment_assessment_to_record(
 
 __all__ = [
     "InvestmentAssessmentBuilder",
-    "InvestmentAssessmentRepository",
     "InvestmentScoreConfig",
     "default_investment_score_config",
     "investment_assessment_to_record",

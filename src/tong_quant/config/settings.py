@@ -293,8 +293,15 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("minimum_liquidity_score must be between 0 and 100")
     if settings.market.default not in settings.market.enabled:
         raise ValueError("default market must be enabled")
-    if settings.execution.allow_live_orders and settings.execution.mode in {"research", "paper"}:
-        raise ValueError("research and paper modes cannot allow live orders")
+    execution_modes = {"disabled", "research", "paper", "semi_automatic", "automatic"}
+    if settings.execution.mode not in execution_modes:
+        raise ValueError("execution mode is unsupported")
+    if settings.execution.allow_live_orders and settings.execution.mode in {
+        "disabled",
+        "research",
+        "paper",
+    }:
+        raise ValueError("disabled, research, and paper modes cannot allow live orders")
     if settings.data.cache_ttl_seconds < 0:
         raise ValueError("cache_ttl_seconds cannot be negative")
     for regime_model in (

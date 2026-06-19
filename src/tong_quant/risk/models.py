@@ -33,6 +33,41 @@ class RiskBudget:
 
 
 @dataclass(frozen=True, slots=True)
+class RiskPositionInput:
+    position_id: str
+    asset_category: str
+    proposed_weight: float
+    confidence: float
+    liquidity_score: float
+    volatility_estimate: float
+    sector: str = "unknown"
+    country: str = "unknown"
+    theme: str = "unknown"
+    symbol: str | None = None
+    average_correlation: float = 0.0
+
+    def __post_init__(self) -> None:
+        if not self.position_id.strip() or not self.asset_category.strip():
+            raise ValueError("risk position input requires identifiers")
+        for name, value in (
+            ("proposed_weight", self.proposed_weight),
+            ("volatility_estimate", self.volatility_estimate),
+            ("average_correlation", self.average_correlation),
+        ):
+            _require_fraction(name, value)
+        _require_percentage("risk position confidence", self.confidence)
+        _require_percentage("risk position liquidity score", self.liquidity_score)
+        if self.is_cash and self.symbol is not None:
+            raise ValueError("cash risk input must not carry a symbol")
+        if not self.is_cash and not self.symbol:
+            raise ValueError("non-cash risk input requires a symbol")
+
+    @property
+    def is_cash(self) -> bool:
+        return self.asset_category == "cash"
+
+
+@dataclass(frozen=True, slots=True)
 class ExposureBreakdown:
     dimension: str
     exposures: dict[str, float]
@@ -125,6 +160,7 @@ __all__ = [
     "ExposureBreakdown",
     "RiskAssessment",
     "RiskBudget",
+    "RiskPositionInput",
     "StressScenario",
     "StressScenarioResult",
 ]

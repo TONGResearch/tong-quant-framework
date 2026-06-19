@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from tong_quant.data.models import PITReadinessAssessment, ProviderLimitation
 from tong_quant.domain.enums import DataTrustLevel
 from tong_quant.validation.replay.models import ReplayConfidence
+from tong_quant.version import REPLAY_CONFIDENCE_VERSION
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,7 +23,7 @@ class ReplayConfidenceInput:
 
 @dataclass(frozen=True, slots=True)
 class ReplayConfidenceEvaluator:
-    model_version: str = "replay-confidence-v0.6.3"
+    model_version: str = REPLAY_CONFIDENCE_VERSION
 
     def evaluate(self, confidence_input: ReplayConfidenceInput) -> ReplayConfidence:
         data_trust_score = _data_trust_score(confidence_input.trust_levels)

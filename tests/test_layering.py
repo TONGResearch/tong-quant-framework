@@ -44,3 +44,32 @@ def test_screening_does_not_own_research_outcome_or_investment_models() -> None:
             offenders.append(str(path))
 
     assert offenders == []
+
+
+def test_notifications_do_not_depend_on_execution_or_order_models() -> None:
+    notification_root = Path("src/tong_quant/notifications")
+    offenders = []
+    forbidden = (
+        "tong_quant.execution",
+        "Order",
+        "Trade",
+        "Broker",
+        "submit_order",
+        "create_order",
+    )
+    for path in notification_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if any(item in text for item in forbidden):
+            offenders.append(str(path))
+
+    assert offenders == []
+
+
+def test_notification_channel_is_research_artifact_oriented() -> None:
+    text = Path("src/tong_quant/notifications/base.py").read_text(encoding="utf-8")
+
+    assert "send_research_report" in text
+    assert "send_validation_report" in text
+    assert "send_portfolio_proposal" in text
+    assert "send_risk_assessment" in text
+    assert "send_signal" not in text

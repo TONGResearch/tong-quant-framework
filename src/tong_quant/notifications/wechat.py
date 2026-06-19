@@ -1,8 +1,20 @@
 class WeChatChannel:
     channel_id = "wechat"
 
-    def send_signal(self, signal: object) -> str:
-        del signal
+    def send_research_report(self, report: object) -> str:
+        del report
+        raise NotImplementedError("WeChat integration is not enabled")
+
+    def send_validation_report(self, report: object) -> str:
+        del report
+        raise NotImplementedError("WeChat integration is not enabled")
+
+    def send_portfolio_proposal(self, proposal: object) -> str:
+        del proposal
+        raise NotImplementedError("WeChat integration is not enabled")
+
+    def send_risk_assessment(self, assessment: object) -> str:
+        del assessment
         raise NotImplementedError("WeChat integration is not enabled")
 
     def send_message(self, subject: str, body: str) -> str:

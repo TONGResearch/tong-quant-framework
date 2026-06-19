@@ -131,14 +131,34 @@ Status: implemented in V0.7 as proposal-only portfolio construction. It does
 not create recommendations, trade plans, orders, broker requests, fills, paper
 trading, or auto rebalancing.
 
+## Milestone 3.6: V0.7.1 Hardening
+
+- Execution defaults to disabled
+- ExecutionDisabledGuard protects OrderFactory and Broker entry points
+- ExecutionReadinessGate requires explicit validation, portfolio, risk,
+  approval, broker, permission, and readiness evidence
+- Risk is decoupled from Portfolio through generic RiskPositionInput
+- Portfolio/Risk read-side repositories reconstruct proposal artifacts by id
+- Version metadata is centralized
+- Notification compatibility is research-artifact oriented and has no
+  execution dependency
+
+Status: implemented as a pre-V0.8 hardening milestone. It does not implement
+Notification Engine, Paper Trading, Execution Engine, brokers, live orders, or
+asset allocation.
+
 ## Milestone 4: Paper Trading
 
-- Paper broker
-- Risk veto and drawdown halt
-- Order lifecycle and reconciliation
-- Telegram notification
+- Paper simulation boundary
+- PortfolioProposal and RiskAssessment consumption
+- Approval and decision journal linkage
+- Market-rule and calendar-aware simulation
+- Research notification review path
 
-Exit: stable paper operation with no live credentials.
+Entry condition: V0.7.1 hardening is complete and execution remains disabled by
+default.
+
+Exit: stable paper simulation with no live credentials.
 
 ## Deferred
 

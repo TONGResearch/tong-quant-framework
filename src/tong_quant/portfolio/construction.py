@@ -13,7 +13,7 @@ from tong_quant.portfolio.models import (
     PositionProposal,
 )
 from tong_quant.risk.assessment import RiskAssessmentEngine
-from tong_quant.risk.models import RiskBudget
+from tong_quant.risk.models import RiskBudget, RiskPositionInput
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,9 +80,10 @@ class PortfolioProposalEngine:
             per_sector_risk_budget=self.config.per_sector_risk_budget,
             per_theme_risk_budget=self.config.per_theme_risk_budget,
         )
+        risk_inputs = tuple(_risk_position(position) for position in all_positions)
         risk_assessment = self.risk_engine.assess(
             proposal_id=proposal_id,
-            positions=all_positions,
+            positions=risk_inputs,
             risk_budget=risk_budget,
             as_of=proposal_as_of,
         )
@@ -251,11 +252,48 @@ def _exposure_summary(
 
 def _correlation_summary(positions: tuple[PositionProposal, ...]) -> dict[str, float]:
     values = [
-        position.proposed_weight * float(position.risk_flags[0].split("=", 1)[1])
+        position.proposed_weight * _position_correlation(position)
         for position in positions
-        if position.risk_flags and position.risk_flags[0].startswith("correlation=")
+        if position.instrument is not None
     ]
     return {"weighted_average_correlation": round(sum(values), 6)}
+
+
+def _risk_position(position: PositionProposal) -> RiskPositionInput:
+    instrument = position.instrument
+    if instrument is None:
+        return RiskPositionInput(
+            position_id="cash",
+            asset_category=position.asset_category.value,
+            proposed_weight=position.proposed_weight,
+            confidence=position.confidence,
+            liquidity_score=position.liquidity_score,
+            volatility_estimate=position.volatility_estimate,
+            sector="cash",
+            country="cash",
+            theme=position.expected_role,
+            average_correlation=0.0,
+        )
+    return RiskPositionInput(
+        position_id=f"{instrument.market.value}:{instrument.asset_type.value}:{instrument.symbol}",
+        asset_category=position.asset_category.value,
+        proposed_weight=position.proposed_weight,
+        confidence=position.confidence,
+        liquidity_score=position.liquidity_score,
+        volatility_estimate=position.volatility_estimate,
+        sector=str(instrument.industry or "unknown"),
+        country=instrument.market.value,
+        theme=position.expected_role,
+        symbol=instrument.symbol,
+        average_correlation=_position_correlation(position),
+    )
+
+
+def _position_correlation(position: PositionProposal) -> float:
+    for flag in position.risk_flags:
+        if flag.startswith("correlation="):
+            return float(flag.split("=", 1)[1])
+    return 0.0
 
 
 __all__ = ["PortfolioConstructionConfig", "PortfolioProposalEngine"]

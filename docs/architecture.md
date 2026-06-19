@@ -20,9 +20,9 @@ Discovery -> Screening -> Research -> Validation
     +------------+-----------+------------+
                          universal Signals
                                |
-                    Portfolio -> Risk veto
+                    Portfolio -> RiskAssessment
                                |
-                   Execution creates Order
+                     Execution disabled
                                |
                          Broker adapter
       ^
@@ -69,14 +69,16 @@ market rules, costs, calendars, and risk checks intended for paper/live modes.
 
 ### Risk and Portfolio
 
-Portfolio construction proposes allocation. Risk has veto authority and may
-reject or reduce an order.
+Portfolio construction proposes allocation research artifacts. Risk may mark a
+PortfolioProposal acceptable, conditional, rejected, or incomplete, but it does
+not create or reduce orders.
 
 ### Execution
 
-The execution package may create Orders only after an approving risk decision.
-Broker adapters accept only those approved Orders. Research and paper modes
-cannot send live orders.
+Execution is disabled by default. `ExecutionDisabledGuard` and
+`ExecutionReadinessGate` fail closed unless future readiness requirements are
+explicitly satisfied. Broker adapters remain placeholders and cannot be reached
+from Research, Validation, Portfolio, Risk, or Notification code.
 
 ## Point-in-Time Contract
 
@@ -312,3 +314,20 @@ RiskAssessment covers concentration, sector, country, theme, correlation,
 volatility targeting, drawdown, liquidity, risk budgets, and scenario stress
 tests. It can mark a proposal acceptable, conditional, rejected, or incomplete,
 but it cannot create orders.
+
+## V0.7.1 Hardening
+
+V0.7.1 hardens the boundary before any V0.8 work:
+
+- Execution defaults to `disabled`.
+- `ExecutionDisabledGuard` and `ExecutionReadinessGate` protect future
+  OrderFactory and Broker entry points.
+- Risk consumes generic `RiskPositionInput` objects instead of importing
+  Portfolio `PositionProposal`.
+- `SQLitePortfolioRepository` can reconstruct PortfolioProposal,
+  PositionProposal, RiskAssessment, exposures, and constraints by proposal id.
+- Framework and replay metadata use centralized version constants.
+- Notification compatibility is limited to research artifacts:
+  ResearchReport, ValidationReport, PortfolioProposal, and RiskAssessment.
+  Notification code must not import Execution, Order, Broker, Trade, or Fill
+  concepts.

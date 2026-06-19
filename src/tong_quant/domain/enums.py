@@ -246,6 +246,7 @@ class Regime(StrEnum):
 
 
 class ExecutionMode(StrEnum):
+    DISABLED = "disabled"
     RESEARCH = "research"
     PAPER = "paper"
     SEMI_AUTOMATIC = "semi_automatic"

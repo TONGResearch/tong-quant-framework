@@ -128,7 +128,7 @@ maximum_average_correlation = 0.70
 stress_loss_limit = 0.12
 
 [execution]
-mode = "paper"
+mode = "disabled"
 allow_live_orders = false
 require_manual_approval = true
 broker = "paper"

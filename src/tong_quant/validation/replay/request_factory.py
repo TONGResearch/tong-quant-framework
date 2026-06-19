@@ -9,11 +9,12 @@ from tong_quant.validation.models import (
     WalkForwardPolicy,
 )
 from tong_quant.validation.replay.models import HistoricalReplayResult
+from tong_quant.version import RESEARCH_ENGINE_VERSION, VALIDATION_ENGINE_VERSION
 
 
 @dataclass(frozen=True, slots=True)
 class ValidationRequestFactory:
-    validation_version: str = "validation-v0.6.3"
+    validation_version: str = VALIDATION_ENGINE_VERSION
 
     def build(
         self,
@@ -34,7 +35,7 @@ class ValidationRequestFactory:
             git_commit=result.manifest.git_commit,
             framework_version=result.manifest.framework_version,
             configuration_hash=result.manifest.configuration_hash,
-            research_version="research-v0.6.3",
+            research_version=RESEARCH_ENGINE_VERSION,
             validation_version=self.validation_version,
             database_schema_version=result.manifest.schema_version,
             captured_at=result.manifest.generated_at,
