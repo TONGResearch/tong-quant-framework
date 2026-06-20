@@ -7,6 +7,10 @@ def test_default_configuration_is_safe() -> None:
     settings = load_settings(Path("config/default.toml"))
 
     assert settings.market.default == "china_a"
+    assert settings.provider_calibration.enabled is False
+    assert settings.provider_calibration.primary_provider == "akshare"
+    assert settings.provider_calibration.secondary_provider == "tushare"
+    assert settings.provider_calibration.fail_on_high_severity_conflict is True
     assert settings.execution.mode == "disabled"
     assert settings.execution.allow_live_orders is False
     assert settings.execution.broker == "paper"

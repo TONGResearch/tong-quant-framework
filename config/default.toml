@@ -12,6 +12,12 @@ cache_ttl_seconds = 86400
 strict_point_in_time = true
 default_adjustment = "none"
 
+[provider_calibration]
+enabled = false
+primary_provider = "akshare"
+secondary_provider = "tushare"
+fail_on_high_severity_conflict = true
+
 [market]
 enabled = ["china_a"]
 default = "china_a"

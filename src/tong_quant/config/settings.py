@@ -24,6 +24,14 @@ class DataSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderCalibrationSettings:
+    enabled: bool
+    primary_provider: str
+    secondary_provider: str
+    fail_on_high_severity_conflict: bool
+
+
+@dataclass(frozen=True, slots=True)
 class MarketSettings:
     enabled: tuple[str, ...]
     default: str
@@ -181,6 +189,7 @@ class ValidationSettings:
 class Settings:
     project: ProjectSettings
     data: DataSettings
+    provider_calibration: ProviderCalibrationSettings
     market: MarketSettings
     market_regime: MarketRegimeSettings
     screening: ScreeningSettings
@@ -238,6 +247,9 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             cache_ttl_seconds=raw["data"]["cache_ttl_seconds"],
             strict_point_in_time=raw["data"]["strict_point_in_time"],
             default_adjustment=raw["data"]["default_adjustment"],
+        ),
+        provider_calibration=ProviderCalibrationSettings(
+            **raw["provider_calibration"]
         ),
         market=MarketSettings(
             enabled=tuple(raw["market"]["enabled"]),
@@ -304,6 +316,11 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
         raise ValueError("minimum_liquidity_score must be between 0 and 100")
     if settings.market.default not in settings.market.enabled:
         raise ValueError("default market must be enabled")
+    if (
+        settings.provider_calibration.primary_provider
+        == settings.provider_calibration.secondary_provider
+    ):
+        raise ValueError("provider calibration requires distinct providers")
     execution_modes = {"disabled", "research", "paper", "semi_automatic", "automatic"}
     if settings.execution.mode not in execution_modes:
         raise ValueError("execution mode is unsupported")

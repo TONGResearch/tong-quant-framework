@@ -21,6 +21,11 @@ AKShare -> Raw schema validation -> Normalization -> Domain validation -> SQLite
   and availability warnings
 - V0.6.2 conservative PIT population for selected AKShare fundamentals,
   instrument-status snapshots, index membership, and corporate actions
+- Security lifecycle events for suspension/resumption, partial ST history, and
+  delisting evidence
+- Fundamental publication events with date-only or exact availability evidence
+- Historical coverage assessments and provider consistency reports
+- Provider conflict observations and calibrated dataset confidence assessments
 
 ## Point-in-Time Rules
 
@@ -94,6 +99,12 @@ Implemented conservative ingestion:
 - Raw dataset fingerprints and ingestion batches for every new dataset
 - Data availability warnings when exact publication time is unavailable
 
+PIT remediation adds dated suspension/resumption evidence, Shenzhen ST
+name-change evidence, delisting events, market-wide and CSI snapshot
+accumulation, actual disclosure dates, and exact CNInfo announcement evidence.
+Complete national ST history, true relisting history, and historical CSI
+entry/exit ledgers remain unavailable from the current provider.
+
 Strict point-in-time mode still rejects provider-adjusted bars. Corporate
 actions are stored for audit and future reconstruction, but they do not yet
 enable adjusted historical price usage.
@@ -108,6 +119,10 @@ historical replay. It records:
 - Missing critical fields
 - Warnings
 - `ready_for_historical_replay`
+- Readiness score and `usable`, `caution`, or `unsuitable` classification
+- Coverage, trust, availability, revision, continuity, and provider-consistency
+  component scores
+- Explicit assumptions
 
 HistoricalReplaySource is implemented and consumes this readiness assessment.
 Low readiness lowers replay confidence and preserves warnings; it does not
@@ -127,6 +142,12 @@ silently discard the sample or reinterpret the dataset as PIT-safe.
 - `data_availability_warnings`
 - `provider_limitations`
 - `pit_readiness_assessments`
+- `security_lifecycle_events`
+- `fundamental_publication_events`
+- `historical_coverage_assessments`
+- `provider_consistency_reports`
+- `provider_conflicts`
+- `dataset_confidence_assessments`
 - `historical_replay_manifests`
 - `historical_replay_samples`
 - `portfolio_proposals`

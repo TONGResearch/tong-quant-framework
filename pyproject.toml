@@ -12,6 +12,7 @@ authors = [{ name = "Tong Li" }]
 dependencies = [
   "akshare>=1.18,<2",
   "pandas>=2.2,<4",
+  "tushare>=1.4,<2",
 ]
 
 [project.optional-dependencies]
@@ -49,5 +50,5 @@ strict = true
 packages = ["tong_quant"]
 
 [[tool.mypy.overrides]]
-module = ["akshare", "akshare.*"]
+module = ["akshare", "akshare.*", "tushare", "tushare.*"]
 ignore_missing_imports = true

@@ -12,11 +12,28 @@ migration head. The stabilization work keeps the public schema at `0.8.0`; the
 migration head distinguishes the hardened physical schema without declaring a
 new product milestone.
 
-The first migration adds:
+Migration `0001_notification_hardening` adds:
 
 - Notification lease expiration and dead-letter timestamps
 - A lease lookup index
 - `notification_dead_letters`, linked to the outbox by foreign key
+
+Migration `0002_pit_data_calibration` adds:
+
+- Readiness score, classification, components, and assumptions
+- `security_lifecycle_events`
+- `fundamental_publication_events`
+- `historical_coverage_assessments`
+- `provider_consistency_reports`
+
+Migration `0003_provider_calibration_phase_ii` adds:
+
+- `provider_conflicts` with stable fingerprints and per-run observations
+- `dataset_confidence_assessments` linked to calibration reports
+
+The current migration head is `0003_provider_calibration_phase_ii`. The public schema
+version remains `0.8.0`; this is data-foundation remediation rather than a new
+product milestone.
 
 ## Transaction Boundary
 

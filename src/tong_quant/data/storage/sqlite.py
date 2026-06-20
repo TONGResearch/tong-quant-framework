@@ -12,12 +12,23 @@ from typing import cast
 from uuid import uuid4
 
 from tong_quant.core.security import reject_sensitive_persistence
+from tong_quant.data.calibration.models import (
+    DatasetConfidenceAssessment,
+    ProviderCalibrationResult,
+    ProviderConflict,
+    ProviderConflictSeverity,
+    ProviderConflictType,
+    ProviderConsistencyReport,
+)
 from tong_quant.data.models import (
     DataAvailabilityWarning,
+    FundamentalPublicationEvent,
+    HistoricalCoverageAssessment,
     IngestionBatch,
     PITReadinessAssessment,
     ProviderLimitation,
     RawDatasetFingerprint,
+    SecurityLifecycleEvent,
 )
 from tong_quant.data.storage.migrations import MIGRATION_HEAD, run_migrations
 from tong_quant.domain.enums import (
@@ -28,7 +39,9 @@ from tong_quant.domain.enums import (
     FundSubtype,
     InstrumentCategory,
     InvestmentAssessmentStatus,
+    LifecycleEventType,
     Market,
+    PITReadinessClassification,
     ResearchQueueStatus,
     ResearchRunStatus,
     ScoreType,
@@ -1182,6 +1195,88 @@ class SQLiteStore:
             )
         return len(rows)
 
+    def upsert_security_lifecycle_events(
+        self,
+        events: Iterable[SecurityLifecycleEvent],
+    ) -> int:
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                str(uuid4()),
+                instrument_id(event.instrument),
+                event.event_type.value,
+                event.effective_date.isoformat(),
+                _datetime_text(event.available_at),
+                event.source,
+                event.source_reference,
+                _json_dumps(event.details),
+                event.raw_data_hash,
+                event.batch_id,
+                event.provider_dataset,
+                event.availability_precision.value,
+                event.trust_level.value,
+                ingested_at,
+            )
+            for event in events
+        ]
+        if not rows:
+            return 0
+        with self._connect() as connection:
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO security_lifecycle_events (
+                    event_id, instrument_id, event_type, effective_date,
+                    available_at, source, source_reference, details_json,
+                    raw_data_hash, batch_id, provider_dataset,
+                    availability_precision, trust_level, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+        return len(rows)
+
+    def upsert_fundamental_publication_events(
+        self,
+        events: Iterable[FundamentalPublicationEvent],
+    ) -> int:
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                str(uuid4()),
+                instrument_id(event.instrument),
+                event.period_end.isoformat(),
+                event.report_type,
+                _datetime_text(event.published_at),
+                _datetime_text(event.available_at),
+                event.title,
+                event.revision,
+                event.source,
+                event.source_reference,
+                event.raw_data_hash,
+                event.batch_id,
+                event.provider_dataset,
+                event.availability_precision.value,
+                event.trust_level.value,
+                ingested_at,
+            )
+            for event in events
+        ]
+        if not rows:
+            return 0
+        with self._connect() as connection:
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO fundamental_publication_events (
+                    event_id, instrument_id, period_end, report_type,
+                    published_at, available_at, title, revision, source,
+                    source_reference, raw_data_hash, batch_id, provider_dataset,
+                    availability_precision, trust_level, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+        return len(rows)
+
     def upsert_corporate_actions(
         self,
         actions: Iterable[CorporateAction],
@@ -1347,8 +1442,9 @@ class SQLiteStore:
                 INSERT INTO pit_readiness_assessments (
                     assessment_id, dataset, assessed_at, coverage_ratio, trust_level,
                     missing_critical_fields_json, warnings_json,
-                    ready_for_historical_replay, model_version, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ready_for_historical_replay, readiness_score, classification,
+                    score_components_json, assumptions_json, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     assessment_id,
@@ -1359,11 +1455,189 @@ class SQLiteStore:
                     json.dumps(assessment.missing_critical_fields),
                     json.dumps(assessment.warnings),
                     int(assessment.ready_for_historical_replay),
+                    assessment.readiness_score,
+                    assessment.classification.value,
+                    _json_dumps(assessment.score_components),
+                    _json_dumps(assessment.assumptions),
                     assessment.model_version,
                     _datetime_text(datetime.now(UTC)),
                 ),
             )
         return assessment_id
+
+    def save_historical_coverage_assessment(
+        self,
+        assessment: HistoricalCoverageAssessment,
+    ) -> str:
+        assessment_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO historical_coverage_assessments (
+                    assessment_id, subject_type, subject_id, dataset,
+                    period_start, period_end, assessed_at, confidence_score,
+                    classification, trust_level, score_components_json,
+                    warnings_json, assumptions_json, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    assessment.subject_type.value,
+                    assessment.subject_id,
+                    assessment.dataset,
+                    assessment.period_start.isoformat(),
+                    assessment.period_end.isoformat(),
+                    _datetime_text(assessment.assessed_at),
+                    assessment.confidence_score,
+                    assessment.classification.value,
+                    assessment.trust_level.value,
+                    _json_dumps(assessment.score_components),
+                    _json_dumps(assessment.warnings),
+                    _json_dumps(assessment.assumptions),
+                    assessment.model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return assessment_id
+
+    def save_provider_consistency_report(
+        self,
+        report: ProviderConsistencyReport,
+    ) -> str:
+        reject_sensitive_persistence(
+            {"provider consistency limitations": _json_dumps(report.limitations)}
+        )
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO provider_consistency_reports (
+                    report_id, dataset, primary_provider, secondary_provider,
+                    compared_at, primary_count, secondary_count, matched_count,
+                    primary_only_count, secondary_only_count, key_overlap_score,
+                    field_match_scores_json, consistency_score, trust_level,
+                    limitations_json, comparison_hash, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (comparison_hash) DO NOTHING
+                """,
+                (
+                    report.report_id,
+                    report.dataset,
+                    report.primary_provider,
+                    report.secondary_provider,
+                    _datetime_text(report.compared_at),
+                    report.primary_count,
+                    report.secondary_count,
+                    report.matched_count,
+                    report.primary_only_count,
+                    report.secondary_only_count,
+                    report.key_overlap_score,
+                    _json_dumps(report.field_match_scores),
+                    report.consistency_score,
+                    report.trust_level.value,
+                    _json_dumps(report.limitations),
+                    report.comparison_hash,
+                    report.model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return report.report_id
+
+    def save_provider_calibration_result(
+        self,
+        result: ProviderCalibrationResult,
+    ) -> None:
+        with self.transaction():
+            self.save_provider_consistency_report(result.report)
+            self.save_provider_conflicts(result.conflicts)
+            self.save_dataset_confidence_assessment(result.confidence)
+
+    def save_provider_conflicts(
+        self,
+        conflicts: tuple[ProviderConflict, ...],
+    ) -> int:
+        if not conflicts:
+            return 0
+        for conflict in conflicts:
+            reject_sensitive_persistence(
+                {
+                    "provider conflict primary value": _json_dumps(
+                        conflict.primary_value
+                    ),
+                    "provider conflict secondary value": _json_dumps(
+                        conflict.secondary_value
+                    ),
+                }
+            )
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                conflict.conflict_id,
+                conflict.conflict_fingerprint,
+                conflict.report_id,
+                conflict.dataset,
+                conflict.record_key,
+                conflict.field_name,
+                conflict.conflict_type.value,
+                conflict.primary_provider,
+                conflict.secondary_provider,
+                _json_dumps(conflict.primary_value),
+                _json_dumps(conflict.secondary_value),
+                conflict.severity.value,
+                _datetime_text(conflict.detected_at),
+                conflict.model_version,
+                ingested_at,
+            )
+            for conflict in conflicts
+        ]
+        with self._connect() as connection:
+            before = connection.total_changes
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO provider_conflicts (
+                    conflict_id, conflict_fingerprint, report_id, dataset,
+                    record_key, field_name, conflict_type, primary_provider,
+                    secondary_provider, primary_value_json, secondary_value_json,
+                    severity, detected_at, model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            inserted = connection.total_changes - before
+        return inserted
+
+    def save_dataset_confidence_assessment(
+        self,
+        assessment: DatasetConfidenceAssessment,
+    ) -> str:
+        reject_sensitive_persistence(
+            {"dataset confidence warnings": _json_dumps(assessment.warnings)}
+        )
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO dataset_confidence_assessments (
+                    assessment_id, report_id, dataset, assessed_at,
+                    confidence_score, trust_level, component_scores_json,
+                    conflict_count, critical_conflict_count, warnings_json,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment.assessment_id,
+                    assessment.report_id,
+                    assessment.dataset,
+                    _datetime_text(assessment.assessed_at),
+                    assessment.confidence_score,
+                    assessment.trust_level.value,
+                    _json_dumps(assessment.component_scores),
+                    assessment.conflict_count,
+                    assessment.critical_conflict_count,
+                    _json_dumps(assessment.warnings),
+                    assessment.model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return assessment.assessment_id
 
     def provider_limitations(
         self,
@@ -1399,6 +1673,60 @@ class SQLiteStore:
                 (dataset,),
             ).fetchone()
         return None if row is None else _pit_readiness_from_row(row)
+
+    def latest_provider_consistency(
+        self,
+        dataset: str,
+        primary_provider: str,
+        secondary_provider: str,
+    ) -> ProviderConsistencyReport | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM provider_consistency_reports
+                WHERE dataset = ?
+                  AND primary_provider = ?
+                  AND secondary_provider = ?
+                ORDER BY compared_at DESC, ingested_at DESC
+                LIMIT 1
+                """,
+                (dataset, primary_provider, secondary_provider),
+            ).fetchone()
+        return None if row is None else _provider_consistency_from_row(row)
+
+    def provider_conflict_history(
+        self,
+        dataset: str,
+        *,
+        conflict_fingerprint: str | None = None,
+    ) -> list[ProviderConflict]:
+        query = "SELECT * FROM provider_conflicts WHERE dataset = ?"
+        parameters: tuple[str, ...] = (dataset,)
+        if conflict_fingerprint is not None:
+            query += " AND conflict_fingerprint = ?"
+            parameters = (dataset, conflict_fingerprint)
+        query += " ORDER BY detected_at, conflict_id"
+        with self._connect() as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return [_provider_conflict_from_row(row) for row in rows]
+
+    def latest_dataset_confidence(
+        self,
+        dataset: str,
+    ) -> DatasetConfidenceAssessment | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM dataset_confidence_assessments
+                WHERE dataset = ?
+                ORDER BY assessed_at DESC, ingested_at DESC
+                LIMIT 1
+                """,
+                (dataset,),
+            ).fetchone()
+        return None if row is None else _dataset_confidence_from_row(row)
 
     def save_historical_replay_manifest(
         self,
@@ -1691,6 +2019,70 @@ class SQLiteStore:
                 ),
             ).fetchall()
         return [_fundamental_fact_from_row(row, instrument) for row in rows]
+
+    def fundamental_publication_events(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        *,
+        as_of: datetime,
+        period_end_on_or_before: date | None = None,
+    ) -> list[FundamentalPublicationEvent]:
+        self._require_aware(as_of)
+        instrument = self.get_instrument(symbol, market, asset_type, as_of=as_of)
+        if instrument is None:
+            return []
+        period_limit = period_end_on_or_before or as_of.date()
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM fundamental_publication_events
+                WHERE instrument_id = ?
+                  AND period_end <= ?
+                  AND available_at <= ?
+                ORDER BY period_end, published_at, revision
+                """,
+                (
+                    instrument_id(instrument),
+                    period_limit.isoformat(),
+                    _datetime_text(as_of),
+                ),
+            ).fetchall()
+        return [_fundamental_publication_from_row(row, instrument) for row in rows]
+
+    def security_lifecycle_events(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        *,
+        as_of: datetime,
+        effective_on_or_before: date | None = None,
+    ) -> list[SecurityLifecycleEvent]:
+        self._require_aware(as_of)
+        instrument = self.get_instrument(symbol, market, asset_type, as_of=as_of)
+        if instrument is None:
+            return []
+        effective_limit = effective_on_or_before or as_of.date()
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM security_lifecycle_events
+                WHERE instrument_id = ?
+                  AND effective_date <= ?
+                  AND available_at <= ?
+                ORDER BY effective_date, available_at, event_type
+                """,
+                (
+                    instrument_id(instrument),
+                    effective_limit.isoformat(),
+                    _datetime_text(as_of),
+                ),
+            ).fetchall()
+        return [_security_lifecycle_from_row(row, instrument) for row in rows]
 
     def instrument_status(
         self,
@@ -3719,6 +4111,12 @@ class SQLiteStore:
             "data_availability_warnings",
             "provider_limitations",
             "pit_readiness_assessments",
+            "security_lifecycle_events",
+            "fundamental_publication_events",
+            "historical_coverage_assessments",
+            "provider_consistency_reports",
+            "provider_conflicts",
+            "dataset_confidence_assessments",
             "historical_replay_manifests",
             "historical_replay_samples",
             "signals",
@@ -3899,6 +4297,48 @@ def _instrument_status_from_row(
     )
 
 
+def _security_lifecycle_from_row(
+    row: sqlite3.Row,
+    instrument: Instrument,
+) -> SecurityLifecycleEvent:
+    return SecurityLifecycleEvent(
+        instrument=instrument,
+        event_type=LifecycleEventType(row["event_type"]),
+        effective_date=date.fromisoformat(row["effective_date"]),
+        available_at=datetime.fromisoformat(row["available_at"]),
+        source=row["source"],
+        source_reference=row["source_reference"],
+        details=dict(json.loads(row["details_json"])),
+        raw_data_hash=row["raw_data_hash"],
+        batch_id=row["batch_id"],
+        provider_dataset=row["provider_dataset"],
+        availability_precision=AvailabilityPrecision(row["availability_precision"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+    )
+
+
+def _fundamental_publication_from_row(
+    row: sqlite3.Row,
+    instrument: Instrument,
+) -> FundamentalPublicationEvent:
+    return FundamentalPublicationEvent(
+        instrument=instrument,
+        period_end=date.fromisoformat(row["period_end"]),
+        report_type=row["report_type"],
+        published_at=datetime.fromisoformat(row["published_at"]),
+        available_at=datetime.fromisoformat(row["available_at"]),
+        title=row["title"],
+        revision=int(row["revision"]),
+        source=row["source"],
+        source_reference=row["source_reference"],
+        raw_data_hash=row["raw_data_hash"],
+        batch_id=row["batch_id"],
+        provider_dataset=row["provider_dataset"],
+        availability_precision=AvailabilityPrecision(row["availability_precision"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+    )
+
+
 def _provider_limitation_from_row(row: sqlite3.Row) -> ProviderLimitation:
     return ProviderLimitation(
         provider=row["provider"],
@@ -3919,6 +4359,69 @@ def _pit_readiness_from_row(row: sqlite3.Row) -> PITReadinessAssessment:
         missing_critical_fields=tuple(json.loads(row["missing_critical_fields_json"])),
         warnings=tuple(json.loads(row["warnings_json"])),
         ready_for_historical_replay=bool(row["ready_for_historical_replay"]),
+        readiness_score=float(row["readiness_score"]),
+        classification=PITReadinessClassification(row["classification"]),
+        score_components=dict(json.loads(row["score_components_json"])),
+        assumptions=tuple(json.loads(row["assumptions_json"])),
+        model_version=row["model_version"],
+    )
+
+
+def _provider_consistency_from_row(row: sqlite3.Row) -> ProviderConsistencyReport:
+    return ProviderConsistencyReport(
+        report_id=row["report_id"],
+        dataset=row["dataset"],
+        primary_provider=row["primary_provider"],
+        secondary_provider=row["secondary_provider"],
+        compared_at=datetime.fromisoformat(row["compared_at"]),
+        primary_count=int(row["primary_count"]),
+        secondary_count=int(row["secondary_count"]),
+        matched_count=int(row["matched_count"]),
+        primary_only_count=int(row["primary_only_count"]),
+        secondary_only_count=int(row["secondary_only_count"]),
+        key_overlap_score=float(row["key_overlap_score"]),
+        field_match_scores=dict(json.loads(row["field_match_scores_json"])),
+        consistency_score=float(row["consistency_score"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+        limitations=tuple(json.loads(row["limitations_json"])),
+        comparison_hash=row["comparison_hash"],
+        model_version=row["model_version"],
+    )
+
+
+def _provider_conflict_from_row(row: sqlite3.Row) -> ProviderConflict:
+    return ProviderConflict(
+        conflict_id=row["conflict_id"],
+        conflict_fingerprint=row["conflict_fingerprint"],
+        report_id=row["report_id"],
+        dataset=row["dataset"],
+        record_key=row["record_key"],
+        field_name=row["field_name"],
+        conflict_type=ProviderConflictType(row["conflict_type"]),
+        primary_provider=row["primary_provider"],
+        secondary_provider=row["secondary_provider"],
+        primary_value=json.loads(row["primary_value_json"]),
+        secondary_value=json.loads(row["secondary_value_json"]),
+        severity=ProviderConflictSeverity(row["severity"]),
+        detected_at=datetime.fromisoformat(row["detected_at"]),
+        model_version=row["model_version"],
+    )
+
+
+def _dataset_confidence_from_row(
+    row: sqlite3.Row,
+) -> DatasetConfidenceAssessment:
+    return DatasetConfidenceAssessment(
+        assessment_id=row["assessment_id"],
+        report_id=row["report_id"],
+        dataset=row["dataset"],
+        assessed_at=datetime.fromisoformat(row["assessed_at"]),
+        confidence_score=float(row["confidence_score"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+        component_scores=dict(json.loads(row["component_scores_json"])),
+        conflict_count=int(row["conflict_count"]),
+        critical_conflict_count=int(row["critical_conflict_count"]),
+        warnings=tuple(json.loads(row["warnings_json"])),
         model_version=row["model_version"],
     )
 

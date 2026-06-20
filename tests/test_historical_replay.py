@@ -9,6 +9,7 @@ from tong_quant.domain.enums import (
     DataTrustLevel,
     EvidenceQuality,
     Market,
+    PITReadinessClassification,
     ResearchConclusion,
     ResearchModuleName,
     ResearchRunStatus,
@@ -218,6 +219,10 @@ def _prepared_store(
             missing_critical_fields=(),
             warnings=("partial coverage",),
             ready_for_historical_replay=True,
+            readiness_score=85,
+            classification=PITReadinessClassification.USABLE,
+            score_components={"coverage": 90, "trust": 75},
+            assumptions=("test fixture",),
         )
     )
     return store, instrument

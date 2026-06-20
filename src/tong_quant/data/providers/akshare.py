@@ -52,9 +52,18 @@ class AkShareClient(Protocol):
 
     def stock_fhps_detail_em(self, **kwargs: Any) -> pd.DataFrame: ...
 
+    def stock_tfp_em(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_info_sz_change_name(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_yysj_em(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_zh_a_disclosure_report_cninfo(self, **kwargs: Any) -> pd.DataFrame: ...
+
 
 class AkShareAdapter:
     source_id = "akshare"
+    supported_csi_indices = frozenset({"000300", "000905", "000852"})
 
     def __init__(
         self,
@@ -228,6 +237,10 @@ class AkShareAdapter:
         )
 
     def index_membership(self, symbol: str) -> ProviderResponse:
+        if symbol not in self.supported_csi_indices:
+            raise ValueError(
+                "historical calibration currently reserves CSI300, CSI500, and CSI1000"
+            )
         def fetch() -> pd.DataFrame:
             frame = self._client.index_stock_cons_csindex(symbol=symbol)
             frame.attrs["tong_quant_source"] = "akshare:index_stock_cons_csindex"
@@ -248,6 +261,70 @@ class AkShareAdapter:
         return self._fetch(
             "corporate_actions",
             {"symbol": symbol},
+            fetch,
+        )
+
+    def suspension_events(self, on_date: str) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.stock_tfp_em(date=on_date)
+            frame.attrs["tong_quant_source"] = "akshare:stock_tfp_em"
+            return frame
+
+        return self._fetch(
+            "security_lifecycle_suspension",
+            {"date": on_date},
+            fetch,
+        )
+
+    def shenzhen_name_changes(self) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.stock_info_sz_change_name(symbol="简称变更")
+            frame.attrs["tong_quant_source"] = "akshare:stock_info_sz_change_name"
+            return frame
+
+        return self._fetch("security_lifecycle_name_change_sz", {}, fetch)
+
+    def fundamental_publication_schedule(self, period_end: str) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.stock_yysj_em(symbol="沪深A股", date=period_end)
+            frame.attrs["tong_quant_source"] = "akshare:stock_yysj_em"
+            return frame
+
+        return self._fetch(
+            "fundamental_publications_schedule",
+            {"period_end": period_end},
+            fetch,
+        )
+
+    def fundamental_disclosures(
+        self,
+        symbol: str,
+        *,
+        start_date: str,
+        end_date: str,
+        category: str = "",
+    ) -> ProviderResponse:
+        def fetch() -> pd.DataFrame:
+            frame = self._client.stock_zh_a_disclosure_report_cninfo(
+                symbol=symbol,
+                market="沪深京",
+                category=category,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            frame.attrs["tong_quant_source"] = (
+                "akshare:stock_zh_a_disclosure_report_cninfo"
+            )
+            return frame
+
+        return self._fetch(
+            "fundamental_publications_disclosure",
+            {
+                "symbol": symbol,
+                "start_date": start_date,
+                "end_date": end_date,
+                "category": category,
+            },
             fetch,
         )
 

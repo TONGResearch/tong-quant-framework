@@ -21,11 +21,30 @@ RAW_REQUIRED_COLUMNS: dict[str, frozenset[str]] = {
     "instrument_status_delisted": frozenset({"代码"}),
     "index_membership": frozenset({"成分券代码"}),
     "corporate_actions": frozenset(),
+    "security_lifecycle_suspension": frozenset({"代码", "停牌时间"}),
+    "security_lifecycle_name_change_sz": frozenset({"证券代码", "变更日期"}),
+    "fundamental_publications_schedule": frozenset(
+        {"股票代码", "实际披露时间"}
+    ),
+    "fundamental_publications_disclosure": frozenset(
+        {"代码", "公告标题", "公告时间"}
+    ),
 }
+
+EMPTY_ALLOWED_DATASETS = frozenset(
+    {
+        "security_lifecycle_suspension",
+        "security_lifecycle_name_change_sz",
+        "fundamental_publications_schedule",
+        "fundamental_publications_disclosure",
+    }
+)
 
 
 def validate_raw_dataset(dataset: RawDataset) -> QualityReport:
     issues: list[QualityIssue] = []
+    if dataset.frame.empty and dataset.dataset in EMPTY_ALLOWED_DATASETS:
+        return QualityReport(dataset=dataset.dataset, rows=0, issues=())
     required = RAW_REQUIRED_COLUMNS.get(dataset.dataset)
     if required is None:
         issues.append(
@@ -45,7 +64,7 @@ def validate_raw_dataset(dataset: RawDataset) -> QualityReport:
                     severity=Severity.ERROR,
                 )
             )
-    if dataset.frame.empty:
+    if dataset.frame.empty and dataset.dataset not in EMPTY_ALLOWED_DATASETS:
         issues.append(
             QualityIssue(
                 code="empty_dataset",

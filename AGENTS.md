@@ -39,6 +39,9 @@ validation, risk management, and controlled execution.
   both `AvailabilityPrecision` and `DataTrustLevel`.
 - Do not treat PIT data as replay-ready until a `PITReadinessAssessment`
   supports that conclusion.
+- Read `PITReadinessClassification` together with its numeric score,
+  component scores, assumptions, and warnings. `CAUTION` and `UNSUITABLE`
+  datasets must never be silently promoted by a consumer.
 - HistoricalReplaySource reconstructs validation samples only. It must not
   backtest orders, allocate capital, connect to brokers, or make trade
   decisions.
@@ -91,6 +94,20 @@ validation, risk management, and controlled execution.
   `MarketDataService` with an explicit timezone-aware `as_of` timestamp.
 - Treat company information and universe snapshots as current snapshots unless
   a dedicated historical security-master source proves otherwise.
+- Current CSI constituent responses are dated snapshots, not historical
+  entry/exit ledgers. Repeated ingestion improves forward coverage only.
+- Never infer relisting from trading resumption, or infer a complete ST interval
+  from a current name/status snapshot.
+- Fundamental publication dates and reported numeric values are independent
+  evidence. Never copy a current revised value backward into an earlier
+  publication event when the earlier value is unavailable.
+- Provider calibration compares normalized evidence but cannot alone grant
+  `VERIFIED` trust. Preserve provider-only records and disagreement warnings.
+- Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
+  render, log, or include the token in cache keys or request parameters.
+- Provider permission errors are access limitations, not empty datasets.
+- Persist repeated provider conflicts as audit history. High-severity conflicts
+  must prevent `USABLE` PIT readiness until resolved or explicitly superseded.
 - Market regime classifiers consume only normalized `RegimeMetric` inputs.
 - Every regime input, bar, and external breadth or volatility metric must have
   `available_at <= as_of`.

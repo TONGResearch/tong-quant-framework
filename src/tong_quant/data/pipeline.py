@@ -18,8 +18,14 @@ from tong_quant.data.normalization import (
     normalize_current_status_snapshot,
     normalize_daily_bars,
     normalize_delisted_statuses,
+    normalize_delisting_lifecycle,
     normalize_financial_statement,
+    normalize_fundamental_disclosures,
     normalize_index_membership,
+    normalize_market_universe_snapshot,
+    normalize_publication_schedule,
+    normalize_st_name_change_lifecycle,
+    normalize_suspension_lifecycle,
     normalize_trading_calendar,
     normalize_universe,
 )
@@ -140,10 +146,17 @@ class DataIngestionPipeline:
         if not report.is_valid:
             raise DataQualityError(report)
         instruments = normalize_universe(response.dataset)
+        batch_id = str(uuid4())
         accepted = self._store.upsert_instruments(instruments)
+        memberships = normalize_market_universe_snapshot(
+            response.dataset,
+            batch_id=batch_id,
+        )
+        self._store.upsert_universe_memberships(memberships)
         batch_id, warnings = self._record_dataset_audit(
             response,
             accepted,
+            batch_id=batch_id,
             warning_code="current_universe_snapshot",
             warning_message=(
                 "A-share universe is a retrieval-time snapshot unless "
@@ -184,6 +197,12 @@ class DataIngestionPipeline:
             response.dataset,
             instrument,
             batch_id=batch_id,
+            publication_events=self._store.fundamental_publication_events(
+                symbol,
+                Market.CHINA_A,
+                AssetType.EQUITY,
+                as_of=response.dataset.retrieved_at,
+            ),
         )
         accepted = self._store.upsert_fundamental_facts(facts)
         recorded_batch_id, warnings = self._record_dataset_audit(
@@ -235,8 +254,13 @@ class DataIngestionPipeline:
             raise DataQualityError(report)
         batch_id = str(uuid4())
         statuses = normalize_delisted_statuses(response.dataset, batch_id=batch_id)
+        lifecycle_events = normalize_delisting_lifecycle(
+            response.dataset,
+            batch_id=batch_id,
+        )
         self._store.upsert_instruments([status.instrument for status in statuses])
         accepted = self._store.upsert_instrument_statuses(statuses)
+        self._store.upsert_security_lifecycle_events(lifecycle_events)
         recorded_batch_id, warnings = self._record_dataset_audit(
             response,
             accepted,
@@ -253,6 +277,152 @@ class DataIngestionPipeline:
             received=len(response.dataset.frame),
             accepted=accepted,
             rejected=len(response.dataset.frame) - accepted,
+            cached=response.cache_hit,
+            batch_id=recorded_batch_id,
+            warnings=warnings,
+        )
+
+    def ingest_suspension_lifecycle(self, on_date: str) -> IngestionResult:
+        response = self._provider.suspension_events(on_date)
+        report = validate_raw_dataset(response.dataset)
+        if not report.is_valid:
+            raise DataQualityError(report)
+        batch_id = str(uuid4())
+        events = normalize_suspension_lifecycle(
+            response.dataset,
+            batch_id=batch_id,
+        )
+        self._store.upsert_instruments([event.instrument for event in events])
+        accepted = self._store.upsert_security_lifecycle_events(events)
+        recorded_batch_id, warnings = self._record_dataset_audit(
+            response,
+            accepted,
+            batch_id=batch_id,
+            warning_code="suspension_event_retrieval_time",
+            warning_message=(
+                "Suspension effective dates are retained, but historical "
+                "availability is known only from retrieval time"
+            ),
+            trust_level=DataTrustLevel.MEDIUM,
+        )
+        return IngestionResult(
+            dataset=response.dataset.dataset,
+            received=len(response.dataset.frame),
+            accepted=accepted,
+            rejected=max(len(response.dataset.frame) - accepted, 0),
+            cached=response.cache_hit,
+            batch_id=recorded_batch_id,
+            warnings=warnings,
+        )
+
+    def ingest_shenzhen_st_history(self) -> IngestionResult:
+        response = self._provider.shenzhen_name_changes()
+        report = validate_raw_dataset(response.dataset)
+        if not report.is_valid:
+            raise DataQualityError(report)
+        batch_id = str(uuid4())
+        events = normalize_st_name_change_lifecycle(
+            response.dataset,
+            batch_id=batch_id,
+        )
+        self._store.upsert_instruments([event.instrument for event in events])
+        accepted = self._store.upsert_security_lifecycle_events(events)
+        recorded_batch_id, warnings = self._record_dataset_audit(
+            response,
+            accepted,
+            batch_id=batch_id,
+            warning_code="st_history_shenzhen_only",
+            warning_message=(
+                "Dated ST name-change evidence currently covers Shenzhen only; "
+                "Shanghai and Beijing history remain incomplete"
+            ),
+            trust_level=DataTrustLevel.MEDIUM,
+        )
+        return IngestionResult(
+            dataset=response.dataset.dataset,
+            received=len(response.dataset.frame),
+            accepted=accepted,
+            rejected=max(len(response.dataset.frame) - accepted, 0),
+            cached=response.cache_hit,
+            batch_id=recorded_batch_id,
+            warnings=warnings,
+        )
+
+    def ingest_fundamental_publication_schedule(
+        self,
+        period_end: str,
+    ) -> IngestionResult:
+        response = self._provider.fundamental_publication_schedule(period_end)
+        report = validate_raw_dataset(response.dataset)
+        if not report.is_valid:
+            raise DataQualityError(report)
+        batch_id = str(uuid4())
+        events = normalize_publication_schedule(
+            response.dataset,
+            batch_id=batch_id,
+        )
+        self._store.upsert_instruments([event.instrument for event in events])
+        accepted = self._store.upsert_fundamental_publication_events(events)
+        recorded_batch_id, warnings = self._record_dataset_audit(
+            response,
+            accepted,
+            batch_id=batch_id,
+            warning_code="publication_date_only",
+            warning_message=(
+                "Actual disclosure dates are date-only and become usable at end of day"
+            ),
+            trust_level=DataTrustLevel.MEDIUM,
+        )
+        return IngestionResult(
+            dataset=response.dataset.dataset,
+            received=len(response.dataset.frame),
+            accepted=accepted,
+            rejected=max(len(response.dataset.frame) - accepted, 0),
+            cached=response.cache_hit,
+            batch_id=recorded_batch_id,
+            warnings=warnings,
+        )
+
+    def ingest_fundamental_disclosures(
+        self,
+        symbol: str,
+        *,
+        start_date: str,
+        end_date: str,
+        category: str = "",
+    ) -> IngestionResult:
+        response = self._provider.fundamental_disclosures(
+            symbol,
+            start_date=start_date,
+            end_date=end_date,
+            category=category,
+        )
+        report = validate_raw_dataset(response.dataset)
+        if not report.is_valid:
+            raise DataQualityError(report)
+        batch_id = str(uuid4())
+        events = normalize_fundamental_disclosures(
+            response.dataset,
+            batch_id=batch_id,
+        )
+        self._store.upsert_instruments([event.instrument for event in events])
+        accepted = self._store.upsert_fundamental_publication_events(events)
+        recorded_batch_id, warnings = self._record_dataset_audit(
+            response,
+            accepted,
+            batch_id=batch_id,
+            warning_code="publication_title_parsing",
+            warning_message=(
+                "Report period and revision order are parsed from announcement titles; "
+                "unrecognized titles remain excluded with source evidence retained raw"
+            ),
+            trust_level=DataTrustLevel.HIGH,
+        )
+        return IngestionResult(
+            dataset=response.dataset.dataset,
+            received=len(response.dataset.frame),
+            accepted=accepted,
+            rejected=max(len(response.dataset.frame) - accepted, 0),
             cached=response.cache_hit,
             batch_id=recorded_batch_id,
             warnings=warnings,
@@ -446,6 +616,49 @@ class DataIngestionPipeline:
                     "issuer publication timestamps; conservative ingestion uses retrieval time"
                 ),
                 trust_level=DataTrustLevel.LOW,
+                documented_at=documented_at,
+            ),
+            ProviderLimitation(
+                provider=self._provider.source_id,
+                dataset="security_lifecycle_events",
+                limitation_code="st_history_exchange_gap",
+                description=(
+                    "Dated ST name changes are currently available for Shenzhen; "
+                    "Shanghai and Beijing timelines require a secondary source"
+                ),
+                trust_level=DataTrustLevel.LOW,
+                documented_at=documented_at,
+            ),
+            ProviderLimitation(
+                provider=self._provider.source_id,
+                dataset="security_lifecycle_events",
+                limitation_code="relisting_history_unavailable",
+                description=(
+                    "AKShare does not provide a verified complete A-share relisting history"
+                ),
+                trust_level=DataTrustLevel.UNKNOWN,
+                documented_at=documented_at,
+            ),
+            ProviderLimitation(
+                provider=self._provider.source_id,
+                dataset="universe_memberships",
+                limitation_code="csi_membership_latest_snapshot",
+                description=(
+                    "CSI300, CSI500, and CSI1000 constituent endpoints provide current "
+                    "snapshots, not complete historical entries and exits"
+                ),
+                trust_level=DataTrustLevel.LOW,
+                documented_at=documented_at,
+            ),
+            ProviderLimitation(
+                provider=self._provider.source_id,
+                dataset="fundamental_publications",
+                limitation_code="schedule_date_only",
+                description=(
+                    "Actual disclosure schedules provide dates; intraday availability "
+                    "requires CNInfo announcement evidence"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
                 documented_at=documented_at,
             ),
             ProviderLimitation(

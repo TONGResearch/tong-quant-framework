@@ -103,6 +103,52 @@ class FakeAkShareClient:
             }
         )
 
+    def stock_tfp_em(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "代码": ["000001"],
+                "名称": ["平安银行"],
+                "停牌时间": ["2024-01-02"],
+                "停牌截止时间": ["2024-01-03"],
+                "停牌期限": ["1 day"],
+                "停牌原因": ["test event"],
+            }
+        )
+
+    def stock_info_sz_change_name(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "证券代码": ["000001", "000001"],
+                "变更日期": ["2022-01-02", "2023-01-02"],
+                "变更前简称": ["平安银行", "*ST平安"],
+                "变更后简称": ["*ST平安", "平安银行"],
+            }
+        )
+
+    def stock_yysj_em(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "股票代码": ["600000"],
+                "股票简称": ["浦发银行"],
+                "实际披露时间": ["2024-01-03"],
+            }
+        )
+
+    def stock_zh_a_disclosure_report_cninfo(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "代码": ["600000", "600000"],
+                "简称": ["浦发银行", "浦发银行"],
+                "公告标题": ["2023年年度报告", "2023年年度报告（修订版）"],
+                "公告时间": ["2024-01-03 18:00:00", "2024-01-04 18:00:00"],
+                "公告链接": ["https://example.invalid/1", "https://example.invalid/2"],
+            }
+        )
+
 
 @pytest.fixture
 def data_foundation(tmp_path: Path) -> tuple[
@@ -279,7 +325,7 @@ def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
     assert store.table_count("ingestion_batches") == 6
     assert store.table_count("raw_dataset_fingerprints") == 6
     assert store.table_count("data_availability_warnings") >= 6
-    assert store.table_count("provider_limitations") == 3
+    assert store.table_count("provider_limitations") == 7
 
     visible = service.fundamental_facts(
         "600000",
@@ -290,6 +336,66 @@ def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
     )
     assert visible
     assert visible[0].raw_data_hash
+
+
+@pytest.mark.integration
+def test_pit_remediation_ingests_lifecycle_and_publication_evidence(
+    data_foundation: tuple[
+        FakeAkShareClient,
+        DataIngestionPipeline,
+        MarketDataService,
+        SQLiteStore,
+    ],
+) -> None:
+    _, pipeline, service, store = data_foundation
+
+    suspension = pipeline.ingest_suspension_lifecycle("20240102")
+    st_history = pipeline.ingest_shenzhen_st_history()
+    schedule = pipeline.ingest_fundamental_publication_schedule("20231231")
+    disclosures = pipeline.ingest_fundamental_disclosures(
+        "600000",
+        start_date="20240101",
+        end_date="20240105",
+    )
+    financial = pipeline.ingest_financial_statement("600000", "income")
+
+    assert suspension.accepted == 2
+    assert st_history.accepted == 2
+    assert schedule.accepted == 1
+    assert disclosures.accepted == 2
+    assert store.table_count("security_lifecycle_events") == 4
+    assert store.table_count("fundamental_publication_events") == 3
+
+    as_of = datetime(2024, 1, 6, tzinfo=UTC)
+    lifecycle = store.security_lifecycle_events(
+        "000001",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        as_of=as_of,
+    )
+    assert {event.event_type.value for event in lifecycle} == {
+        "st_enter",
+        "st_exit",
+        "suspension_started",
+        "trading_resumed",
+    }
+    publications = store.fundamental_publication_events(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        as_of=as_of,
+    )
+    assert [event.revision for event in publications] == [0, 0, 1]
+    facts = service.fundamental_facts(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        "revenue",
+        as_of=as_of,
+    )
+    assert financial.accepted == 2
+    assert facts[0].revision == 1
+    assert facts[0].published_at == datetime(2024, 1, 4, 10, tzinfo=UTC)
 
 
 def _daily_frame(*, include_symbol: bool) -> pd.DataFrame:

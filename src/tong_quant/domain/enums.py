@@ -186,6 +186,28 @@ class DataTrustLevel(StrEnum):
     UNKNOWN = "unknown"
 
 
+class PITReadinessClassification(StrEnum):
+    USABLE = "usable"
+    CAUTION = "caution"
+    UNSUITABLE = "unsuitable"
+
+
+class LifecycleEventType(StrEnum):
+    ST_ENTER = "st_enter"
+    ST_EXIT = "st_exit"
+    SUSPENSION_STARTED = "suspension_started"
+    TRADING_RESUMED = "trading_resumed"
+    DELISTING_PERIOD_STARTED = "delisting_period_started"
+    DELISTED = "delisted"
+    RELISTED = "relisted"
+
+
+class HistoricalCoverageSubject(StrEnum):
+    SECURITY_LIFECYCLE = "security_lifecycle"
+    UNIVERSE_MEMBERSHIP = "universe_membership"
+    FUNDAMENTAL_PUBLICATION = "fundamental_publication"
+
+
 class AvailabilityPrecision(StrEnum):
     EXACT = "exact"
     DATE_ONLY = "date_only"

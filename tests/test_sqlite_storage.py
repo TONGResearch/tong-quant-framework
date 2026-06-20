@@ -41,6 +41,12 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("data_availability_warnings") == 0
     assert store.table_count("provider_limitations") == 0
     assert store.table_count("pit_readiness_assessments") == 0
+    assert store.table_count("security_lifecycle_events") == 0
+    assert store.table_count("fundamental_publication_events") == 0
+    assert store.table_count("historical_coverage_assessments") == 0
+    assert store.table_count("provider_consistency_reports") == 0
+    assert store.table_count("provider_conflicts") == 0
+    assert store.table_count("dataset_confidence_assessments") == 0
     assert store.table_count("historical_replay_manifests") == 0
     assert store.table_count("historical_replay_samples") == 0
     assert store.table_count("signals") == 0
@@ -62,7 +68,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("notification_deliveries") == 0
     assert store.table_count("notification_dead_letters") == 0
     assert store.table_count("schema_metadata") == 2
-    assert store.table_count("schema_migrations") == 1
+    assert store.table_count("schema_migrations") == 3
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
     assert store.migration_head() == MIGRATION_HEAD
     with sqlite3.connect(store.path) as connection:
@@ -123,6 +129,19 @@ def test_initialize_migrates_pre_ledger_database(tmp_path: Path) -> None:
             ).fetchall()
         }
     assert {"lease_expires_at", "dead_lettered_at"} <= outbox_columns
+    with sqlite3.connect(path) as connection:
+        readiness_columns = {
+            str(row[1])
+            for row in connection.execute(
+                "PRAGMA table_info(pit_readiness_assessments)"
+            ).fetchall()
+        }
+    assert {
+        "readiness_score",
+        "classification",
+        "score_components_json",
+        "assumptions_json",
+    } <= readiness_columns
     assert store.migration_head() == MIGRATION_HEAD
 
 

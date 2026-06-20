@@ -167,6 +167,24 @@ persistent dead letters, repository-level credential rejection, ordered database
 migrations, and atomic Research/Validation final writes. See
 `engineering-stabilization-review.md`.
 
+## PIT Data Remediation And Provider Calibration
+
+- Partial historical security lifecycle ingestion with explicit exchange gaps
+- Dated CSI300/500/1000 and market-wide snapshots without invented history
+- Actual disclosure dates and CNInfo announcement timestamps
+- Historical coverage scoring and `USABLE` / `CAUTION` / `UNSUITABLE` readiness
+- Generic provider comparison reports for future secondary-source onboarding
+
+Status: implemented as a data-reliability phase before Paper Trading or
+Execution. Secondary providers and complete national lifecycle histories remain
+future data-acquisition work.
+
+Provider Calibration Phase II adds Tushare as the first secondary adapter,
+automatic conflict detection, conflict-history persistence, dataset confidence,
+and PIT readiness conflict caps. Live calibration remains opt-in and depends on
+local `TUSHARE_TOKEN` permissions; no trust class changes merely because the
+adapter exists.
+
 ## Reserved Review: Paper Trading Architecture
 
 - Review hypothetical-ledger ownership and isolation.

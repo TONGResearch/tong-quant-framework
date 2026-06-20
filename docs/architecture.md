@@ -174,6 +174,25 @@ HistoricalReplaySource consumes readiness assessments and preserves incomplete
 or low-trust reconstruction with warnings; readiness never silently upgrades
 provider data.
 
+PIT remediation extends this boundary without introducing trading behavior:
+
+```text
+Lifecycle/publication/universe evidence
+                 |
+HistoricalCoverageEvaluator ---- ProviderCalibrationEngine
+                 |                         |
+       coverage assessment       consistency report
+                 \_________________________/
+                              |
+             PITReadinessAssessment
+             usable | caution | unsuitable
+```
+
+Security lifecycle and constituent data accumulate forward from dated
+snapshots. Complete historical membership or status intervals are never
+invented. Fundamental publication evidence can improve availability timing,
+but later revised numeric values are not backfilled into earlier revisions.
+
 ## Future Asset Classes
 
 The market package reserves this future structure:
@@ -384,6 +403,15 @@ audits; this phase does not perform a global schema rewrite.
 The authoritative AKShare quality classifications are in
 `docs/data-trust-matrix.md`. Current snapshots and provider-limited histories
 must not be treated as stronger evidence than that matrix allows.
+
+The remediation evidence and calibration rules are documented in
+`docs/pit-data-quality-audit.md`, `docs/historical-coverage-matrix.md`, and
+`docs/provider-calibration.md`.
+
+Provider Calibration Phase II adds Tushare behind a canonical calibration
+adapter. Consistency reports, individual conflict observations, and dataset
+confidence are persisted separately. Credentials remain environment-only, and
+calibration is disabled by default. See `docs/provider-calibration-phase-ii.md`.
 
 Execution remains disabled. No Paper Trading, Broker integration, Order, Fill,
 automatic rebalancing, or asset-allocation implementation is part of this

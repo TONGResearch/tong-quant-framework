@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+from tong_quant.data.models import FundamentalPublicationEvent, SecurityLifecycleEvent
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import Adjustment, AssetType, Market
 from tong_quant.domain.models import Bar, FundamentalFact, Instrument, InstrumentStatus
@@ -88,6 +89,40 @@ class MarketDataService:
             metric,
             as_of=as_of,
             period_end_on_or_before=period_end_on_or_before,
+        )
+
+    def fundamental_publications(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        *,
+        as_of: datetime,
+        period_end_on_or_before: date | None = None,
+    ) -> list[FundamentalPublicationEvent]:
+        return self._store.fundamental_publication_events(
+            symbol,
+            market,
+            asset_type,
+            as_of=as_of,
+            period_end_on_or_before=period_end_on_or_before,
+        )
+
+    def security_lifecycle(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        *,
+        as_of: datetime,
+        effective_on_or_before: date | None = None,
+    ) -> list[SecurityLifecycleEvent]:
+        return self._store.security_lifecycle_events(
+            symbol,
+            market,
+            asset_type,
+            as_of=as_of,
+            effective_on_or_before=effective_on_or_before,
         )
 
     def instrument_status(

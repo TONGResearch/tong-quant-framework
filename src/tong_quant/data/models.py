@@ -1,7 +1,7 @@
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
@@ -9,11 +9,16 @@ import pandas as pd
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
+    AvailabilityPrecision,
     DataTrustLevel,
+    HistoricalCoverageSubject,
     IngestionBatchStatus,
+    LifecycleEventType,
     Market,
+    PITReadinessClassification,
 )
-from tong_quant.domain.models import require_timezone
+from tong_quant.domain.models import Instrument, require_timezone
+from tong_quant.version import HISTORICAL_COVERAGE_VERSION, PIT_READINESS_VERSION
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,18 +151,109 @@ class PITReadinessAssessment:
     missing_critical_fields: tuple[str, ...]
     warnings: tuple[str, ...]
     ready_for_historical_replay: bool
-    model_version: str = "pit-readiness-v0.6.2"
+    readiness_score: float
+    classification: PITReadinessClassification
+    score_components: dict[str, float]
+    assumptions: tuple[str, ...]
+    model_version: str = PIT_READINESS_VERSION
 
     def __post_init__(self) -> None:
         require_timezone(self.assessed_at, "assessed_at")
         if not 0 <= self.coverage_ratio <= 1:
             raise ValueError("coverage_ratio must be between zero and one")
+        if not 0 <= self.readiness_score <= 100:
+            raise ValueError("readiness_score must be between zero and 100")
+        if any(not 0 <= value <= 100 for value in self.score_components.values()):
+            raise ValueError("PIT readiness components must be between zero and 100")
+        if self.ready_for_historical_replay != (
+            self.classification is PITReadinessClassification.USABLE
+        ):
+            raise ValueError("PIT readiness boolean and classification disagree")
         if self.ready_for_historical_replay and (
             self.missing_critical_fields
             or self.trust_level
             in {DataTrustLevel.LOW, DataTrustLevel.UNKNOWN}
         ):
             raise ValueError("ready datasets cannot have critical gaps or weak trust")
+
+
+@dataclass(frozen=True, slots=True)
+class SecurityLifecycleEvent:
+    instrument: Instrument
+    event_type: LifecycleEventType
+    effective_date: date
+    available_at: datetime
+    source: str
+    source_reference: str = ""
+    details: dict[str, str] = field(default_factory=dict)
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
+
+    def __post_init__(self) -> None:
+        require_timezone(self.available_at, "lifecycle available_at")
+        if self.raw_data_hash and len(self.raw_data_hash) < 16:
+            raise ValueError("raw_data_hash is too short")
+
+
+@dataclass(frozen=True, slots=True)
+class FundamentalPublicationEvent:
+    instrument: Instrument
+    period_end: date
+    report_type: str
+    published_at: datetime
+    available_at: datetime
+    title: str
+    revision: int
+    source: str
+    source_reference: str = ""
+    raw_data_hash: str = ""
+    batch_id: str = ""
+    provider_dataset: str = ""
+    availability_precision: AvailabilityPrecision = AvailabilityPrecision.UNKNOWN
+    trust_level: DataTrustLevel = DataTrustLevel.UNKNOWN
+
+    def __post_init__(self) -> None:
+        require_timezone(self.published_at, "publication published_at")
+        require_timezone(self.available_at, "publication available_at")
+        if self.available_at < self.published_at:
+            raise ValueError("publication available_at cannot precede published_at")
+        if self.revision < 0:
+            raise ValueError("publication revision cannot be negative")
+        if not self.report_type.strip() or not self.title.strip():
+            raise ValueError("publication report type and title are required")
+
+
+@dataclass(frozen=True, slots=True)
+class HistoricalCoverageAssessment:
+    subject_type: HistoricalCoverageSubject
+    subject_id: str
+    dataset: str
+    period_start: date
+    period_end: date
+    assessed_at: datetime
+    confidence_score: float
+    classification: PITReadinessClassification
+    trust_level: DataTrustLevel
+    score_components: dict[str, float]
+    warnings: tuple[str, ...]
+    assumptions: tuple[str, ...]
+    model_version: str = HISTORICAL_COVERAGE_VERSION
+
+    def __post_init__(self) -> None:
+        require_timezone(self.assessed_at, "coverage assessed_at")
+        if self.period_end < self.period_start:
+            raise ValueError("coverage period_end cannot precede period_start")
+        if not 0 <= self.confidence_score <= 100:
+            raise ValueError("coverage confidence must be between zero and 100")
+        if any(not 0 <= value <= 100 for value in self.score_components.values()):
+            raise ValueError("coverage components must be between zero and 100")
+        if self.classification is PITReadinessClassification.USABLE and (
+            self.trust_level in {DataTrustLevel.LOW, DataTrustLevel.UNKNOWN}
+        ):
+            raise ValueError("usable historical coverage requires medium or better trust")
 
 
 def dataframe_sha256(frame: pd.DataFrame, parameters: dict[str, Any]) -> str:
