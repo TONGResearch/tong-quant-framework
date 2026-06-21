@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from tong_quant.data.calibration.base import (
     ProviderCalibrationRepository,
@@ -9,6 +10,7 @@ from tong_quant.data.calibration.models import (
     DEFAULT_CALIBRATION_FIELDS,
     CalibrationQuery,
     ProviderCalibrationResult,
+    ProviderCalibrationSnapshot,
 )
 
 
@@ -28,21 +30,36 @@ class ProviderCalibrationCoordinator:
         comparison_fields = fields or DEFAULT_CALIBRATION_FIELDS[query.dataset]
         primary_snapshot = primary.calibration_snapshot(query)
         secondary_snapshot = secondary.calibration_snapshot(query)
-        report = self.engine.compare(
+        return self.run_snapshots(
             primary_snapshot,
             secondary_snapshot,
             fields=comparison_fields,
             compared_at=query.as_of,
         )
+
+    def run_snapshots(
+        self,
+        primary_snapshot: ProviderCalibrationSnapshot,
+        secondary_snapshot: ProviderCalibrationSnapshot,
+        *,
+        fields: tuple[str, ...],
+        compared_at: datetime,
+    ) -> ProviderCalibrationResult:
+        report = self.engine.compare(
+            primary_snapshot,
+            secondary_snapshot,
+            fields=fields,
+            compared_at=compared_at,
+        )
         conflicts = self.engine.detect_conflicts(
             primary_snapshot,
             secondary_snapshot,
             report,
-            fields=comparison_fields,
+            fields=fields,
         )
         temporal_alignment = (
             100.0
-            if primary_snapshot.as_of == secondary_snapshot.as_of == query.as_of
+            if primary_snapshot.as_of == secondary_snapshot.as_of == compared_at
             else 50.0
         )
         confidence = self.engine.assess_confidence(

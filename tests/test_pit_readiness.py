@@ -124,3 +124,22 @@ def test_critical_provider_conflict_caps_pit_readiness() -> None:
     assert assessment.classification is PITReadinessClassification.CAUTION
     assert assessment.ready_for_historical_replay is False
     assert "prevent usable" in " ".join(assessment.warnings)
+
+
+def test_required_provider_calibration_caps_unknown_consistency() -> None:
+    assessment = PITReadinessEvaluator().evaluate(
+        PITReadinessInput(
+            dataset="universe_coverage",
+            expected_records=100,
+            observed_records=100,
+            trust_level=DataTrustLevel.HIGH,
+            availability_score=100,
+            revision_score=100,
+            continuity_score=100,
+            provider_consistency_required=True,
+        ),
+        assessed_at=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+
+    assert assessment.classification is PITReadinessClassification.CAUTION
+    assert "required provider calibration is unavailable" in assessment.warnings

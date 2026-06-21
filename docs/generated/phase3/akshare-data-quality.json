@@ -1,0 +1,206 @@
+{
+  "akshare_version": "1.18.64",
+  "datasets": [
+    {
+      "access_status": "available",
+      "dataset": "security_lifecycle",
+      "date_validity": 100.0,
+      "evidence_scope": "partial_history",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare dated ST name-change evidence currently covers Shenzhen only",
+        "AKShare suspension history is queried by date and retained at retrieval time",
+        "AKShare delisting records do not prove complete warning-period coverage"
+      ],
+      "query_parameters": {
+        "trade_date": "20260619"
+      },
+      "recommended_usage": "Use as incomplete historical evidence; never infer missing intervals",
+      "record_count": 1693,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "52193bbb98136d884bfd50b66352cf1583864707dc6a7f451c744ea8193952a5"
+    },
+    {
+      "access_status": "available",
+      "dataset": "st_status",
+      "date_validity": 100.0,
+      "evidence_scope": "partial_history",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare dated ST name-change evidence currently covers Shenzhen only"
+      ],
+      "query_parameters": {},
+      "recommended_usage": "Use as incomplete historical evidence; never infer missing intervals",
+      "record_count": 1464,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "6dbf7af337a6749715e725580a94f7ac9a1d485e9c2c4dab6e683a83c93c01c0"
+    },
+    {
+      "access_status": "available",
+      "dataset": "suspension_status",
+      "date_validity": 100.0,
+      "evidence_scope": "date_scoped",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare suspension history is queried by date and retained at retrieval time"
+      ],
+      "query_parameters": {
+        "trade_date": "20260619"
+      },
+      "recommended_usage": "Use with explicit dates and provider limitations; backfill multiple periods",
+      "record_count": 25,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "44547ddc057b2441fe27ada1d42fe1a0f678c72d4ce801d025fbad8efee7ce09"
+    },
+    {
+      "access_status": "available",
+      "dataset": "delisting_records",
+      "date_validity": 100.0,
+      "evidence_scope": "terminal_records",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare delisting records do not prove complete warning-period coverage"
+      ],
+      "query_parameters": {},
+      "recommended_usage": "Use for terminal-event evidence; warning-period history remains separate",
+      "record_count": 204,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "d7b0508593460a6330fb9863d77a05fb8f04cec8c7cb5c281089473713e84c07"
+    },
+    {
+      "access_status": "available",
+      "dataset": "financial_publication_dates",
+      "date_validity": 100.0,
+      "evidence_scope": "date_scoped",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare actual disclosure schedule is date-only"
+      ],
+      "query_parameters": {
+        "period_end": "20251231"
+      },
+      "recommended_usage": "Use with explicit dates and provider limitations; backfill multiple periods",
+      "record_count": 5189,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "0279b8e73e6c6da9018001766549dd552e8e4ae81e569268f3ad9e813565e67d"
+    },
+    {
+      "access_status": "available",
+      "dataset": "fundamental_revisions",
+      "date_validity": 100.0,
+      "evidence_scope": "date_scoped",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare CNInfo announcements identify revisions but not prior numeric values"
+      ],
+      "query_parameters": {
+        "end_date": "20260621",
+        "start_date": "20240101",
+        "symbol": "600000"
+      },
+      "recommended_usage": "Use with explicit dates and provider limitations; backfill multiple periods",
+      "record_count": 23,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "b17fbbdca992feef2658782ecf5d5972bfb6d19f6f319cb8415fa7c76e79d6a1"
+    },
+    {
+      "access_status": "available",
+      "dataset": "corporate_actions",
+      "date_validity": 100.0,
+      "evidence_scope": "partial_history",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare corporate-action announcement timing remains provider-limited"
+      ],
+      "query_parameters": {
+        "symbol": "600000"
+      },
+      "recommended_usage": "Use as incomplete historical evidence; never infer missing intervals",
+      "record_count": 25,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "4a77b11cd1a4f0d02bfc1d293cfac09bf4ed936c3fb33b59ad73d5d25a36989f"
+    },
+    {
+      "access_status": "available",
+      "dataset": "universe_coverage",
+      "date_validity": null,
+      "evidence_scope": "current_snapshot",
+      "expected_record_coverage": null,
+      "key_uniqueness": 100.0,
+      "limitations": [
+        "AKShare A-share universe is a retrieval-time listing snapshot"
+      ],
+      "query_parameters": {},
+      "recommended_usage": "Use for forward snapshot collection only, not backward reconstruction",
+      "record_count": 5528,
+      "required_field_completeness": 100.0,
+      "snapshot_hash": "a16a62dacf8ec07f0c2bfb45457e80b540cc9e844724f1d4338d73de5e8b674c"
+    },
+    {
+      "access_status": "error",
+      "dataset": "csi300_membership",
+      "date_validity": null,
+      "evidence_scope": "current_snapshot",
+      "expected_record_coverage": 0,
+      "key_uniqueness": null,
+      "limitations": [
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)"
+      ],
+      "query_parameters": {
+        "end_date": "20260621",
+        "start_date": "20260601"
+      },
+      "recommended_usage": "Unavailable until provider access is restored",
+      "record_count": 0,
+      "required_field_completeness": null,
+      "snapshot_hash": null
+    },
+    {
+      "access_status": "error",
+      "dataset": "csi500_membership",
+      "date_validity": null,
+      "evidence_scope": "current_snapshot",
+      "expected_record_coverage": 0,
+      "key_uniqueness": null,
+      "limitations": [
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)"
+      ],
+      "query_parameters": {
+        "end_date": "20260621",
+        "start_date": "20260601"
+      },
+      "recommended_usage": "Unavailable until provider access is restored",
+      "record_count": 0,
+      "required_field_completeness": null,
+      "snapshot_hash": null
+    },
+    {
+      "access_status": "error",
+      "dataset": "csi1000_membership",
+      "date_validity": null,
+      "evidence_scope": "current_snapshot",
+      "expected_record_coverage": 0,
+      "key_uniqueness": null,
+      "limitations": [
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)"
+      ],
+      "query_parameters": {
+        "end_date": "20260621",
+        "start_date": "20260601"
+      },
+      "recommended_usage": "Unavailable until provider access is restored",
+      "record_count": 0,
+      "required_field_completeness": null,
+      "snapshot_hash": null
+    }
+  ],
+  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "model_version": "akshare-quality-audit-v0.8-phase3"
+}

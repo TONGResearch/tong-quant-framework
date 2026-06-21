@@ -99,6 +99,22 @@ class FakeTushareClient:
             }
         )
 
+    def dividend(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame(
+            {
+                "ts_code": ["600000.SH"],
+                "end_date": ["20231231"],
+                "ann_date": ["20240401"],
+                "div_proc": ["实施"],
+                "stk_div": [0.0],
+                "cash_div_tax": [0.3],
+                "record_date": ["20240601"],
+                "ex_date": ["20240602"],
+                "imp_ann_date": ["20240520"],
+            }
+        )
+
 
 class FakeAkSharePublicationClient:
     def stock_yysj_em(self, **kwargs: object) -> pd.DataFrame:
@@ -157,6 +173,8 @@ def test_tushare_requires_environment_token_for_live_client(
             CalibrationDataset.FUNDAMENTAL_REVISIONS,
             {"symbol": "600000", "start_date": "20240101", "end_date": "20240131"},
         ),
+        (CalibrationDataset.CORPORATE_ACTIONS, {"symbol": "600000"}),
+        (CalibrationDataset.UNIVERSE_COVERAGE, {}),
         (CalibrationDataset.CSI300_MEMBERSHIP, {"trade_date": "20240105"}),
         (CalibrationDataset.CSI500_MEMBERSHIP, {"trade_date": "20240105"}),
         (CalibrationDataset.CSI1000_MEMBERSHIP, {"trade_date": "20240105"}),

@@ -1,7 +1,9 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
+from io import BytesIO
 from time import sleep
 from typing import Any, Protocol
+from urllib.request import urlopen
 
 import akshare as ak
 import pandas as pd
@@ -75,6 +77,7 @@ class AkShareAdapter:
         max_attempts: int = 3,
         retry_delay_seconds: float = 1,
         sleeper: Callable[[float], None] = sleep,
+        index_membership_fetcher: Callable[[str, float], pd.DataFrame] | None = None,
     ) -> None:
         self._client = client
         self._cache = cache
@@ -83,6 +86,8 @@ class AkShareAdapter:
         self._max_attempts = max_attempts
         self._retry_delay_seconds = retry_delay_seconds
         self._sleeper = sleeper
+        self._index_membership_fetcher = index_membership_fetcher
+        self._uses_default_client = client is ak
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
 
@@ -242,8 +247,18 @@ class AkShareAdapter:
                 "historical calibration currently reserves CSI300, CSI500, and CSI1000"
             )
         def fetch() -> pd.DataFrame:
-            frame = self._client.index_stock_cons_csindex(symbol=symbol)
-            frame.attrs["tong_quant_source"] = "akshare:index_stock_cons_csindex"
+            if self._index_membership_fetcher is not None:
+                frame = self._index_membership_fetcher(symbol, self._timeout_seconds)
+            elif self._uses_default_client:
+                frame = _csindex_constituents_with_timeout(
+                    symbol,
+                    self._timeout_seconds,
+                )
+            else:
+                frame = self._client.index_stock_cons_csindex(symbol=symbol)
+            frame.attrs["tong_quant_source"] = (
+                "akshare:index_stock_cons_csindex:timeout_guarded"
+            )
             return frame
 
         return self._fetch(
@@ -366,8 +381,10 @@ class AkShareAdapter:
                 last_error = error
                 if attempt < self._max_attempts:
                     self._sleeper(self._retry_delay_seconds * attempt)
+        error_type = type(last_error).__name__ if last_error is not None else "UnknownError"
         raise DataProviderError(
-            f"AKShare dataset {dataset_name} failed after {self._max_attempts} attempts"
+            f"AKShare dataset {dataset_name} failed after {self._max_attempts} attempts "
+            f"({error_type})"
         ) from last_error
 
 
@@ -422,3 +439,36 @@ def _normalize_cninfo_company(frame: pd.DataFrame) -> pd.DataFrame:
         "上市时间": row.get("上市日期"),
     }
     return pd.DataFrame({"item": mapping.keys(), "value": mapping.values()})
+
+
+def _csindex_constituents_with_timeout(
+    symbol: str,
+    timeout_seconds: float,
+) -> pd.DataFrame:
+    url = (
+        "https://oss-ch.csindex.com.cn/static/html/csindex/public/"
+        f"uploads/file/autofile/cons/{symbol}cons.xls"
+    )
+    with urlopen(url, timeout=timeout_seconds) as response:  # noqa: S310
+        content = response.read()
+    frame = pd.read_excel(BytesIO(content))
+    expected_columns = (
+        "日期",
+        "指数代码",
+        "指数名称",
+        "指数英文名称",
+        "成分券代码",
+        "成分券名称",
+        "成分券英文名称",
+        "交易所",
+        "交易所英文名称",
+    )
+    if len(frame.columns) != len(expected_columns):
+        raise ValueError("unexpected CSI constituent workbook schema")
+    frame.columns = list(expected_columns)
+    frame["日期"] = pd.to_datetime(
+        frame["日期"], format="%Y%m%d", errors="coerce"
+    ).dt.date
+    frame["指数代码"] = frame["指数代码"].astype(str).str.zfill(6)
+    frame["成分券代码"] = frame["成分券代码"].astype(str).str.zfill(6)
+    return frame

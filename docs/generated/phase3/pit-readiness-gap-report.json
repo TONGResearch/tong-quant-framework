@@ -1,0 +1,174 @@
+{
+  "critical_next_actions": [
+    "Configure and validate TUSHARE_TOKEN permissions for every required endpoint",
+    "Run date-aligned AKShare/Tushare comparisons across multiple periods",
+    "Backfill dated history or collect forward snapshots until continuity is measurable",
+    "Acquire announcement-time or effective-time evidence for retrieval-time datasets",
+    "Do not treat dual-provider agreement alone as sufficient for Historical Replay"
+  ],
+  "datasets": [
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "security_lifecycle",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 35.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "st_status",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 50.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "suspension_status",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 20.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "delisting_records",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 55.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "usable",
+      "current_classification": "unsuitable",
+      "dataset": "financial_publication_dates",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "historical continuity is 70.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "usable",
+      "current_classification": "unsuitable",
+      "dataset": "fundamental_revisions",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "historical continuity is 55.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "corporate_actions",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 55.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "caution",
+      "current_classification": "unsuitable",
+      "dataset": "universe_coverage",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains low",
+        "availability precision remains retrieval_time",
+        "historical continuity is 25.00, below the 80 target"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "unsuitable",
+      "current_classification": "unsuitable",
+      "dataset": "csi300_membership",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "unsuitable",
+      "current_classification": "unsuitable",
+      "dataset": "csi500_membership",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data"
+      ]
+    },
+    {
+      "best_case_after_dual_validation": "unsuitable",
+      "current_classification": "unsuitable",
+      "dataset": "csi1000_membership",
+      "future_paper_research_ready": false,
+      "historical_replay_ready": false,
+      "missing_requirements": [
+        "Tushare dataset capability is not_tested",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data"
+      ]
+    }
+  ],
+  "future_paper_research_ready": false,
+  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "historical_replay_ready": false,
+  "model_version": "data-readiness-gap-v0.8-phase3"
+}

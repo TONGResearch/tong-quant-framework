@@ -185,6 +185,27 @@ and PIT readiness conflict caps. Live calibration remains opt-in and depends on
 local `TUSHARE_TOKEN` permissions; no trust class changes merely because the
 adapter exists.
 
+Provider Calibration Phase III adds real-provider orchestration, per-dataset
+coverage/trust/precision/consistency/continuity assessments, framework-area
+readiness aggregation, reproducible query manifests, and generated Markdown and
+JSON dashboards. The first real AKShare run is intentionally classified
+`UNSUITABLE`: Tushare was unavailable and several sources remain retrieval-time
+snapshots without adequate historical continuity. See
+`provider-calibration-phase-iii.md`.
+
+Tushare integration hardening adds environment-only credential validation,
+automatic endpoint permission detection, dataset capability mapping, and an
+explicit readiness gap report. Missing credentials currently block the real
+dual-provider run. Perfect provider agreement would still leave most lifecycle
+and universe datasets at `CAUTION`, so historical continuity remediation remains
+mandatory before Paper Trading architecture is reconsidered.
+
+AKShare hardening adds an independent normalized-response audit and bounded CSI
+constituent downloads. Current runs preserve eight successful dataset groups and
+surface three CSI endpoint failures without stale substitution or an unbounded
+hang. These operational improvements do not change the overall `UNSUITABLE` PIT
+classification.
+
 ## Reserved Review: Paper Trading Architecture
 
 - Review hypothetical-ledger ownership and isolation.

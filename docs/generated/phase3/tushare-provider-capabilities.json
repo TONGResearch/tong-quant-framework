@@ -1,0 +1,180 @@
+{
+  "datasets": [
+    {
+      "dataset": "security_lifecycle",
+      "required_endpoints": [
+        "namechange",
+        "suspend_d",
+        "stock_basic"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "namechange",
+        "suspend_d",
+        "stock_basic"
+      ]
+    },
+    {
+      "dataset": "st_status",
+      "required_endpoints": [
+        "namechange"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "namechange"
+      ]
+    },
+    {
+      "dataset": "suspension_status",
+      "required_endpoints": [
+        "suspend_d"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "suspend_d"
+      ]
+    },
+    {
+      "dataset": "delisting_records",
+      "required_endpoints": [
+        "stock_basic"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "stock_basic"
+      ]
+    },
+    {
+      "dataset": "financial_publication_dates",
+      "required_endpoints": [
+        "disclosure_date"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "disclosure_date"
+      ]
+    },
+    {
+      "dataset": "fundamental_revisions",
+      "required_endpoints": [
+        "income"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "income"
+      ]
+    },
+    {
+      "dataset": "corporate_actions",
+      "required_endpoints": [
+        "dividend"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "dividend"
+      ]
+    },
+    {
+      "dataset": "universe_coverage",
+      "required_endpoints": [
+        "stock_basic"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "stock_basic"
+      ]
+    },
+    {
+      "dataset": "csi300_membership",
+      "required_endpoints": [
+        "index_weight"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "index_weight"
+      ]
+    },
+    {
+      "dataset": "csi500_membership",
+      "required_endpoints": [
+        "index_weight"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "index_weight"
+      ]
+    },
+    {
+      "dataset": "csi1000_membership",
+      "required_endpoints": [
+        "index_weight"
+      ],
+      "status": "not_tested",
+      "unavailable_endpoints": [
+        "index_weight"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "stock_basic",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "namechange",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "suspend_d",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "disclosure_date",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "income",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "dividend",
+      "records_observed": null,
+      "status": "not_tested"
+    },
+    {
+      "detail": "credential validation did not permit a live probe",
+      "endpoint": "index_weight",
+      "records_observed": null,
+      "status": "not_tested"
+    }
+  ],
+  "environment": {
+    "configured": false,
+    "credential_source": "environment:TUSHARE_TOKEN",
+    "model_version": "provider-capability-v0.8-phase3",
+    "status": "not_configured",
+    "warnings": [
+      "TUSHARE_TOKEN is not configured"
+    ]
+  },
+  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "model_version": "provider-capability-v0.8-phase3",
+  "probe_scope": {
+    "end_date": "20260621",
+    "period_end": "20251231",
+    "start_date": "20260601",
+    "trade_date": "20260619",
+    "ts_code": "600000.SH"
+  }
+}

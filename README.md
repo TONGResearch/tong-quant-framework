@@ -64,6 +64,10 @@ hardening boundaries:
 - Explicit `DataTrustLevel` and `AvailabilityPrecision` metadata
 - Audited ingestion batches, raw dataset fingerprints, and availability warnings
 - Corporate action, provider limitation, and PIT readiness persistence
+- AKShare/Tushare provider calibration with auditable conflict history
+- Phase III dataset and framework-area PIT readiness dashboards
+- Secure Tushare endpoint capability detection and readiness gap reporting
+- Independent AKShare normalized-data quality auditing with bounded CSI timeouts
 - PIT-safe HistoricalReplaySource with manifest and sample replay hashes
 - ReplayConfidence to separate weak reconstruction from weak research
 - PortfolioProposal and PositionProposal research artifacts
@@ -105,9 +109,11 @@ python scripts/ingest_data.py calendar
 python scripts/ingest_data.py company 600000
 python scripts/ingest_data.py daily-bars 600000 20240101 20241231
 python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
+python scripts/run_data_readiness.py --output-dir reports/phase3
 ```
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
+`docs/provider-calibration-phase-iii.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,
 `docs/research-engine.md`, `docs/validation-engine.md`, and
 `docs/notification-engine.md`, and `docs/development-roadmap.md`. The current

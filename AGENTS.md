@@ -88,6 +88,11 @@ validation, risk management, and controlled execution.
   ingestion batches to preserve auditability.
 - AKShare provider limitations and missing publication timestamps must be
   persisted as warnings instead of hidden inside normalizers.
+- AKShare endpoints without native timeout parameters must use a bounded Tong
+  Quant wrapper. A slow endpoint must become an explicit partial-report error,
+  never block the entire audit indefinitely.
+- AKShare response quality metrics describe observed rows only and must not
+  upgrade PIT trust, historical continuity, or cross-provider consistency.
 - Persist normalized market data through `SQLiteStore`; do not write ad hoc
   strategy-specific data files.
 - Screening, research, and validation must read historical data through
@@ -105,7 +110,15 @@ validation, risk management, and controlled execution.
   `VERIFIED` trust. Preserve provider-only records and disagreement warnings.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
+- Validate Tushare credentials locally before live access and persist only
+  capability status, never token values, lengths, prefixes, or fingerprints.
+- A successful empty provider response proves endpoint access only; it does not
+  prove dataset coverage or historical continuity.
 - Provider permission errors are access limitations, not empty datasets.
+- Missing secondary-provider access must render coverage and consistency as
+  unknown or `N/A`; never convert it to zero or provider agreement.
+- Generated readiness reports must record query dates, symbols, periods, and
+  other scope parameters needed to interpret and reproduce each observation.
 - Persist repeated provider conflicts as audit history. High-severity conflicts
   must prevent `USABLE` PIT readiness until resolved or explicitly superseded.
 - Market regime classifiers consume only normalized `RegimeMetric` inputs.

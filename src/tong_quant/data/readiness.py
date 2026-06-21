@@ -13,12 +13,14 @@ class PITReadinessInput:
     expected_records: int
     observed_records: int
     trust_level: DataTrustLevel
+    coverage_known: bool = True
     missing_critical_fields: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
     availability_score: float = 0.0
     revision_score: float = 0.0
     continuity_score: float = 0.0
     provider_consistency_score: float | None = None
+    provider_consistency_required: bool = False
     provider_conflict_count: int = 0
     critical_provider_conflict_count: int = 0
     assumptions: tuple[str, ...] = ()
@@ -59,7 +61,13 @@ class PITReadinessEvaluator:
     ) -> PITReadinessAssessment:
         assessed = assessed_at or datetime.now(UTC)
         expected = readiness_input.expected_records
-        coverage = 1.0 if expected == 0 else readiness_input.observed_records / expected
+        coverage = (
+            1.0
+            if expected == 0
+            else readiness_input.observed_records / expected
+            if readiness_input.coverage_known
+            else 0.0
+        )
         trust_ok = _trust_rank(readiness_input.trust_level) >= _trust_rank(
             self.minimum_trust_level
         )
@@ -95,6 +103,11 @@ class PITReadinessEvaluator:
         if readiness_input.critical_provider_conflict_count:
             score = min(score, self.usable_score - 1)
         if (
+            readiness_input.provider_consistency_required
+            and readiness_input.provider_consistency_score is None
+        ):
+            score = min(score, self.usable_score - 1)
+        if (
             score >= self.usable_score
             and coverage >= self.minimum_coverage_ratio
             and trust_ok
@@ -106,7 +119,9 @@ class PITReadinessEvaluator:
         else:
             classification = PITReadinessClassification.UNSUITABLE
         warnings = readiness_input.warnings
-        if coverage < self.minimum_coverage_ratio:
+        if not readiness_input.coverage_known:
+            warnings = (*warnings, "coverage is unmeasurable")
+        elif coverage < self.minimum_coverage_ratio:
             warnings = (
                 *warnings,
                 f"coverage {coverage:.1%} is below required {self.minimum_coverage_ratio:.1%}",
@@ -119,6 +134,14 @@ class PITReadinessEvaluator:
             )
         if readiness_input.provider_consistency_score is None:
             warnings = (*warnings, "secondary-provider consistency is unknown")
+        if (
+            readiness_input.provider_consistency_required
+            and readiness_input.provider_consistency_score is None
+        ):
+            warnings = (
+                *warnings,
+                "required provider calibration is unavailable",
+            )
         if readiness_input.provider_conflict_count:
             warnings = (
                 *warnings,

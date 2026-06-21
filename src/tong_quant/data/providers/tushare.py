@@ -29,6 +29,8 @@ class TushareClient(Protocol):
 
     def index_weight(self, **kwargs: Any) -> pd.DataFrame: ...
 
+    def dividend(self, **kwargs: Any) -> pd.DataFrame: ...
+
 
 class TushareCalibrationAdapter:
     source_id = "tushare"
@@ -74,6 +76,8 @@ class TushareCalibrationAdapter:
                 self._financial_publication_dates
             ),
             CalibrationDataset.FUNDAMENTAL_REVISIONS: self._fundamental_revisions,
+            CalibrationDataset.CORPORATE_ACTIONS: self._corporate_actions,
+            CalibrationDataset.UNIVERSE_COVERAGE: self._universe_coverage,
             CalibrationDataset.CSI300_MEMBERSHIP: self._index_membership,
             CalibrationDataset.CSI500_MEMBERSHIP: self._index_membership,
             CalibrationDataset.CSI1000_MEMBERSHIP: self._index_membership,
@@ -306,6 +310,70 @@ class TushareCalibrationAdapter:
             )
         return tuple(_deduplicate(records)), (
             "index_weight is monthly and requires sufficient Tushare points",
+        )
+
+    def _corporate_actions(
+        self, query: CalibrationQuery
+    ) -> tuple[tuple[CalibrationRecord, ...], tuple[str, ...]]:
+        ts_code = query.parameters.get("ts_code")
+        if not ts_code:
+            ts_code = _ts_code(_required(query, "symbol"))
+        frame = self._call(
+            "dividend",
+            lambda: self._client.dividend(
+                ts_code=ts_code,
+                fields=(
+                    "ts_code,end_date,ann_date,div_proc,stk_div,cash_div_tax,"
+                    "record_date,ex_date,imp_ann_date"
+                ),
+            ),
+        )
+        records = []
+        for row in _rows(frame):
+            symbol = _symbol(row.get("ts_code"))
+            effective_date = _date_text(row.get("ex_date"))
+            if not symbol or not effective_date:
+                continue
+            records.append(
+                CalibrationRecord(
+                    key=f"{symbol}:{effective_date}",
+                    fields={
+                        "effective_date": effective_date,
+                        "cash_dividend": _number(row.get("cash_div_tax")),
+                        "stock_dividend": _number(row.get("stk_div")),
+                        "ann_date": _date_text(
+                            row.get("imp_ann_date") or row.get("ann_date")
+                        ),
+                    },
+                )
+            )
+        return _deduplicate(records), (
+            "dividend requires sufficient Tushare points and excludes non-dividend actions",
+        )
+
+    def _universe_coverage(
+        self, query: CalibrationQuery
+    ) -> tuple[tuple[CalibrationRecord, ...], tuple[str, ...]]:
+        del query
+        frame = self._call(
+            "stock_basic",
+            lambda: self._client.stock_basic(
+                list_status="L",
+                fields="ts_code,symbol,name,exchange,list_status,list_date",
+            ),
+        )
+        records = []
+        for row in _rows(frame):
+            symbol = _symbol(row.get("ts_code") or row.get("symbol"))
+            if symbol:
+                records.append(
+                    CalibrationRecord(
+                        key=symbol,
+                        fields={"listed": True},
+                    )
+                )
+        return _deduplicate(records), (
+            "stock_basic is a current listing snapshot unless historical snapshots are retained",
         )
 
     def _call(self, dataset: str, fetch: Callable[[], pd.DataFrame]) -> pd.DataFrame:

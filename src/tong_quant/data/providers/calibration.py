@@ -37,6 +37,8 @@ class AkShareCalibrationAdapter:
                 self._financial_publication_dates
             ),
             CalibrationDataset.FUNDAMENTAL_REVISIONS: self._fundamental_revisions,
+            CalibrationDataset.CORPORATE_ACTIONS: self._corporate_actions,
+            CalibrationDataset.UNIVERSE_COVERAGE: self._universe_coverage,
             CalibrationDataset.CSI300_MEMBERSHIP: self._index_membership,
             CalibrationDataset.CSI500_MEMBERSHIP: self._index_membership,
             CalibrationDataset.CSI1000_MEMBERSHIP: self._index_membership,
@@ -250,6 +252,55 @@ class AkShareCalibrationAdapter:
             )
         return _deduplicate(records), (
             "AKShare CSI constituents are current snapshots, not historical ledgers",
+        )
+
+    def _corporate_actions(
+        self, query: CalibrationQuery
+    ) -> tuple[tuple[CalibrationRecord, ...], tuple[str, ...]]:
+        symbol = _required(query, "symbol")
+        frame = self._adapter.corporate_actions(symbol).dataset.frame
+        records = []
+        for row in _rows(frame):
+            effective_date = _date_text(
+                row.get("除权除息日") or row.get("股权登记日")
+            )
+            if not effective_date:
+                continue
+            records.append(
+                CalibrationRecord(
+                    key=f"{symbol}:{effective_date}",
+                    fields={
+                        "effective_date": effective_date,
+                        "cash_dividend": _number(
+                            row.get("现金分红") or row.get("派息")
+                        ),
+                        "stock_dividend": _number(
+                            row.get("送转股份") or row.get("送转比例")
+                        ),
+                        "ann_date": _date_text(
+                            row.get("公告日期") or row.get("实施公告日")
+                        ),
+                    },
+                )
+            )
+        return _deduplicate(records), (
+            "AKShare corporate-action announcement timing remains provider-limited",
+        )
+
+    def _universe_coverage(
+        self, query: CalibrationQuery
+    ) -> tuple[tuple[CalibrationRecord, ...], tuple[str, ...]]:
+        del query
+        frame = self._adapter.a_share_universe().dataset.frame
+        records = []
+        for row in _rows(frame):
+            symbol = _symbol(row, "代码", "股票代码", "证券代码")
+            if symbol:
+                records.append(
+                    CalibrationRecord(key=symbol, fields={"listed": True})
+                )
+        return _deduplicate(records), (
+            "AKShare A-share universe is a retrieval-time listing snapshot",
         )
 
 

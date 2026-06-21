@@ -20,6 +20,8 @@ class CalibrationDataset(StrEnum):
     DELISTING_RECORDS = "delisting_records"
     FINANCIAL_PUBLICATION_DATES = "financial_publication_dates"
     FUNDAMENTAL_REVISIONS = "fundamental_revisions"
+    CORPORATE_ACTIONS = "corporate_actions"
+    UNIVERSE_COVERAGE = "universe_coverage"
     CSI300_MEMBERSHIP = "csi300_membership"
     CSI500_MEMBERSHIP = "csi500_membership"
     CSI1000_MEMBERSHIP = "csi1000_membership"
@@ -36,6 +38,12 @@ DEFAULT_CALIBRATION_FIELDS: dict[CalibrationDataset, tuple[str, ...]] = {
         "report_type",
         "update_flag",
     ),
+    CalibrationDataset.CORPORATE_ACTIONS: (
+        "effective_date",
+        "cash_dividend",
+        "stock_dividend",
+    ),
+    CalibrationDataset.UNIVERSE_COVERAGE: ("listed",),
     CalibrationDataset.CSI300_MEMBERSHIP: ("member",),
     CalibrationDataset.CSI500_MEMBERSHIP: ("member",),
     CalibrationDataset.CSI1000_MEMBERSHIP: ("member",),
