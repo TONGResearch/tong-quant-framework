@@ -17,8 +17,9 @@ from tong_quant.data.storage.engineering import (
 )
 from tong_quant.data.storage.migrations import (
     MIGRATION_HEAD,
-    PROVIDER_EVIDENCE_FOUNDATION,
+    PROVIDER_CONTRACT_BASELINE,
     SCHEMA_DEFINITION_HASHES,
+    schema_fingerprint,
 )
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import AssetType, Market
@@ -112,13 +113,11 @@ def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> No
     source = tmp_path / "source.sqlite3"
     restored = tmp_path / "restored.sqlite3"
     _database(source)
-    previous_head = PROVIDER_EVIDENCE_FOUNDATION.migration_id
+    previous_head = PROVIDER_CONTRACT_BASELINE.migration_id
     with sqlite3.connect(source) as connection:
-        fingerprint = str(
-            connection.execute(
-                "SELECT value FROM schema_metadata WHERE key = 'schema_fingerprint'"
-            ).fetchone()[0]
-        )
+        connection.execute("DROP TABLE provider_artifact_observations")
+        connection.execute("DROP TABLE provider_artifacts")
+        fingerprint = schema_fingerprint(connection)
         connection.execute(
             "DELETE FROM schema_migrations WHERE migration_id = ?",
             (MIGRATION_HEAD,),
@@ -141,6 +140,10 @@ def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> No
         connection.execute(
             "UPDATE schema_metadata SET value = ? WHERE key = 'migration_head'",
             (previous_head,),
+        )
+        connection.execute(
+            "UPDATE schema_metadata SET value = ? WHERE key = 'schema_fingerprint'",
+            (fingerprint,),
         )
     integrity = SQLiteIntegrityService(clock=lambda: NOW)
     before = integrity.audit(source)

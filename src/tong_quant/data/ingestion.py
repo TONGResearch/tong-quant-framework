@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from tong_quant.core.exceptions import DataProviderError
+from tong_quant.data.artifacts import ProviderArtifactStore, StoredProviderArtifact
 from tong_quant.data.models import (
     DataAvailabilityWarning,
     IngestionBatch,
@@ -31,6 +32,7 @@ class ProviderNeutralIngestionService:
     store: SQLiteStore
     strict_point_in_time: bool = True
     clock: Callable[[], datetime] = _utc_now
+    artifact_store: ProviderArtifactStore | None = None
 
     def ingest(
         self,
@@ -49,67 +51,83 @@ class ProviderNeutralIngestionService:
         completed_at = self.clock()
         if completed_at < batch.retrieved_at:
             raise ValueError("ingestion completion cannot precede provider retrieval")
+        stored_artifacts = self._store_artifacts(batch)
         warnings = tuple(limitation.description for limitation in batch.limitations)
         if not batch.records:
             warnings = (*warnings, "Provider response produced no normalized evidence")
 
-        with self.store.transaction():
-            self.store.save_ingestion_batch(
-                IngestionBatch(
-                    batch_id=batch_id,
-                    provider=batch.provider,
-                    dataset=batch.dataset,
-                    started_at=batch.retrieved_at,
-                    completed_at=completed_at,
-                    status=IngestionBatchStatus.COMPLETED,
-                    parameters=batch.parameters,
-                    raw_response_hash=batch.raw_data_hash,
-                )
-            )
-            self.store.save_raw_dataset_fingerprint(
-                RawDatasetFingerprint(
-                    dataset=batch.dataset,
-                    provider=batch.provider,
-                    raw_data_hash=batch.raw_data_hash,
-                    retrieved_at=batch.retrieved_at,
-                    parameters=batch.parameters,
-                    row_count=batch.raw_record_count,
-                    source=batch.source,
-                )
-            )
-            self.store.save_provider_evidence_records(batch.records, batch_id=batch_id)
-            for limitation in batch.limitations:
-                self.store.save_provider_limitation(
-                    ProviderLimitation(
+        try:
+            with self.store.transaction():
+                self.store.save_ingestion_batch(
+                    IngestionBatch(
+                        batch_id=batch_id,
                         provider=batch.provider,
                         dataset=batch.dataset,
-                        limitation_code=limitation.code,
-                        description=limitation.description,
-                        trust_level=limitation.trust_level,
-                        documented_at=completed_at,
+                        started_at=batch.retrieved_at,
+                        completed_at=completed_at,
+                        status=IngestionBatchStatus.COMPLETED,
+                        parameters=batch.parameters,
+                        raw_response_hash=batch.raw_data_hash,
                     )
                 )
-                self.store.save_data_availability_warning(
-                    DataAvailabilityWarning(
-                        batch_id=batch_id,
+                self.store.save_raw_dataset_fingerprint(
+                    RawDatasetFingerprint(
                         dataset=batch.dataset,
-                        warning_code=limitation.code,
-                        message=limitation.description,
-                        trust_level=limitation.trust_level,
-                        created_at=completed_at,
+                        provider=batch.provider,
+                        raw_data_hash=batch.raw_data_hash,
+                        retrieved_at=batch.retrieved_at,
+                        parameters=batch.parameters,
+                        row_count=batch.raw_record_count,
+                        source=batch.source,
                     )
                 )
-            if not batch.records:
-                self.store.save_data_availability_warning(
-                    DataAvailabilityWarning(
-                        batch_id=batch_id,
-                        dataset=batch.dataset,
-                        warning_code="no_normalized_evidence",
-                        message="Provider response produced no normalized evidence",
-                        trust_level=DataTrustLevel.UNKNOWN,
-                        created_at=completed_at,
-                    )
+                self.store.save_provider_evidence_records(
+                    batch.records,
+                    batch_id=batch_id,
                 )
+                self.store.save_provider_artifacts(
+                    stored_artifacts,
+                    batch_id=batch_id,
+                )
+                self.store.save_provider_artifact_observations(
+                    batch.artifact_observations,
+                    batch_id=batch_id,
+                )
+                for limitation in batch.limitations:
+                    self.store.save_provider_limitation(
+                        ProviderLimitation(
+                            provider=batch.provider,
+                            dataset=batch.dataset,
+                            limitation_code=limitation.code,
+                            description=limitation.description,
+                            trust_level=limitation.trust_level,
+                            documented_at=completed_at,
+                        )
+                    )
+                    self.store.save_data_availability_warning(
+                        DataAvailabilityWarning(
+                            batch_id=batch_id,
+                            dataset=batch.dataset,
+                            warning_code=limitation.code,
+                            message=limitation.description,
+                            trust_level=limitation.trust_level,
+                            created_at=completed_at,
+                        )
+                    )
+                if not batch.records:
+                    self.store.save_data_availability_warning(
+                        DataAvailabilityWarning(
+                            batch_id=batch_id,
+                            dataset=batch.dataset,
+                            warning_code="no_normalized_evidence",
+                            message="Provider response produced no normalized evidence",
+                            trust_level=DataTrustLevel.UNKNOWN,
+                            created_at=completed_at,
+                        )
+                    )
+        except Exception:
+            self._discard_created_artifacts(stored_artifacts)
+            raise
 
         return IngestionResult(
             dataset=batch.dataset,
@@ -148,6 +166,46 @@ class ProviderNeutralIngestionService:
             record.trust_level is DataTrustLevel.VERIFIED for record in batch.records
         ):
             raise ValueError("adapter cannot promote evidence above its capability trust")
+        if capability.trust_level is not DataTrustLevel.VERIFIED and any(
+            artifact.trust_level is DataTrustLevel.VERIFIED
+            for artifact in batch.artifacts
+        ):
+            raise ValueError("adapter cannot promote artifacts above capability trust")
+        if self.strict_point_in_time and any(
+            artifact.published_at > request.as_of for artifact in batch.artifacts
+        ):
+            raise ValueError("provider artifacts contain future publication data")
+        if self.strict_point_in_time and any(
+            observation.published_at > request.as_of
+            for observation in batch.artifact_observations
+        ):
+            raise ValueError("artifact observations contain future publication data")
+
+    def _store_artifacts(
+        self,
+        batch: ProviderEvidenceBatch,
+    ) -> tuple[StoredProviderArtifact, ...]:
+        if not batch.artifacts:
+            return ()
+        if self.artifact_store is None:
+            raise ValueError("provider artifact ingestion requires an artifact store")
+        stored: list[StoredProviderArtifact] = []
+        try:
+            for artifact in batch.artifacts:
+                stored.append(self.artifact_store.put(artifact))
+        except Exception:
+            self._discard_created_artifacts(tuple(stored))
+            raise
+        return tuple(stored)
+
+    def _discard_created_artifacts(
+        self,
+        stored: tuple[StoredProviderArtifact, ...],
+    ) -> None:
+        if self.artifact_store is None:
+            return
+        for artifact in reversed(stored):
+            self.artifact_store.discard(artifact)
 
 
 def _resolve_capability(

@@ -24,6 +24,12 @@ class ProviderContractStatus(StrEnum):
     DEFECT = "defect"
 
 
+class ProviderArtifactStatus(StrEnum):
+    CAPTURED = "captured"
+    MISSING = "missing"
+    UNAVAILABLE = "unavailable"
+
+
 @dataclass(frozen=True, slots=True)
 class ProviderDatasetRequest:
     dataset: str
@@ -110,6 +116,95 @@ class ProviderEvidenceRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderArtifact:
+    artifact_id: str
+    provider: str
+    dataset: str
+    market: Market
+    subject: str
+    source_identity: str
+    source_reference: str
+    published_at: datetime
+    retrieved_at: datetime
+    content_hash: str
+    media_type: str
+    availability_precision: AvailabilityPrecision
+    trust_level: DataTrustLevel
+    content: bytes = field(repr=False, compare=False)
+    model_version: str = PROVIDER_EVIDENCE_VERSION
+
+    def __post_init__(self) -> None:
+        require_timezone(self.published_at, "provider artifact published_at")
+        require_timezone(self.retrieved_at, "provider artifact retrieved_at")
+        if self.published_at > self.retrieved_at:
+            raise ValueError("provider artifact cannot precede its publication")
+        if len(self.artifact_id) != 64 or len(self.content_hash) != 64:
+            raise ValueError("provider artifact identifiers must be SHA-256 digests")
+        if not all(
+            value.strip()
+            for value in (
+                self.provider,
+                self.dataset,
+                self.subject,
+                self.source_identity,
+                self.source_reference,
+                self.media_type,
+            )
+        ):
+            raise ValueError("provider artifact identity and media type are required")
+        if not self.content:
+            raise ValueError("captured provider artifacts cannot be empty")
+        if sha256(self.content).hexdigest() != self.content_hash:
+            raise ValueError("provider artifact content hash does not match its bytes")
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderArtifactObservation:
+    observation_id: str
+    provider: str
+    dataset: str
+    market: Market
+    subject: str
+    source_identity: str
+    source_reference: str
+    published_at: datetime
+    retrieved_at: datetime
+    status: ProviderArtifactStatus
+    artifact_id: str | None
+    error_code: str
+    related_source_identities: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        require_timezone(self.published_at, "provider artifact observation published_at")
+        require_timezone(self.retrieved_at, "provider artifact observation retrieved_at")
+        if self.published_at > self.retrieved_at:
+            raise ValueError("artifact observation cannot precede publication")
+        if len(self.observation_id) != 64:
+            raise ValueError("artifact observation ID must be a SHA-256 digest")
+        if self.artifact_id is not None and len(self.artifact_id) != 64:
+            raise ValueError("artifact observation artifact ID must be a SHA-256 digest")
+        if self.status is ProviderArtifactStatus.CAPTURED and self.artifact_id is None:
+            raise ValueError("captured artifact observations require an artifact ID")
+        if self.status is not ProviderArtifactStatus.CAPTURED and self.artifact_id:
+            raise ValueError("uncaptured artifact observations cannot reference an artifact")
+        if self.status is ProviderArtifactStatus.CAPTURED and self.error_code:
+            raise ValueError("captured artifact observations cannot contain an error")
+        if self.status is not ProviderArtifactStatus.CAPTURED and not self.error_code:
+            raise ValueError("uncaptured artifact observations require an error code")
+        if not all(
+            value.strip()
+            for value in (
+                self.provider,
+                self.dataset,
+                self.subject,
+                self.source_identity,
+                self.source_reference,
+            )
+        ):
+            raise ValueError("artifact observation identity is required")
+
+
+@dataclass(frozen=True, slots=True)
 class ProviderEvidenceBatch:
     provider: str
     dataset: str
@@ -121,6 +216,8 @@ class ProviderEvidenceBatch:
     raw_record_count: int
     records: tuple[ProviderEvidenceRecord, ...]
     limitations: tuple[EvidenceLimitation, ...]
+    artifacts: tuple[ProviderArtifact, ...] = ()
+    artifact_observations: tuple[ProviderArtifactObservation, ...] = ()
 
     def __post_init__(self) -> None:
         require_timezone(self.retrieved_at, "provider evidence batch retrieved_at")
@@ -137,6 +234,30 @@ class ProviderEvidenceBatch:
                 or record.raw_data_hash != self.raw_data_hash
             ):
                 raise ValueError("provider evidence record does not match its batch")
+        artifacts = {artifact.artifact_id: artifact for artifact in self.artifacts}
+        if len(artifacts) != len(self.artifacts):
+            raise ValueError("provider evidence batch contains duplicate artifact IDs")
+        for artifact in self.artifacts:
+            if (
+                artifact.provider != self.provider
+                or artifact.dataset != self.dataset
+                or artifact.market != self.market
+                or artifact.retrieved_at != self.retrieved_at
+            ):
+                raise ValueError("provider artifact does not match its batch")
+        for observation in self.artifact_observations:
+            if (
+                observation.provider != self.provider
+                or observation.dataset != self.dataset
+                or observation.market != self.market
+                or observation.retrieved_at != self.retrieved_at
+            ):
+                raise ValueError("provider artifact observation does not match its batch")
+            if (
+                observation.artifact_id is not None
+                and observation.artifact_id not in artifacts
+            ):
+                raise ValueError("captured observation must reference a batch artifact")
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,9 +346,73 @@ def provider_evidence_id(
     return sha256(encoded).hexdigest()
 
 
+def provider_artifact_id(
+    *,
+    provider: str,
+    dataset: str,
+    market: Market,
+    subject: str,
+    source_identity: str,
+    source_reference: str,
+    content_hash: str,
+) -> str:
+    return _stable_identifier(
+        {
+            "provider": provider,
+            "dataset": dataset,
+            "market": market.value,
+            "subject": subject,
+            "source_identity": source_identity,
+            "source_reference": source_reference,
+            "content_hash": content_hash,
+        }
+    )
+
+
+def provider_artifact_observation_id(
+    *,
+    provider: str,
+    dataset: str,
+    market: Market,
+    subject: str,
+    source_identity: str,
+    source_reference: str,
+    published_at: datetime,
+    retrieved_at: datetime,
+    status: ProviderArtifactStatus,
+    artifact_id: str | None,
+    error_code: str,
+    related_source_identities: tuple[str, ...],
+) -> str:
+    return _stable_identifier(
+        {
+            "provider": provider,
+            "dataset": dataset,
+            "market": market.value,
+            "subject": subject,
+            "source_identity": source_identity,
+            "source_reference": source_reference,
+            "published_at": published_at.isoformat(),
+            "retrieved_at": retrieved_at.isoformat(),
+            "status": status.value,
+            "artifact_id": artifact_id,
+            "error_code": error_code,
+            "related_source_identities": related_source_identities,
+        }
+    )
+
+
+def _stable_identifier(document: dict[str, object]) -> str:
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    return sha256(encoded).hexdigest()
+
+
 __all__ = [
     "EvidenceLimitation",
     "ProviderCapabilityStatus",
+    "ProviderArtifact",
+    "ProviderArtifactObservation",
+    "ProviderArtifactStatus",
     "ProviderContractCheck",
     "ProviderContractRun",
     "ProviderContractStatus",
@@ -236,5 +421,7 @@ __all__ = [
     "ProviderEvidenceAdapter",
     "ProviderEvidenceBatch",
     "ProviderEvidenceRecord",
+    "provider_artifact_id",
+    "provider_artifact_observation_id",
     "provider_evidence_id",
 ]

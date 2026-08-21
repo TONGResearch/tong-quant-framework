@@ -1,7 +1,7 @@
 [baseline]
 framework_version = "0.8.0"
 database_schema_version = "0.8.0"
-migration_head = "0006_provider_contract_baseline"
+migration_head = "0007_cninfo_artifact_capture"
 current_phase = "engineering-continuity-and-data-readiness"
 canonical_status_document = "PROJECT_STATUS.md"
 
@@ -69,14 +69,14 @@ depends_on = []
 [[work_packages]]
 id = "WP-DATA-002"
 title = "Direct CNInfo artifact capture"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-data-002.md"
 depends_on = ["WP-DATA-001"]
 
 [[work_packages]]
 id = "WP-DATA-003"
 title = "Independent Yahoo calibration"
-status = "planned"
+status = "ready"
 document = "docs/work-packages/wp-data-003.md"
 depends_on = ["WP-DATA-001"]
 

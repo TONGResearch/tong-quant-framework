@@ -122,6 +122,9 @@ python scripts/run_data_readiness.py
 python scripts/run_provider_contract_monitor.py
 python scripts/build_provider_contract_baseline.py
 python scripts/manage_database.py audit --database data/tong_quant.sqlite3
+python scripts/capture_cninfo_artifacts.py \
+  --symbol 600000 --start-date 2026-01-01 --end-date 2026-03-31 \
+  --metadata-only
 ```
 
 Tushare cross-provider calibration is opt-in and requires an environment
@@ -136,6 +139,7 @@ python scripts/run_data_readiness.py --require-secondary
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/provider-evidence-foundation.md`,
+`docs/cninfo-direct-artifacts.md`,
 `docs/database-backup-restore.md`,
 `docs/engineering-continuity.md`,
 `docs/provider-calibration-phase-iii.md`,

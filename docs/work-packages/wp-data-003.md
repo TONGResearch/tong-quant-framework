@@ -1,6 +1,6 @@
 # Work Package: WP-DATA-003
 
-Status: `planned`
+Status: `ready`
 
 ## Objective
 

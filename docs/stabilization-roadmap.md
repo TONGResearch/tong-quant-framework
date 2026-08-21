@@ -41,6 +41,6 @@ user explicitly approves a separate architecture proposal.
 ## Current Work-Package Control
 
 This roadmap is now implemented through machine-readable work state in
-`config/project-governance.toml`. `WP-DATA-001` and `WP-DB-001` are completed;
-`WP-DATA-002` is the only ready package. All trading-related development remains
-frozen.
+`config/project-governance.toml`. `WP-DATA-001`, `WP-DB-001`, and `WP-DATA-002`
+are completed; `WP-DATA-003` is the only ready package. All trading-related
+development remains frozen.

@@ -104,6 +104,25 @@ PROVIDER_CONTRACT_BASELINE = Migration(
     """,
 )
 
+CNINFO_ARTIFACT_CAPTURE = Migration(
+    migration_id="0007_cninfo_artifact_capture",
+    description="add immutable provider artifacts and capture observations",
+    definition="""
+    provider_artifacts(
+        source_identity, source_reference, published_at, first_retrieved_at,
+        content_hash, media_type, byte_size, storage_key,
+        availability_precision, trust_level, model_version,
+        ... REFERENCES ingestion_batches
+    );
+    provider_artifact_observations(
+        source_identity, source_reference, published_at, retrieved_at,
+        status, artifact_id, error_code, related_source_identities_json,
+        ... REFERENCES provider_artifacts,
+        ... REFERENCES ingestion_batches
+    );
+    """,
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -112,6 +131,7 @@ MIGRATIONS = (
     SCHEMA_FINGERPRINT_LEDGER,
     PROVIDER_EVIDENCE_FOUNDATION,
     PROVIDER_CONTRACT_BASELINE,
+    CNINFO_ARTIFACT_CAPTURE,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -123,6 +143,9 @@ SCHEMA_DEFINITION_HASHES = {
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
     PROVIDER_CONTRACT_BASELINE.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
+    CNINFO_ARTIFACT_CAPTURE.migration_id: (
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
 }
@@ -190,6 +213,9 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
         return
     if migration is PROVIDER_CONTRACT_BASELINE:
         _apply_provider_contract_baseline(connection)
+        return
+    if migration is CNINFO_ARTIFACT_CAPTURE:
+        _apply_cninfo_artifact_capture(connection)
         return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
 
@@ -581,6 +607,78 @@ def _apply_provider_contract_baseline(connection: sqlite3.Connection) -> None:
     )
 
 
+def _apply_cninfo_artifact_capture(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS provider_artifacts (
+            artifact_id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            source_identity TEXT NOT NULL,
+            source_reference TEXT NOT NULL,
+            published_at TEXT NOT NULL,
+            first_retrieved_at TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            media_type TEXT NOT NULL,
+            byte_size INTEGER NOT NULL CHECK (byte_size > 0),
+            storage_key TEXT NOT NULL,
+            availability_precision TEXT NOT NULL,
+            trust_level TEXT NOT NULL,
+            model_version TEXT NOT NULL,
+            first_batch_id TEXT NOT NULL,
+            ingested_at TEXT NOT NULL,
+            UNIQUE (
+                provider, dataset, source_identity,
+                source_reference, content_hash
+            ),
+            FOREIGN KEY (first_batch_id)
+                REFERENCES ingestion_batches (batch_id) ON DELETE RESTRICT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_artifact_identity
+        ON provider_artifacts (
+            provider, dataset, market, subject, source_identity
+        );
+
+        CREATE TABLE IF NOT EXISTS provider_artifact_observations (
+            observation_id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            source_identity TEXT NOT NULL,
+            source_reference TEXT NOT NULL,
+            published_at TEXT NOT NULL,
+            retrieved_at TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (
+                status IN ('captured', 'missing', 'unavailable')
+            ),
+            artifact_id TEXT,
+            error_code TEXT NOT NULL,
+            related_source_identities_json TEXT NOT NULL,
+            batch_id TEXT NOT NULL,
+            ingested_at TEXT NOT NULL,
+            CHECK (
+                (status = 'captured' AND artifact_id IS NOT NULL AND error_code = '')
+                OR
+                (status != 'captured' AND artifact_id IS NULL AND error_code != '')
+            ),
+            FOREIGN KEY (artifact_id)
+                REFERENCES provider_artifacts (artifact_id) ON DELETE RESTRICT,
+            FOREIGN KEY (batch_id)
+                REFERENCES ingestion_batches (batch_id) ON DELETE RESTRICT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_artifact_observation_history
+        ON provider_artifact_observations (
+            provider, dataset, source_identity, retrieved_at
+        );
+        """
+    )
+
+
 def schema_fingerprint(connection: sqlite3.Connection) -> str:
     rows = connection.execute(
         """
@@ -723,6 +821,7 @@ def _add_column_if_missing(
 
 
 __all__ = [
+    "CNINFO_ARTIFACT_CAPTURE",
     "MIGRATION_HEAD",
     "MIGRATIONS",
     "Migration",

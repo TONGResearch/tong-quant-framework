@@ -116,6 +116,10 @@ encryption, free space, and required evidence before removing a backup.
 
 - Tong Quant does not implement backup encryption or cloud upload. The operator
   must choose an approved encrypted destination.
+- SQLite backups contain provider artifact metadata but not files under
+  `data/provider-artifacts`. Preserve that content-addressed directory on an
+  encrypted volume and verify its hashes separately before declaring a complete
+  evidence recovery.
 - Credential-like schema columns are rejected, but opaque unlabelled secret
   values cannot be detected reliably. Credentials must never be persisted in
   the source database.

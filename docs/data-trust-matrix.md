@@ -53,6 +53,7 @@ silently promoted to PIT-safe data.
 | Provider evidence | Current trust | Availability precision | Permitted use | Explicit limitation |
 |---|---|---|---|---|
 | CNInfo disclosures via AKShare transport | MEDIUM | EXACT per parsed announcement timestamp | Filing-timing evidence from the record's `available_at` | Direct CNInfo parity, coverage, correction continuity, and raw filing capture are unverified. |
+| Direct CNInfo disclosures and artifacts | MEDIUM | EXACT per official announcement timestamp | Direct filing metadata and content-hash evidence from `available_at`; artifact bytes are research evidence only | Public web contract, representative parity, historical coverage, URL-change behavior, and correction continuity remain unverified. |
 | Yahoo Finance unadjusted daily bars | LOW | RETRIEVAL_TIME | Global exploratory research and provider comparison from ingestion time | Unofficial API, no authoritative historical availability, and unverified delisting/symbol/correction continuity. |
 
 These adapter defaults are deliberately weaker than any dataset-specific trust

@@ -414,8 +414,10 @@ New provider integrations use `ProviderEvidenceAdapter` and
 `ProviderNeutralIngestionService`. Capabilities, point-in-time timestamps, raw
 hashes, trust, availability precision, and limitations cross one shared
 transactional boundary before evidence reaches SQLite. CNInfo disclosure
-evidence currently retains `cninfo_via_akshare` provenance; Yahoo unadjusted
-daily bars remain unofficial, low-trust, retrieval-time evidence.
+evidence retains distinct `cninfo_via_akshare` and `cninfo_direct` provenance.
+Direct filing bytes use a content-addressed `ProviderArtifactStore`; SQLite
+stores immutable metadata and capture observations. Yahoo unadjusted daily bars
+remain unofficial, low-trust, retrieval-time evidence.
 
 The physical database schema is registered by baseline migration and protected
 by a canonical fingerprint that is checked before pending migrations. Weekly

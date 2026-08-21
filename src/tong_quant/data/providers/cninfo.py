@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Protocol
+from urllib.parse import parse_qs, urlparse
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -59,8 +60,8 @@ class CnInfoEvidenceAdapter:
             raise ValueError("CNInfo disclosure evidence is China A specific")
         response = self.transport.fundamental_disclosures(
             request.subject,
-            start_date=request.parameters["start_date"],
-            end_date=request.parameters["end_date"],
+            start_date=_compact_date(request.parameters["start_date"]),
+            end_date=_compact_date(request.parameters["end_date"]),
             category=request.parameters.get("category", ""),
         )
         dataset = response.dataset
@@ -80,10 +81,12 @@ class CnInfoEvidenceAdapter:
             subject = _text(row.get("代码")) or request.subject
             title = _text(row.get("公告标题"))
             source_reference = _text(row.get("公告链接"))
+            announcement_id = _announcement_id(source_reference)
             payload: dict[str, object] = {
                 "symbol": subject,
                 "name": _text(row.get("简称")),
                 "title": title,
+                "announcement_id": announcement_id,
                 "announcement_time": published_at.isoformat(),
                 "category": request.parameters.get("category", ""),
             }
@@ -188,6 +191,23 @@ def _text(value: Any) -> str:
     if value is None or pd.isna(value):
         return ""
     return str(value).strip()
+
+
+def _announcement_id(source_reference: str) -> str:
+    if not source_reference:
+        return ""
+    values = parse_qs(urlparse(source_reference).query).get("announcementId", ())
+    return values[0].strip() if values else ""
+
+
+def _compact_date(value: str) -> str:
+    normalized = value.strip()
+    if len(normalized) == 8 and normalized.isdigit():
+        date.fromisoformat(
+            f"{normalized[:4]}-{normalized[4:6]}-{normalized[6:]}"
+        )
+        return normalized
+    return date.fromisoformat(normalized).strftime("%Y%m%d")
 
 
 __all__ = ["CNINFO_DISCLOSURES_DATASET", "CnInfoEvidenceAdapter", "CnInfoTransport"]

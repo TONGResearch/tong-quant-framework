@@ -55,7 +55,14 @@ Migration `0006_provider_contract_baseline` adds:
 - `provider_baseline_inputs` linking each manifest to its original contract
   checks with `RESTRICT` history semantics
 
-The current migration head is `0006_provider_contract_baseline`. The public
+Migration `0007_cninfo_artifact_capture` adds:
+
+- `provider_artifacts` for immutable source/content identity and safe relative
+  storage keys
+- `provider_artifact_observations` for captured, missing, unavailable, changed
+  URL, and relation evidence over time
+
+The current migration head is `0007_cninfo_artifact_capture`. The public
 schema version remains `0.8.0`; this is data-foundation remediation rather than
 a new product milestone.
 

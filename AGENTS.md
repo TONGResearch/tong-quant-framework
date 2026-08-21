@@ -122,6 +122,13 @@ in the same commit.
   availability precision, continuity, and consistency are separate evidence.
 - CNInfo evidence transported through AKShare must retain the provider identity
   `cninfo_via_akshare`; do not claim direct-source verification.
+- Direct CNInfo evidence must retain `cninfo_direct` provenance, use only the
+  approved official HTTPS query/static-document scope, respect bounded
+  pagination/rate limits, and persist failed or missing artifact observations.
+- Provider document bytes belong in `ProviderArtifactStore`; SQLite stores
+  content hashes and safe relative storage keys, never ad hoc absolute paths or
+  credentials. Direct-source success cannot promote trust without measured
+  parity, coverage, and continuity review.
 - Yahoo Finance evidence is research-grade, unofficial, `LOW` trust, and
   `RETRIEVAL_TIME` availability until calibration proves more.
 - Provider contract monitoring may detect access and schema drift but must never

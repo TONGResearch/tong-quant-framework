@@ -35,13 +35,26 @@ PIT readiness decision.
 
 ## Implemented Providers
 
-### CNInfo
+### CNInfo Via AKShare
 
 `CnInfoEvidenceAdapter` captures China A disclosure timing. The current
 transport is `AkShareAdapter.fundamental_disclosures`, so provenance is
 `cninfo_via_akshare`, trust defaults to `MEDIUM`, and direct-source parity is an
 open limitation. Exact announcement timestamps are retained when present;
 missing or future timestamps are rejected with warnings.
+
+### Direct CNInfo Artifacts
+
+`CnInfoDirectEvidenceAdapter` captures official announcement IDs, publication
+timestamps, detail/file URLs, relation evidence, and optional filing bytes under
+the distinct provider identity `cninfo_direct`. `FileSystemArtifactStore` writes
+content-addressed mode-`0600` files; SQLite stores immutable metadata and every
+captured/missing/unavailable observation. Pagination, download counts, domains,
+response sizes, retries, and request intervals are bounded.
+
+Direct evidence remains `MEDIUM` trust until representative parity, coverage,
+correction continuity, and long-term provider behavior are reviewed. See
+`docs/cninfo-direct-artifacts.md`.
 
 ### Yahoo Finance
 
@@ -117,11 +130,13 @@ bundle. This fixed transport compatibility without weakening TLS validation.
 
 ## Database
 
-The migration head is `0006_provider_contract_baseline`. Provider evidence and
-baseline tables are:
+The migration head is `0007_cninfo_artifact_capture`. Provider evidence,
+artifact, and baseline tables are:
 
 - `schema_fingerprints`
 - `provider_evidence_records`
+- `provider_artifacts`
+- `provider_artifact_observations`
 - `provider_contract_runs`
 - `provider_contract_checks`
 - `provider_baseline_manifests`
@@ -135,7 +150,8 @@ new framework feature milestone.
 
 - Accumulate and review representative CNInfo/Yahoo baselines across multiple
   calendar periods.
-- Add direct CNInfo raw document capture and parity checks.
+- Accumulate direct CNInfo/AKShare-transport parity and correction-continuity
+  evidence; the capture and comparison contracts are implemented.
 - Compare Yahoo against an independent provider before any trust reassessment.
 - Measure corrections, delistings, symbol changes, and historical continuity.
 - Keep all trading-related development frozen while required replay datasets

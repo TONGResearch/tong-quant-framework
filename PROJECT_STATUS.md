@@ -7,7 +7,7 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 - Framework version: `0.8.0`
 - Database schema version: `0.8.0`
-- Migration head: `0006_provider_contract_baseline`
+- Migration head: `0007_cninfo_artifact_capture`
 - Current phase: Engineering continuity and data readiness
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
@@ -25,6 +25,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Scheduled provider contract monitoring
 - Immutable longitudinal provider baselines with separate success, field
   coverage, and schedule-continuity metrics
+- Direct CNInfo disclosure metadata and content-addressed filing artifacts with
+  immutable capture observations and AKShare-transport parity support
 - Read-only SQLite integrity audits, verified online backups, and isolated
   no-overwrite restore drills
 - Discovery, Screening, Research, Validation, Historical Replay, Portfolio/Risk
@@ -39,10 +41,10 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-DATA-002`: direct CNInfo artifact capture
+1. `WP-DATA-003`: independent Yahoo calibration
 
-`WP-DATA-003` remains planned until its work state is explicitly promoted;
-completion of a dependency does not authorize work by itself.
+`WP-OPS-001` remains planned until its work state is explicitly promoted;
+completion of dependencies does not authorize work by itself.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

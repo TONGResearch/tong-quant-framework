@@ -13,8 +13,8 @@ feature development.
 | Remote baseline | Revalidated after each requested push with `git ls-remote` |
 | Framework version | `0.8.0` |
 | Public database schema version | `0.8.0` |
-| Migration head | `0006_provider_contract_baseline` |
-| Latest data evidence | Phase III reports plus live CNInfo/Yahoo contract probe on `2026-08-21` |
+| Migration head | `0007_cninfo_artifact_capture` |
+| Latest data evidence | Phase III reports, live CNInfo/Yahoo contract probe, and bounded direct CNInfo metadata/PDF smoke checks on `2026-08-21` |
 | Scope boundary | Research platform only; no live trading capability |
 
 Provider-neutral evidence, engineering continuity governance, and longitudinal
@@ -222,7 +222,7 @@ internal tables.
 ### Schema Engineering Status
 
 - Public schema version: `0.8.0`.
-- Migration head: `0006_provider_contract_baseline`.
+- Migration head: `0007_cninfo_artifact_capture`.
 - Migrations are ordered and checksum-verified.
 - Research and Validation final writes have transaction boundaries.
 - A fresh schema passes `PRAGMA foreign_key_check`.
@@ -234,7 +234,7 @@ internal tables.
   table counts.
 - Migrations remain forward-only; downgrade, free-space checks, automated
   encrypted retention, and broad post-migration domain invariants are incomplete.
-- `data/storage/sqlite.py` is 4,907 lines and is the largest maintainability
+- `data/storage/sqlite.py` is 5,047 lines and is the largest maintainability
   hotspot.
 
 ## 4. Provider Inventory
@@ -244,7 +244,8 @@ internal tables.
 | AKShare `1.18.64` | China A primary adapter | Active | Latest Phase III audit completed | Bars, calendar, company data, lifecycle, disclosure, universe, actions |
 | Tencent via AKShare | China bar fallback | Active fallback | Used only when primary history endpoint fails | Unadjusted daily-bar continuity |
 | Tushare | China A optional calibration | Engineering complete and frozen | Token validated; account-tier limits prevent fully available calibration datasets | Optional cross-provider evidence when permissions allow |
-| CNInfo via AKShare | China A disclosure evidence | Provider-neutral adapter implemented | Fake-client contract tests; direct-source parity unverified | Announcement timestamps with explicit provenance |
+| CNInfo via AKShare | China A disclosure evidence | Provider-neutral adapter implemented | Fake-client and live contract checks | Transported announcement timestamps with explicit provenance |
+| CNInfo direct | China A disclosure metadata/artifacts | Direct adapter and content-addressed store implemented | Real bounded metadata, one-PDF, and 3/3 same-day transport-parity smoke checks; representative continuity unverified | Official timestamp, URL, relation and content-hash evidence |
 | Yahoo Finance | Overseas bootstrap | Provider-neutral adapter implemented | Fake-client contract tests; live continuity unverified | Low-trust retrieval-time US/HK/Malaysia bars |
 | Massive/Polygon | Overseas commercial provider | Future reservation only | No adapter or capability study | Higher-quality market/reference data if justified |
 | Finnhub | Overseas news/fundamental provider | Future reservation only | No adapter or capability study | News, filings, fundamentals, event augmentation |
@@ -302,6 +303,7 @@ No integrated AKShare dataset is universally PIT-safe.
 | Statements without publication evidence | LOW, retrieval snapshot | Not valid before ingestion time |
 | Actual disclosure schedule | MEDIUM, date-only | Conservative end-of-day availability |
 | CNInfo financial announcements | HIGH per covered record | Exact timestamp evidence with coverage and parsing warnings |
+| Direct CNInfo filing evidence | MEDIUM, exact timestamp | Official metadata and content hashes; continuity and representative parity remain unverified |
 | Current ST and suspension lists | LOW, retrieval snapshot | Current/forward evidence only |
 | Suspension and Shenzhen name-change events | MEDIUM, partial | Preserve dated evidence; never infer missing intervals |
 | Delisting records | MEDIUM, partial | Terminal-event evidence, not complete warning history |
@@ -543,19 +545,20 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 176 | Python files under `src/` |
-| Source lines | 26,869 | Python lines under `src/`, including blanks/comments |
-| Test files | 41 | Python test modules under `tests/` |
-| Test cases | 208 | Pytest collection |
-| Test lines | 7,933 | Python lines under `tests/` |
-| Database tables | 60 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 44 | Markdown files under `docs/` |
-| Runtime scripts | 6 | Files under `scripts/` |
+| Source files | 178 | Python files under `src/` |
+| Source lines | 28,351 | Python lines under `src/`, including blanks/comments |
+| Test files | 43 | Python test modules under `tests/` |
+| Test cases | 222 | Pytest collection |
+| Test lines | 8,559 | Python lines under `tests/` |
+| Database tables | 62 | Initialized application tables, excluding SQLite internals |
+| Documentation files | 45 | Markdown files under `docs/` |
+| Runtime scripts | 7 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 203 passed and 5 skipped tests. Skips are the
-expected opt-in live AKShare, Tushare, and notification network checks. CI runs
-Pytest, Ruff, mypy, and the project governance audit on push and pull request.
+The verification baseline is 216 passed and 6 skipped tests. Skips are the
+expected opt-in live AKShare, direct CNInfo, Tushare, and notification network
+checks. CI runs Pytest, Ruff, mypy, and the project governance audit on push and
+pull request.
 
 ## Completed Milestones
 
@@ -580,6 +583,7 @@ Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 | Engineering continuity | `e842f50` | Canonical status, machine-readable governance, bounded work packages, CI audit |
 | Longitudinal provider baseline | Current baseline | Immutable manifests, scope metrics, retained CI history, deterministic reports |
 | Database recovery hardening | Current baseline | Read-only audit, verified backup, isolated restore drill, corruption/interruption tests, runbook |
+| Direct CNInfo artifact evidence | Current baseline | Official metadata adapter, bounded PDF capture, content-addressed storage, immutable observations, parity contract |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
 
 ## Baseline Freeze Decision

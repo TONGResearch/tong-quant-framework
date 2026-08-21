@@ -13,6 +13,10 @@ from tong_quant.data.providers.cninfo import (
     CNINFO_DISCLOSURES_DATASET,
     CnInfoEvidenceAdapter,
 )
+from tong_quant.data.providers.cninfo_direct import (
+    CnInfoDirectEvidenceAdapter,
+    CnInfoHttpClient,
+)
 from tong_quant.data.providers.contracts import (
     ProviderContractStatus,
     ProviderDatasetRequest,
@@ -65,6 +69,10 @@ def main() -> None:
     store.initialize()
     akshare = AkShareAdapter(clock=lambda: now, max_attempts=2)
     cninfo = CnInfoEvidenceAdapter(transport=akshare)
+    cninfo_direct = CnInfoDirectEvidenceAdapter(
+        client=CnInfoHttpClient(max_attempts=2, max_pages=1),
+        clock=lambda: now,
+    )
     yahoo = YahooFinanceEvidenceAdapter(
         client=YahooChartHttpClient(max_attempts=2),
         clock=lambda: now,
@@ -83,6 +91,28 @@ def main() -> None:
                 },
             ),
             required_payload_fields=("symbol", "title", "announcement_time"),
+        ),
+        ProviderContractProbe(
+            adapter=cninfo_direct,
+            request=ProviderDatasetRequest(
+                dataset=CNINFO_DISCLOSURES_DATASET,
+                market=Market.CHINA_A,
+                subject=args.china_symbol,
+                as_of=now,
+                parameters={
+                    "start_date": start,
+                    "end_date": end,
+                    "capture_artifacts": "false",
+                    "max_artifacts": "0",
+                },
+            ),
+            required_payload_fields=(
+                "symbol",
+                "title",
+                "announcement_id",
+                "announcement_time",
+                "artifact_status",
+            ),
         ),
         *_yahoo_probes(
             adapter=yahoo,

@@ -15,6 +15,7 @@ from tong_quant.core.security import (
     reject_sensitive_persistence,
     reject_sensitive_structure,
 )
+from tong_quant.data.artifacts import StoredProviderArtifact
 from tong_quant.data.baselines import (
     ProviderBaselineManifest,
     ProviderBaselineQuery,
@@ -40,6 +41,7 @@ from tong_quant.data.models import (
     SecurityLifecycleEvent,
 )
 from tong_quant.data.providers.contracts import (
+    ProviderArtifactObservation,
     ProviderContractRun,
     ProviderContractStatus,
     ProviderEvidenceRecord,
@@ -1478,6 +1480,142 @@ class SQLiteStore:
                 rows,
             )
             return connection.total_changes - before
+
+    def save_provider_artifacts(
+        self,
+        artifacts: tuple[StoredProviderArtifact, ...],
+        *,
+        batch_id: str,
+    ) -> int:
+        if not artifacts:
+            return 0
+        for stored in artifacts:
+            reject_sensitive_structure(
+                {
+                    "source_reference": stored.artifact.source_reference,
+                    "storage_key": stored.storage_key,
+                },
+                path="provider_artifact",
+            )
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                stored.artifact.artifact_id,
+                stored.artifact.provider,
+                stored.artifact.dataset,
+                stored.artifact.market.value,
+                stored.artifact.subject,
+                stored.artifact.source_identity,
+                stored.artifact.source_reference,
+                _datetime_text(stored.artifact.published_at),
+                _datetime_text(stored.artifact.retrieved_at),
+                stored.artifact.content_hash,
+                stored.artifact.media_type,
+                len(stored.artifact.content),
+                stored.storage_key,
+                stored.artifact.availability_precision.value,
+                stored.artifact.trust_level.value,
+                stored.artifact.model_version,
+                batch_id,
+                ingested_at,
+            )
+            for stored in artifacts
+        ]
+        with self._connect() as connection:
+            before = connection.total_changes
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO provider_artifacts (
+                    artifact_id, provider, dataset, market, subject,
+                    source_identity, source_reference, published_at,
+                    first_retrieved_at, content_hash, media_type, byte_size,
+                    storage_key, availability_precision, trust_level,
+                    model_version, first_batch_id, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            return connection.total_changes - before
+
+    def save_provider_artifact_observations(
+        self,
+        observations: tuple[ProviderArtifactObservation, ...],
+        *,
+        batch_id: str,
+    ) -> int:
+        if not observations:
+            return 0
+        for observation in observations:
+            reject_sensitive_structure(
+                {
+                    "source_reference": observation.source_reference,
+                    "error_code": observation.error_code,
+                },
+                path="provider_artifact_observation",
+            )
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                observation.observation_id,
+                observation.provider,
+                observation.dataset,
+                observation.market.value,
+                observation.subject,
+                observation.source_identity,
+                observation.source_reference,
+                _datetime_text(observation.published_at),
+                _datetime_text(observation.retrieved_at),
+                observation.status.value,
+                observation.artifact_id,
+                observation.error_code,
+                _json_dumps(observation.related_source_identities),
+                batch_id,
+                ingested_at,
+            )
+            for observation in observations
+        ]
+        with self._connect() as connection:
+            before = connection.total_changes
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO provider_artifact_observations (
+                    observation_id, provider, dataset, market, subject,
+                    source_identity, source_reference, published_at,
+                    retrieved_at, status, artifact_id, error_code,
+                    related_source_identities_json, batch_id, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            return connection.total_changes - before
+
+    def provider_artifact_history(
+        self,
+        *,
+        provider: str,
+        dataset: str,
+        subject: str,
+        source_identity: str | None = None,
+    ) -> list[sqlite3.Row]:
+        query = """
+            SELECT observation.*, artifact.content_hash,
+                   artifact.media_type, artifact.byte_size, artifact.storage_key,
+                   artifact.availability_precision, artifact.trust_level,
+                   artifact.model_version
+            FROM provider_artifact_observations AS observation
+            LEFT JOIN provider_artifacts AS artifact
+              ON artifact.artifact_id = observation.artifact_id
+            WHERE observation.provider = ?
+              AND observation.dataset = ?
+              AND observation.subject = ?
+        """
+        parameters: list[str] = [provider, dataset, subject]
+        if source_identity is not None:
+            query += " AND observation.source_identity = ?"
+            parameters.append(source_identity)
+        query += " ORDER BY observation.retrieved_at, observation.observation_id"
+        with self._connect() as connection:
+            return list(connection.execute(query, parameters).fetchall())
 
     def provider_evidence_as_of(
         self,
@@ -4541,6 +4679,8 @@ class SQLiteStore:
             "provider_conflicts",
             "dataset_confidence_assessments",
             "provider_evidence_records",
+            "provider_artifacts",
+            "provider_artifact_observations",
             "provider_contract_runs",
             "provider_contract_checks",
             "provider_baseline_manifests",

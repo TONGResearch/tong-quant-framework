@@ -42,7 +42,7 @@ must be earned by dataset-specific evidence and preserved as auditable metadata.
 | 1 | Massive / Polygon | US equity market data and reference data | US | Future primary US provider |
 | 2 | Yahoo Finance | Research-grade global market data | Global | Evidence adapter implemented; live continuity unverified |
 | 3 | Finnhub | News, filings, fundamentals, events | Global | Future AI/research input provider |
-| 4 | CNInfo | Authoritative China disclosure timestamps and filings | China A | AKShare-transport evidence adapter implemented; direct-source parity unverified |
+| 4 | CNInfo | Authoritative China disclosure timestamps and filings | China A | Direct metadata/artifact adapter implemented; representative parity and continuity unverified |
 | 5 | Tushare | Optional calibration provider | China A | Frozen optional provider |
 | Existing | AKShare | China A open-source source and diagnostics | China A | Existing primary open source source |
 
@@ -92,10 +92,11 @@ limitations through one ingestion service. Provider-native payloads are stored
 as auditable evidence and are not promoted into existing canonical research
 models without a dataset-specific normalizer and readiness review.
 
-CNInfo currently uses the provenance label `cninfo_via_akshare`. It must not be
-described as a direct CNInfo integration until direct-source parity and raw
-artifact capture are verified. Yahoo uses the unofficial chart interface and
-is intentionally `LOW` trust with `RETRIEVAL_TIME` availability.
+CNInfo now has two explicit evidence identities: `cninfo_via_akshare` and
+`cninfo_direct`. Direct metadata and raw artifact capture are implemented, but
+trust remains conservative until representative parity, coverage, correction
+continuity, and contract history are reviewed. Yahoo uses the unofficial chart
+interface and is intentionally `LOW` trust with `RETRIEVAL_TIME` availability.
 
 ## Shared Provider Contracts
 
@@ -375,11 +376,11 @@ No schema rewrite is recommended before the next provider adapter is designed.
 - Connect to Research/AI inputs only through normalized artifacts.
 - Preserve no-trading-decision boundary.
 
-### Phase MP-5: CNInfo Evidence Foundation (implemented through AKShare transport)
+### Phase MP-5: CNInfo Evidence Foundation (implemented)
 
-- Define authoritative China filing and timestamp ingestion.
-- Link CNInfo announcements to instruments, fundamentals, and revision evidence.
-- Reassess China PIT readiness after real CNInfo evidence exists.
+- Preserve direct and AKShare-transport provenance independently.
+- Capture official timestamps, URLs, raw filing hashes, and relation evidence.
+- Accumulate representative parity and continuity before any trust reassessment.
 
 ### Phase MP-6: Multi-Provider Calibration Upgrade
 
@@ -415,7 +416,8 @@ MP-1 Provider Registry Design
 -> MP-5 CNInfo China Disclosure Provider Design
 ```
 
-The provider-neutral ingestion contract, CNInfo/Yahoo evidence adapters, and
-scheduled contract monitor are now implemented. The next provider work should
-calibrate real coverage and continuity; it must not assume that successful
-contract probes grant higher trust or PIT readiness.
+The provider-neutral ingestion contract, direct/transported CNInfo evidence,
+Yahoo evidence adapter, content-addressed artifact store, and scheduled contract
+monitor are now implemented. The next provider work should calibrate real
+coverage and continuity; it must not assume that successful contract probes
+grant higher trust or PIT readiness.
