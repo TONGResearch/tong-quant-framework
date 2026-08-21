@@ -36,3 +36,9 @@ Allocation, or automatic orders.
 
 No implementation should begin until the earlier gates have evidence and the
 user explicitly approves a separate architecture proposal.
+
+## Current Work-Package Control
+
+This roadmap is now implemented through machine-readable work state in
+`config/project-governance.toml`. `WP-DATA-001` and `WP-DB-001` are the only
+ready packages. All trading-related development remains frozen.

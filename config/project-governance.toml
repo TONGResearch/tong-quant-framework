@@ -1,0 +1,88 @@
+[baseline]
+framework_version = "0.8.0"
+database_schema_version = "0.8.0"
+migration_head = "0005_provider_evidence_foundation"
+current_phase = "engineering-continuity-and-data-readiness"
+canonical_status_document = "PROJECT_STATUS.md"
+
+[freeze]
+trading_related_development = true
+required_execution_mode = "disabled"
+allow_live_orders = false
+required_notification_mode = "disabled"
+reason = "PIT readiness remains unsuitable for trading-related development"
+forbidden_capabilities = [
+  "paper_trading",
+  "broker_integration",
+  "order_generation",
+  "trade_and_fill_models",
+  "live_trading",
+  "asset_allocation",
+  "auto_rebalancing",
+]
+
+[readiness]
+production = "not_ready"
+research = "conditional"
+validation = "mechanically_ready_evidence_blocked"
+portfolio = "research_artifact_only"
+pit = "unsuitable"
+
+[quality]
+required_commands = [
+  ".venv/bin/pytest",
+  ".venv/bin/ruff check .",
+  ".venv/bin/mypy src",
+  "git diff --check",
+  ".venv/bin/python scripts/check_project_governance.py",
+]
+required_documents = [
+  "AGENTS.md",
+  "PROJECT_STATUS.md",
+  "docs/architecture.md",
+  "docs/current-state-report.md",
+  "docs/data-trust-matrix.md",
+  "docs/database-migrations.md",
+  "docs/engineering-continuity.md",
+  "docs/risk-register.md",
+  "docs/technical-debt-register.md",
+]
+
+[next_phase]
+objective = "Improve historical evidence continuity and operating reliability without trading functionality"
+promotion_requirement = "Critical replay datasets require reviewed PIT readiness of at least caution with verified consistency evidence"
+
+[[work_packages]]
+id = "WP-DATA-001"
+title = "Longitudinal provider baseline"
+status = "ready"
+document = "docs/work-packages/wp-data-001.md"
+depends_on = []
+
+[[work_packages]]
+id = "WP-DB-001"
+title = "Database backup restore and integrity drills"
+status = "ready"
+document = "docs/work-packages/wp-db-001.md"
+depends_on = []
+
+[[work_packages]]
+id = "WP-DATA-002"
+title = "Direct CNInfo artifact capture"
+status = "planned"
+document = "docs/work-packages/wp-data-002.md"
+depends_on = ["WP-DATA-001"]
+
+[[work_packages]]
+id = "WP-DATA-003"
+title = "Independent Yahoo calibration"
+status = "planned"
+document = "docs/work-packages/wp-data-003.md"
+depends_on = ["WP-DATA-001"]
+
+[[work_packages]]
+id = "WP-OPS-001"
+title = "Provider monitor alerting and retention"
+status = "planned"
+document = "docs/work-packages/wp-ops-001.md"
+depends_on = ["WP-DATA-001", "WP-DB-001"]

@@ -195,16 +195,24 @@ snapshots without adequate historical continuity. See
 
 Tushare integration hardening adds environment-only credential validation,
 automatic endpoint permission detection, dataset capability mapping, and an
-explicit readiness gap report. Missing credentials currently block the real
-dual-provider run. Perfect provider agreement would still leave most lifecycle
-and universe datasets at `CAUTION`, so historical continuity remediation remains
-mandatory before Paper Trading architecture is reconsidered.
+explicit readiness gap report. Authentication works, but the current account
+tier does not expose the required calibration datasets. Tushare is therefore an
+optional provider and not a roadmap blocker. Perfect provider agreement would
+still leave most lifecycle and universe datasets at `CAUTION`, so historical
+continuity remediation remains mandatory before Paper Trading architecture is
+reconsidered.
 
 AKShare hardening adds an independent normalized-response audit and bounded CSI
 constituent downloads. Current runs preserve eight successful dataset groups and
 surface three CSI endpoint failures without stale substitution or an unbounded
 hang. These operational improvements do not change the overall `UNSUITABLE` PIT
 classification.
+
+Provider evidence hardening adds the schema baseline and fingerprint ledger,
+provider-neutral ingestion, CNInfo-via-AKShare and Yahoo evidence adapters, and
+scheduled contract monitoring. The next implementation order is governed by
+`config/project-governance.toml` and `docs/work-packages/` rather than this
+historical milestone narrative.
 
 ## Reserved Review: Paper Trading Architecture
 

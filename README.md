@@ -2,6 +2,10 @@
 
 Personal quantitative investment research platform developed by Tong Li.
 
+Current project state and the next approved work packages are in
+`PROJECT_STATUS.md`. Run `python scripts/check_project_governance.py` before
+starting a new milestone.
+
 ## Philosophy
 
 Discover Opportunities -> Screen Opportunities -> Research Opportunities ->
@@ -130,6 +134,7 @@ python scripts/run_data_readiness.py --require-secondary
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/provider-evidence-foundation.md`,
+`docs/engineering-continuity.md`,
 `docs/provider-calibration-phase-iii.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,
 `docs/research-engine.md`, `docs/validation-engine.md`, and

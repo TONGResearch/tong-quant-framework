@@ -75,6 +75,13 @@ validation, risk management, and controlled execution.
 
 ## Development Style
 
+Before implementation, read `PROJECT_STATUS.md`,
+`config/project-governance.toml`, and the selected work-package document. Run
+`python scripts/check_project_governance.py`. Work on one `ready` package at a
+time; do not infer project state from chat history or historical milestone docs.
+When state changes, update governance, status, package, risk, and debt records
+in the same commit.
+
 - Prefer Python standard library and typed, immutable domain models.
 - Use `Protocol` or abstract interfaces at external boundaries.
 - Add dependencies only when they solve a current requirement.
@@ -201,6 +208,7 @@ Before considering a change complete:
 .venv/bin/pytest
 .venv/bin/ruff check .
 .venv/bin/mypy src
+python scripts/check_project_governance.py
 ```
 
 Add tests for market behavior, timestamp integrity, configuration safety,

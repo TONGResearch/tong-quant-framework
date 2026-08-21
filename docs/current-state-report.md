@@ -538,19 +538,19 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 171 | Python files under `src/` |
-| Source lines | 24,880 | Python lines under `src/`, including blanks/comments |
-| Test files | 38 | Python test modules under `tests/` |
-| Test cases | 188 | Pytest collection |
-| Test lines | 7,265 | Python lines under `tests/` |
+| Source files | 174 | Python files under `src/` |
+| Source lines | 25,283 | Python lines under `src/`, including blanks/comments |
+| Test files | 39 | Python test modules under `tests/` |
+| Test cases | 193 | Pytest collection |
+| Test lines | 7,345 | Python lines under `tests/` |
 | Database tables | 57 | Initialized application tables, excluding SQLite internals |
-| Documentation files before this report | 31 | Files under `docs/` |
-| Runtime scripts | 3 | Files under `scripts/` |
+| Documentation files | 41 | Markdown files under `docs/` |
+| Runtime scripts | 4 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 183 passed and 5 skipped tests. Skips are the
+The verification baseline is 188 passed and 5 skipped tests. Skips are the
 expected opt-in live AKShare, Tushare, and notification network checks. CI runs
-Pytest, Ruff, and mypy on push and pull request.
+Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 
 ## Completed Milestones
 
