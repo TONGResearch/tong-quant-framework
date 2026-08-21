@@ -1,0 +1,2956 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+      "content_hash": "",
+      "datasets": [],
+      "limitations": [
+        "Required evidence source is missing"
+      ],
+      "model_versions": [],
+      "observed_at": null,
+      "role": "operational_database",
+      "source_path": "data/provider-contract-monitor.sqlite3",
+      "status": "missing"
+    },
+    {
+      "artifact_id": "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+      "content_hash": "4a00d22be255697c64825f2dc362886ed32ac1f57de5ee8a97bf52d165105a6c",
+      "datasets": [
+        "corporate_actions",
+        "csi1000_membership",
+        "csi300_membership",
+        "csi500_membership",
+        "delisting_records",
+        "financial_publication_dates",
+        "fundamental_revisions",
+        "security_lifecycle",
+        "st_status",
+        "suspension_status",
+        "universe_coverage"
+      ],
+      "limitations": [
+        "Evidence timestamp is missing or outside freshness policy"
+      ],
+      "model_versions": [
+        "provider-capability-v0.8-phase3"
+      ],
+      "observed_at": "2026-07-03T03:15:17.289650+00:00",
+      "role": "provider_capabilities",
+      "source_path": "docs/generated/phase3/tushare-provider-capabilities.json",
+      "status": "stale"
+    },
+    {
+      "artifact_id": "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+      "content_hash": "e9c3a9dd4cb8bd01666dfe91702ccaab4d4e387102e283ee5e0b736bcbc9d0fd",
+      "datasets": [
+        "corporate_actions",
+        "csi1000_membership",
+        "csi300_membership",
+        "csi500_membership",
+        "delisting_records",
+        "financial_publication_dates",
+        "fundamental_revisions",
+        "security_lifecycle",
+        "st_status",
+        "suspension_status",
+        "universe_coverage"
+      ],
+      "limitations": [
+        "Evidence timestamp is missing or outside freshness policy"
+      ],
+      "model_versions": [
+        "akshare-quality-audit-v0.8-phase3"
+      ],
+      "observed_at": "2026-06-21T08:37:38.262662+00:00",
+      "role": "quality_audit",
+      "source_path": "docs/generated/phase3/akshare-data-quality.json",
+      "status": "stale"
+    },
+    {
+      "artifact_id": "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+      "content_hash": "b62a9e72202114d73088868a53b1dbfff04250c888a0e774bb2f81b8cdd3e718",
+      "datasets": [
+        "corporate_actions",
+        "csi1000_membership",
+        "csi300_membership",
+        "csi500_membership",
+        "delisting_records",
+        "financial_publication_dates",
+        "fundamental_revisions",
+        "security_lifecycle",
+        "st_status",
+        "suspension_status",
+        "universe_coverage"
+      ],
+      "limitations": [
+        "Evidence timestamp is missing or outside freshness policy"
+      ],
+      "model_versions": [
+        "data-readiness-v0.8-phase3",
+        "pit-readiness-v0.8-phase2"
+      ],
+      "observed_at": "2026-06-21T08:37:38.262662+00:00",
+      "role": "readiness_dashboard",
+      "source_path": "docs/generated/phase3/framework-data-readiness.json",
+      "status": "stale"
+    },
+    {
+      "artifact_id": "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+      "content_hash": "efb8933b5a3ba0cdd85724ccb374573a5ea03a0bbce3f290aa428cee93679e1a",
+      "datasets": [
+        "corporate_actions",
+        "csi1000_membership",
+        "csi300_membership",
+        "csi500_membership",
+        "delisting_records",
+        "financial_publication_dates",
+        "fundamental_revisions",
+        "security_lifecycle",
+        "st_status",
+        "suspension_status",
+        "universe_coverage"
+      ],
+      "limitations": [
+        "Evidence timestamp is missing or outside freshness policy"
+      ],
+      "model_versions": [
+        "data-readiness-gap-v0.8-phase3"
+      ],
+      "observed_at": "2026-06-21T08:37:38.262662+00:00",
+      "role": "readiness_gap",
+      "source_path": "docs/generated/phase3/pit-readiness-gap-report.json",
+      "status": "stale"
+    },
+    {
+      "artifact_id": "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+      "content_hash": "ca39c1e2965514aff6127eaec36557876ad4cd75548a16ef6cc157e4fd085fc5",
+      "datasets": [
+        "financial_publication_dates"
+      ],
+      "limitations": [
+        "Supporting documentation is not operational evidence"
+      ],
+      "model_versions": [],
+      "observed_at": null,
+      "role": "supporting_document",
+      "source_path": "docs/cninfo-direct-artifacts.md",
+      "status": "available"
+    },
+    {
+      "artifact_id": "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16",
+      "content_hash": "8a41b26ad63667ef1663d0b298bbe731d8fd01c1a5277b39dfd42732c9d650a5",
+      "datasets": [],
+      "limitations": [
+        "Supporting documentation is not operational evidence"
+      ],
+      "model_versions": [],
+      "observed_at": null,
+      "role": "supporting_document",
+      "source_path": "docs/provider-monitor-operations.md",
+      "status": "available"
+    },
+    {
+      "artifact_id": "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+      "content_hash": "a66bec93631225282fe1648be0361e9327dc13b22c096add607cce6373b1074a",
+      "datasets": [
+        "global_daily_bars"
+      ],
+      "limitations": [
+        "Supporting documentation is not operational evidence"
+      ],
+      "model_versions": [],
+      "observed_at": null,
+      "role": "supporting_document",
+      "source_path": "docs/yahoo-daily-bar-calibration.md",
+      "status": "available"
+    }
+  ],
+  "assessed_at": "2026-08-22T00:00:00+00:00",
+  "configuration_hash": "c1ff5355ce579bbee2e746cc8c5b216490e65d294e9875fe6a6995120948d1f7",
+  "current_overall_classification": "unsuitable",
+  "database_schema_version": "0.8.0",
+  "decisions": [
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (55.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: dividend: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 55.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "corporate_actions",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 26.75,
+        "date_validity": 100.0,
+        "historical_continuity_score": 55.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: dividend: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "availability precision remains retrieval_time",
+          "historical continuity is 55.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 25,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "55.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare corporate-action announcement timing remains provider-limited",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: dividend: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "dividend: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 33.75,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (0.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: field_completeness (unknown; requires >=90.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: trust_caution (unknown; requires medium or stronger)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "csi1000_membership",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "unknown",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 5.0,
+        "date_validity": null,
+        "historical_continuity_score": 0.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "trust level remains unknown",
+          "availability precision remains unknown",
+          "historical continuity is 0.00, below the 80 target",
+          "critical fields missing: primary_provider_data"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 0,
+        "provider_consistency_score": null,
+        "required_field_completeness": null,
+        "secondary_status": "unavailable",
+        "trust_level": "unknown"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "0.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "primary provider unavailable: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "index_weight: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 0.0,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (0.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: field_completeness (unknown; requires >=90.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: trust_caution (unknown; requires medium or stronger)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "csi300_membership",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "unknown",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 5.0,
+        "date_validity": null,
+        "historical_continuity_score": 0.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "trust level remains unknown",
+          "availability precision remains unknown",
+          "historical continuity is 0.00, below the 80 target",
+          "critical fields missing: primary_provider_data"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 0,
+        "provider_consistency_score": null,
+        "required_field_completeness": null,
+        "secondary_status": "unavailable",
+        "trust_level": "unknown"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "0.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "primary provider unavailable: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "index_weight: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 0.0,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (0.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: field_completeness (unknown; requires >=90.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: trust_caution (unknown; requires medium or stronger)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains unknown",
+        "availability precision remains unknown",
+        "historical continuity is 0.00, below the 80 target",
+        "critical fields missing: primary_provider_data",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "csi500_membership",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "unknown",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 5.0,
+        "date_validity": null,
+        "historical_continuity_score": 0.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "trust level remains unknown",
+          "availability precision remains unknown",
+          "historical continuity is 0.00, below the 80 target",
+          "critical fields missing: primary_provider_data"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 0,
+        "provider_consistency_score": null,
+        "required_field_completeness": null,
+        "secondary_status": "unavailable",
+        "trust_level": "unknown"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "0.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "primary provider unavailable: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: index_weight: permission_denied (account permission is insufficient for this endpoint)",
+        "provider call failed: AKShare dataset index_membership failed after 2 attempts (URLError)",
+        "index_weight: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 0.0,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (55.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 55.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "delisting_records",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 24.25,
+        "date_validity": 100.0,
+        "historical_continuity_score": 55.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "availability precision remains retrieval_time",
+          "historical continuity is 55.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 204,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "55.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare delisting records do not prove complete warning-period coverage",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "stock_basic: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 33.75,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: disclosure_date: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "historical continuity is 70.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "financial_publication_dates",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "date_only",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 40.0,
+        "date_validity": 100.0,
+        "historical_continuity_score": 70.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: disclosure_date: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "historical continuity is 70.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 5189,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "70.00",
+          "passed": true,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "74e05a91c629ecbb7a24d46eaa545ee0d6f1870235e2524ef27d3d097a6248f1",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare actual disclosure schedule is date-only",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: disclosure_date: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "disclosure_date: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 37.5,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (55.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: income: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "historical continuity is 55.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "fundamental_revisions",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "exact",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 47.5,
+        "date_validity": 100.0,
+        "historical_continuity_score": 55.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: income: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "historical continuity is 55.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 23,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "high"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "55.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "high",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare CNInfo announcements identify revisions but not prior numeric values",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: income: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "income: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 36.25,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (unknown; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: field_completeness (unknown; requires >=90.00)",
+        "Gate failed: secondary_available (unknown; requires available)",
+        "Gate failed: capability_available (unknown; requires available or degraded)",
+        "Gate failed: trust_caution (unknown; requires medium or stronger)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "global_daily_bars",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "unknown",
+        "capability_status": "unknown",
+        "coverage_percent": null,
+        "current_readiness_score": 0,
+        "date_validity": null,
+        "historical_continuity_score": null,
+        "missing_requirements": [],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": null,
+        "provider_consistency_score": null,
+        "required_field_completeness": null,
+        "secondary_status": "unknown",
+        "trust_level": "unknown"
+      },
+      "evidence_artifact_ids": [
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unknown",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unknown",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "72a2ee2fc19e8110712282b9895c75cc79e6491cc03e9be8b58cf898f9402a75",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [],
+      "mechanical_score": 0.0,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (35.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint); suspend_d: permission_denied (account permission is insufficient for this endpoint); stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 35.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "security_lifecycle",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 22.25,
+        "date_validity": 100.0,
+        "historical_continuity_score": 35.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint); suspend_d: permission_denied (account permission is insufficient for this endpoint); stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "availability precision remains retrieval_time",
+          "historical continuity is 35.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 1693,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "35.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare dated ST name-change evidence currently covers Shenzhen only",
+        "AKShare suspension history is queried by date and retained at retrieval time",
+        "AKShare delisting records do not prove complete warning-period coverage",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint); suspend_d: permission_denied (account permission is insufficient for this endpoint); stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "namechange: permission_denied (account permission is insufficient for this endpoint); suspend_d: permission_denied (account permission is insufficient for this endpoint); stock_basic: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 28.75,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (50.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 50.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "st_status",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 23.75,
+        "date_validity": 100.0,
+        "historical_continuity_score": 50.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "availability precision remains retrieval_time",
+          "historical continuity is 50.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 1464,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "50.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare dated ST name-change evidence currently covers Shenzhen only",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: namechange: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "namechange: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 32.5,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (20.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: suspend_d: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "availability precision remains retrieval_time",
+        "historical continuity is 20.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "suspension_status",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 20.75,
+        "date_validity": 100.0,
+        "historical_continuity_score": 20.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: suspend_d: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "availability precision remains retrieval_time",
+          "historical continuity is 20.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 25,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "medium"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "20.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "medium",
+          "passed": true,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare suspension history is queried by date and retained at retrieval time",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: suspend_d: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "suspend_d: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 25.0,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    },
+    {
+      "blockers": [
+        "Gate failed: artifacts_fresh (available,missing,stale; requires all available)",
+        "Gate failed: coverage_measured (unknown; requires measured)",
+        "Gate failed: coverage_caution (unknown; requires >=60.00)",
+        "Gate failed: continuity_caution (25.00; requires >=60.00)",
+        "Gate failed: consistency_caution (unknown; requires >=70.00)",
+        "Gate failed: secondary_available (unavailable; requires available)",
+        "Gate failed: capability_available (unavailable; requires available or degraded)",
+        "Gate failed: trust_caution (low; requires medium or stronger)",
+        "Gate failed: operational_history (0 checks/0.0 days; requires >=8 checks/84 days with baseline coverage)",
+        "Historical Phase III capability gap is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "cross-provider coverage is unmeasured",
+        "cross-provider consistency is unmeasured",
+        "trust level remains low",
+        "availability precision remains retrieval_time",
+        "historical continuity is 25.00, below the 80 target",
+        "Current evidence artifacts are stale or missing"
+      ],
+      "cause": "mixed",
+      "current_classification": "unsuitable",
+      "dataset": "universe_coverage",
+      "effective_classification": "unsuitable",
+      "evidence": {
+        "availability_precision": "retrieval_time",
+        "capability_status": "unavailable",
+        "coverage_percent": null,
+        "current_readiness_score": 16.25,
+        "date_validity": null,
+        "historical_continuity_score": 25.0,
+        "missing_requirements": [
+          "Historical Phase III capability gap is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+          "cross-provider coverage is unmeasured",
+          "cross-provider consistency is unmeasured",
+          "trust level remains low",
+          "availability precision remains retrieval_time",
+          "historical continuity is 25.00, below the 80 target"
+        ],
+        "operational": {
+          "artifact_capture_count": 0,
+          "artifact_failure_count": 0,
+          "baseline_continuity_ratio": null,
+          "baseline_count": 0,
+          "baseline_field_coverage_ratio": null,
+          "baseline_success_ratio": null,
+          "calibration_completed_count": 0,
+          "calibration_incompatible_count": 0,
+          "calibration_unavailable_count": 0,
+          "contract_check_count": 0,
+          "contract_observation_days": 0,
+          "high_conflict_count": 0,
+          "provider_conflict_count": 0
+        },
+        "primary_records": 5528,
+        "provider_consistency_score": null,
+        "required_field_completeness": 100.0,
+        "secondary_status": "unavailable",
+        "trust_level": "low"
+      },
+      "evidence_artifact_ids": [
+        "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+        "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+        "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+        "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+        "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+        "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+      ],
+      "gates": [
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "artifacts_fresh",
+          "observed": "available,missing,stale",
+          "passed": false,
+          "required": "all available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_measured",
+          "observed": "unknown",
+          "passed": false,
+          "required": "measured"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "coverage_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "continuity_caution",
+          "observed": "25.00",
+          "passed": false,
+          "required": ">=60.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "consistency_caution",
+          "observed": "unknown",
+          "passed": false,
+          "required": ">=70.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "field_completeness",
+          "observed": "100.00",
+          "passed": true,
+          "required": ">=90.00"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "secondary_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "capability_available",
+          "observed": "unavailable",
+          "passed": false,
+          "required": "available or degraded"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "trust_caution",
+          "observed": "low",
+          "passed": false,
+          "required": "medium or stronger"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "operational_history",
+          "observed": "0 checks/0.0 days",
+          "passed": false,
+          "required": ">=8 checks/84 days with baseline coverage"
+        },
+        {
+          "evidence_artifact_ids": [
+            "1614028fb49a6437afb0de391aa6e08f2d11a4e40858c432b34a0b6ae76939cc",
+            "294edee2eb11908fee7a759e44eed274eacc3fa2af90ec1735341ccff86a51d7",
+            "7315900621ea4b90a5523c21703b6c6e9f32d9fbc2efbe5d7dd17da3a2451f3f",
+            "b8bc1069d95a2c40afb40d5614591d8e634686843aa9987b19bedc92b3694b0c",
+            "de2807b78f698e02aeb0398d1743ed96e6d195ffce1ed6663e28b7e1ca5fba23",
+            "31a89823e46f1761295d49627b63545fa6a1170f1edc13285e0d676ca823ea16"
+          ],
+          "name": "no_high_conflicts",
+          "observed": "0",
+          "passed": true,
+          "required": "0"
+        }
+      ],
+      "limitations": [
+        "AKShare A-share universe is a retrieval-time listing snapshot",
+        "Historical Phase III credential-missing limitation is superseded by later capability evidence; current constraint: stock_basic: permission_denied (account permission is insufficient for this endpoint)",
+        "coverage is unmeasurable",
+        "trust level low is below required medium",
+        "secondary-provider consistency is unknown",
+        "required provider calibration is unavailable",
+        "stock_basic: permission_denied (account permission is insufficient for this endpoint)"
+      ],
+      "mechanical_score": 23.75,
+      "promotion_review_eligible": false,
+      "proposed_classification": "unsuitable"
+    }
+  ],
+  "effective_overall_classification": "unsuitable",
+  "framework_version": "0.8.0",
+  "git_commit": "57c9d14b5c7a797c6f3bbc38cbb8f97aa62afb5b",
+  "historical_replay_ready": false,
+  "implementation_version": "evidence-readiness-v0.8-hardening",
+  "migration_head": "0008_provider_calibration_attempts",
+  "policy": {
+    "artifact_stale_days": 45,
+    "caution_consistency_score": 70,
+    "caution_continuity_score": 60,
+    "caution_coverage_percent": 60,
+    "caution_field_completeness": 90,
+    "minimum_contract_checks": 8,
+    "minimum_observation_days": 84,
+    "usable_consistency_score": 85,
+    "usable_continuity_score": 80,
+    "usable_coverage_percent": 90,
+    "usable_field_completeness": 98,
+    "version": "evidence-readiness-v0.8-hardening"
+  },
+  "proposed_overall_classification": "unsuitable",
+  "report_id": "84965dcd0806a4fea83cea170123f61198718382088c2c860bd5041013b101bd",
+  "source_tree_hash": "c11dfe0acf9b90a8fde372d9caf935596140b12bb9daf2eb3bc8227293456ab2",
+  "trading_freeze_remains": true
+}

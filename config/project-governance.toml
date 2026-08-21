@@ -51,7 +51,7 @@ required_documents = [
 ]
 
 [next_phase]
-objective = "Improve historical evidence continuity and operating reliability without trading functionality"
+objective = "Accumulate and freeze representative longitudinal provider evidence without trading functionality"
 promotion_requirement = "Critical replay datasets require reviewed PIT readiness of at least caution with verified consistency evidence"
 
 [[work_packages]]
@@ -92,7 +92,7 @@ depends_on = ["WP-DATA-001", "WP-DB-001"]
 [[work_packages]]
 id = "WP-READINESS-001"
 title = "Evidence-backed PIT readiness reassessment"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-readiness-001.md"
 depends_on = [
   "WP-DATA-001",
@@ -100,4 +100,16 @@ depends_on = [
   "WP-DATA-002",
   "WP-DATA-003",
   "WP-OPS-001",
+]
+
+[[work_packages]]
+id = "WP-EVIDENCE-001"
+title = "Representative longitudinal evidence horizon"
+status = "ready"
+document = "docs/work-packages/wp-evidence-001.md"
+depends_on = [
+  "WP-READINESS-001",
+  "WP-OPS-001",
+  "WP-DATA-002",
+  "WP-DATA-003",
 ]

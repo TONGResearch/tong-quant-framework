@@ -50,10 +50,12 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-READINESS-001`: evidence-backed PIT readiness reassessment
+1. `WP-EVIDENCE-001`: representative longitudinal evidence horizon
 
-Implementation is in progress. The readiness reassessment may recommend another
-remediation package; it cannot promote trust or PIT readiness automatically.
+`WP-READINESS-001` completed with 12 reviewed datasets, zero promotion-review
+eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next
+package must retain and freeze at least 12 weeks of operational evidence before
+another reassessment. It cannot promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

@@ -28,6 +28,15 @@ distinguishes missing evidence from observed quality failure and provider
 restriction, and emits proposed classifications for human review. Effective
 classifications remain unchanged by construction.
 
+The frozen 2026-08-22 report
+`84965dcd0806a4fea83cea170123f61198718382088c2c860bd5041013b101bd`
+reviewed 12 datasets. Current, proposed, and effective overall readiness are all
+`UNSUITABLE`; no dataset is eligible for promotion review. Phase III JSON
+artifacts are stale under the 45-day policy, no retained local operational
+database was available, and cross-provider coverage/consistency remain
+unmeasured. This is a mixed evidence insufficiency and provider limitation, not
+a newly discovered implementation defect.
+
 ## Executive Assessment
 
 Tong Quant is a well-structured personal investment research platform with
@@ -151,7 +160,7 @@ flowchart LR
     Execution --> Foundation
 ```
 
-Static imports across 180 source files show no top-level package cycle. The
+Static imports across 183 source files show no top-level package cycle. The
 important directional properties are intact:
 
 - Risk does not import Portfolio; Portfolio imports the generic Risk contract.
@@ -556,17 +565,17 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 181 | Python files under `src/` |
-| Source lines | 30,662 | Python lines under `src/`, including blanks/comments |
-| Test files | 45 | Python test modules under `tests/` |
-| Test cases | 240 | Pytest collection |
-| Test lines | 9,248 | Python lines under `tests/` |
+| Source files | 183 | Python files under `src/` |
+| Source lines | 32,308 | Python lines under `src/`, including blanks/comments |
+| Test files | 46 | Python test modules under `tests/` |
+| Test cases | 249 | Pytest collection |
+| Test lines | 9,667 | Python lines under `tests/` |
 | Database tables | 63 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 48 | Markdown files under `docs/` |
-| Runtime scripts | 8 | Files under `scripts/` |
+| Documentation files | 51 | Markdown files under `docs/` |
+| Runtime scripts | 9 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 234 passed and 6 skipped tests. Skips are the
+The verification baseline is 243 passed and 6 skipped tests. Skips are the
 expected opt-in live AKShare, direct CNInfo, Tushare, and notification network
 checks. CI runs Pytest, Ruff, mypy, and the project governance audit on push and
 pull request.
@@ -598,6 +607,7 @@ pull request.
 | Independent Yahoo calibration | Current baseline | Deterministic unadjusted contract, optional Massive evidence, trust ceiling, unavailable/incompatible audit states |
 | Provider health operations | Current baseline | Owner-assigned alerts, acknowledgement/recovery policy, repeated-condition escalation, immutable 90-day CI artifacts |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
+| Evidence readiness reassessment | `57c9d14` | Content-addressed 12-dataset review, explicit stale/missing evidence, superseded capability reconciliation, no automatic promotion |
 
 ## Baseline Freeze Decision
 
