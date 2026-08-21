@@ -212,6 +212,22 @@ snapshots. Complete historical membership or status intervals are never
 invented. Fundamental publication evidence can improve availability timing,
 but later revised numeric values are not backfilled into earlier revisions.
 
+Evidence-backed reassessment sits above data collection and below governance:
+
+```text
+Phase III artifacts + contract history + baselines + calibration attempts
+                              |
+                  EvidenceReadinessEvaluator
+                              |
+       current | proposed | effective classification + blockers
+                              |
+                  separate human governance review
+```
+
+The evaluator is deterministic and content-addressed. Missing values remain
+unknown, stale artifacts remain visible, and effective classifications cannot
+change automatically. See `docs/evidence-readiness-reassessment.md`.
+
 ## Future Asset Classes
 
 The market package reserves this future structure:

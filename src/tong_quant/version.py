@@ -20,6 +20,7 @@ PROVIDER_CONTRACT_MONITOR_VERSION = "provider-contract-monitor-v0.8-hardening"
 PROVIDER_CONTRACT_BASELINE_VERSION = "provider-contract-baseline-v0.8-hardening"
 PROVIDER_HEALTH_POLICY_VERSION = "provider-health-policy-v0.8-hardening"
 DAILY_BAR_CALIBRATION_VERSION = "daily-bar-calibration-v0.8-hardening"
+EVIDENCE_READINESS_VERSION = "evidence-readiness-v0.8-hardening"
 
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "DATA_READINESS_VERSION",
     "DATA_READINESS_GAP_VERSION",
     "DAILY_BAR_CALIBRATION_VERSION",
+    "EVIDENCE_READINESS_VERSION",
     "FRAMEWORK_VERSION",
     "HISTORICAL_COVERAGE_VERSION",
     "HISTORICAL_REPLAY_VERSION",

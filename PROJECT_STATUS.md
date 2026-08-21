@@ -31,6 +31,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
   artifact retention
 - Immutable longitudinal provider baselines with separate success, field
   coverage, and schedule-continuity metrics
+- Deterministic evidence-backed PIT readiness reassessment with immutable input
+  hashes, explicit missing/stale evidence, cause classification, and no
+  automatic promotion
 - Direct CNInfo disclosure metadata and content-addressed filing artifacts with
   immutable capture observations and AKShare-transport parity support
 - Read-only SQLite integrity audits, verified online backups, and isolated
@@ -49,9 +52,8 @@ met and Tong explicitly approves a new architecture proposal.
 
 1. `WP-READINESS-001`: evidence-backed PIT readiness reassessment
 
-All current data foundation and provider-operations packages are complete. The
-readiness reassessment may recommend another remediation package; it cannot
-promote trust or PIT readiness automatically.
+Implementation is in progress. The readiness reassessment may recommend another
+remediation package; it cannot promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

@@ -22,6 +22,12 @@ provider baseline infrastructure are part of the current architecture. Phase
 III reports remain evidence snapshots; they are not silently reinterpreted as
 new readiness conclusions.
 
+`WP-READINESS-001` adds a deterministic evidence reassessment boundary. It
+inventories immutable report hashes and optional operational SQLite history,
+distinguishes missing evidence from observed quality failure and provider
+restriction, and emits proposed classifications for human review. Effective
+classifications remain unchanged by construction.
+
 ## Executive Assessment
 
 Tong Quant is a well-structured personal investment research platform with
