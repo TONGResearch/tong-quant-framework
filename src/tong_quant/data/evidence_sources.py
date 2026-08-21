@@ -387,6 +387,8 @@ def _build_inputs(
     dataset_names = set(dashboard_rows) | set(gap_rows) | set(quality_rows)
     dataset_names |= set(capability_rows) | set(operational)
     dataset_names.add("global_daily_bars")
+    capability_environment = _mapping(capabilities.get("environment"))
+    credential_was_later_detected = capability_environment.get("configured") is True
     inputs: list[DatasetEvidenceInput] = []
     for dataset in sorted(dataset_names):
         readiness = dashboard_rows.get(dataset, {})
@@ -394,6 +396,7 @@ def _build_inputs(
         quality_row = quality_rows.get(dataset, {})
         gap_row = gap_rows.get(dataset, {})
         capability_row = capability_rows.get(dataset, {})
+        capability_reason = str(capability_row.get("reason") or "")
         operational_row = operational.get(
             dataset, OperationalDatasetEvidence(dataset=dataset)
         )
@@ -430,12 +433,20 @@ def _build_inputs(
                 secondary_status=str(readiness.get("secondary_status") or "unknown"),
                 capability_status=str(capability_row.get("status") or "unknown"),
                 evidence_artifact_ids=evidence_ids,
-                limitations=_strings(
-                    readiness.get("known_limitations"),
-                    quality_row.get("limitations"),
-                    capability_row.get("reason"),
+                limitations=_reconcile_historical_text(
+                    _strings(
+                        readiness.get("known_limitations"),
+                        quality_row.get("limitations"),
+                        capability_reason,
+                    ),
+                    credential_was_later_detected=credential_was_later_detected,
+                    capability_reason=capability_reason,
                 ),
-                missing_requirements=_strings(gap_row.get("missing_requirements")),
+                missing_requirements=_reconcile_historical_text(
+                    _strings(gap_row.get("missing_requirements")),
+                    credential_was_later_detected=credential_was_later_detected,
+                    capability_reason=capability_reason,
+                ),
                 operational=operational_row,
             )
         )
@@ -583,6 +594,32 @@ def _strings(*values: object) -> tuple[str, ...]:
             raise ValueError("evidence limitations must be strings")
         result.extend(item for item in value if item.strip())
     return tuple(dict.fromkeys(result))
+
+
+def _reconcile_historical_text(
+    values: tuple[str, ...],
+    *,
+    credential_was_later_detected: bool,
+    capability_reason: str,
+) -> tuple[str, ...]:
+    if not credential_was_later_detected:
+        return values
+    current_constraint = capability_reason or "later capability probe completed"
+    reconciled: list[str] = []
+    for value in values:
+        if "TUSHARE_TOKEN is not configured" in value:
+            reconciled.append(
+                "Historical Phase III credential-missing limitation is superseded "
+                f"by later capability evidence; current constraint: {current_constraint}"
+            )
+        elif "Tushare dataset capability is not_tested" in value:
+            reconciled.append(
+                "Historical Phase III capability gap is superseded by later "
+                f"capability evidence; current constraint: {current_constraint}"
+            )
+        else:
+            reconciled.append(value)
+    return tuple(dict.fromkeys(reconciled))
 
 
 def _classification(value: object) -> PITReadinessClassification:

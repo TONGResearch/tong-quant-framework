@@ -181,6 +181,54 @@ def test_source_loader_preserves_stale_and_missing_evidence(tmp_path: Path) -> N
     assert any(item.dataset == "global_daily_bars" for item in loaded.inputs)
 
 
+def test_later_capability_evidence_supersedes_old_missing_token_message(
+    tmp_path: Path,
+) -> None:
+    paths = _source_paths(tmp_path)
+    generated_at = "2026-08-20T00:00:00+00:00"
+    _write_json(
+        paths.readiness_dashboard,
+        {
+            "generated_at": generated_at,
+            "datasets": [
+                {
+                    "dataset": "fundamentals",
+                    "known_limitations": [
+                        "secondary provider unavailable: TUSHARE_TOKEN is not configured"
+                    ],
+                }
+            ],
+        },
+    )
+    _write_json(paths.readiness_gap, {"generated_at": generated_at, "datasets": []})
+    _write_json(paths.quality_audit, {"generated_at": generated_at, "datasets": []})
+    _write_json(
+        paths.provider_capabilities,
+        {
+            "generated_at": generated_at,
+            "environment": {"configured": True},
+            "datasets": [
+                {
+                    "dataset": "fundamentals",
+                    "status": "unavailable",
+                    "reason": "account permission is insufficient",
+                }
+            ],
+        },
+    )
+
+    loaded = load_evidence_sources(paths, assessed_at=NOW)
+    fundamentals = next(item for item in loaded.inputs if item.dataset == "fundamentals")
+
+    assert "TUSHARE_TOKEN is not configured" not in " ".join(
+        fundamentals.limitations
+    )
+    assert "superseded" in " ".join(fundamentals.limitations)
+    assert "account permission is insufficient" in " ".join(
+        fundamentals.limitations
+    )
+
+
 def test_source_loader_fails_closed_for_malformed_json(tmp_path: Path) -> None:
     paths = _source_paths(tmp_path)
     paths.readiness_dashboard.parent.mkdir(parents=True, exist_ok=True)
