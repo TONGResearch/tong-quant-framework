@@ -56,7 +56,8 @@ class DataIngestionPipeline:
 
     def initialize(self) -> None:
         self._store.initialize()
-        self._document_provider_limitations()
+        with self._store.transaction():
+            self._document_provider_limitations()
 
     def ingest_daily_bars(self, request: DailyBarRequest) -> IngestionResult:
         if (
@@ -82,9 +83,10 @@ class DataIngestionPipeline:
         if not normalized_report.is_valid:
             raise DataQualityError(normalized_report)
 
-        self._store.upsert_instruments([instrument])
-        accepted = self._store.upsert_daily_bars(bars)
-        batch_id, warnings = self._record_dataset_audit(response, accepted)
+        with self._store.transaction():
+            self._store.upsert_instruments([instrument])
+            accepted = self._store.upsert_daily_bars(bars)
+            batch_id, warnings = self._record_dataset_audit(response, accepted)
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -101,8 +103,9 @@ class DataIngestionPipeline:
         if not report.is_valid:
             raise DataQualityError(report)
         sessions = normalize_trading_calendar(response.dataset)
-        accepted = self._store.upsert_trading_sessions(sessions)
-        batch_id, warnings = self._record_dataset_audit(response, accepted)
+        with self._store.transaction():
+            accepted = self._store.upsert_trading_sessions(sessions)
+            batch_id, warnings = self._record_dataset_audit(response, accepted)
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -119,17 +122,18 @@ class DataIngestionPipeline:
         if not report.is_valid:
             raise DataQualityError(report)
         instrument = normalize_company_info(response.dataset, symbol)
-        accepted = self._store.upsert_instruments([instrument])
-        batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            warning_code="current_snapshot_only",
-            warning_message=(
-                "Company information is a retrieval-time snapshot, not "
-                "historical fundamentals"
-            ),
-            trust_level=DataTrustLevel.LOW,
-        )
+        with self._store.transaction():
+            accepted = self._store.upsert_instruments([instrument])
+            batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                warning_code="current_snapshot_only",
+                warning_message=(
+                    "Company information is a retrieval-time snapshot, not "
+                    "historical fundamentals"
+                ),
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -147,23 +151,24 @@ class DataIngestionPipeline:
             raise DataQualityError(report)
         instruments = normalize_universe(response.dataset)
         batch_id = str(uuid4())
-        accepted = self._store.upsert_instruments(instruments)
         memberships = normalize_market_universe_snapshot(
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_universe_memberships(memberships)
-        batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="current_universe_snapshot",
-            warning_message=(
-                "A-share universe is a retrieval-time snapshot unless "
-                "historical membership is ingested"
-            ),
-            trust_level=DataTrustLevel.LOW,
-        )
+        with self._store.transaction():
+            accepted = self._store.upsert_instruments(instruments)
+            self._store.upsert_universe_memberships(memberships)
+            batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="current_universe_snapshot",
+                warning_message=(
+                    "A-share universe is a retrieval-time snapshot unless "
+                    "historical membership is ingested"
+                ),
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -179,43 +184,44 @@ class DataIngestionPipeline:
         report = validate_raw_dataset(response.dataset)
         if not report.is_valid:
             raise DataQualityError(report)
-        instrument = self._store.get_instrument(
-            symbol,
-            market=Market.CHINA_A,
-            asset_type=AssetType.EQUITY,
-            as_of=response.dataset.retrieved_at,
-        )
-        if instrument is None:
-            instrument = build_bar_instrument(
+        with self._store.transaction():
+            instrument = self._store.get_instrument(
                 symbol,
+                market=Market.CHINA_A,
                 asset_type=AssetType.EQUITY,
-                available_at=response.dataset.retrieved_at,
-            )
-            self._store.upsert_instruments([instrument])
-        batch_id = str(uuid4())
-        facts = normalize_financial_statement(
-            response.dataset,
-            instrument,
-            batch_id=batch_id,
-            publication_events=self._store.fundamental_publication_events(
-                symbol,
-                Market.CHINA_A,
-                AssetType.EQUITY,
                 as_of=response.dataset.retrieved_at,
-            ),
-        )
-        accepted = self._store.upsert_fundamental_facts(facts)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="publication_time_unavailable",
-            warning_message=(
-                "AKShare financial statement payload does not provide reliable "
-                "issuer publication timestamps; records are retrieval-time safe"
-            ),
-            trust_level=DataTrustLevel.LOW,
-        )
+            )
+            if instrument is None:
+                instrument = build_bar_instrument(
+                    symbol,
+                    asset_type=AssetType.EQUITY,
+                    available_at=response.dataset.retrieved_at,
+                )
+                self._store.upsert_instruments([instrument])
+            batch_id = str(uuid4())
+            facts = normalize_financial_statement(
+                response.dataset,
+                instrument,
+                batch_id=batch_id,
+                publication_events=self._store.fundamental_publication_events(
+                    symbol,
+                    Market.CHINA_A,
+                    AssetType.EQUITY,
+                    as_of=response.dataset.retrieved_at,
+                ),
+            )
+            accepted = self._store.upsert_fundamental_facts(facts)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="publication_time_unavailable",
+                warning_message=(
+                    "AKShare financial statement payload does not provide reliable "
+                    "issuer publication timestamps; records are retrieval-time safe"
+                ),
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -258,20 +264,21 @@ class DataIngestionPipeline:
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([status.instrument for status in statuses])
-        accepted = self._store.upsert_instrument_statuses(statuses)
-        self._store.upsert_security_lifecycle_events(lifecycle_events)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="delisting_history_partial",
-            warning_message=(
-                "Delisting data may not include the full warning or "
-                "delisting-risk period"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([status.instrument for status in statuses])
+            accepted = self._store.upsert_instrument_statuses(statuses)
+            self._store.upsert_security_lifecycle_events(lifecycle_events)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="delisting_history_partial",
+                warning_message=(
+                    "Delisting data may not include the full warning or "
+                    "delisting-risk period"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -292,19 +299,20 @@ class DataIngestionPipeline:
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([event.instrument for event in events])
-        accepted = self._store.upsert_security_lifecycle_events(events)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="suspension_event_retrieval_time",
-            warning_message=(
-                "Suspension effective dates are retained, but historical "
-                "availability is known only from retrieval time"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([event.instrument for event in events])
+            accepted = self._store.upsert_security_lifecycle_events(events)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="suspension_event_retrieval_time",
+                warning_message=(
+                    "Suspension effective dates are retained, but historical "
+                    "availability is known only from retrieval time"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -325,19 +333,20 @@ class DataIngestionPipeline:
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([event.instrument for event in events])
-        accepted = self._store.upsert_security_lifecycle_events(events)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="st_history_shenzhen_only",
-            warning_message=(
-                "Dated ST name-change evidence currently covers Shenzhen only; "
-                "Shanghai and Beijing history remain incomplete"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([event.instrument for event in events])
+            accepted = self._store.upsert_security_lifecycle_events(events)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="st_history_shenzhen_only",
+                warning_message=(
+                    "Dated ST name-change evidence currently covers Shenzhen only; "
+                    "Shanghai and Beijing history remain incomplete"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -361,18 +370,19 @@ class DataIngestionPipeline:
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([event.instrument for event in events])
-        accepted = self._store.upsert_fundamental_publication_events(events)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="publication_date_only",
-            warning_message=(
-                "Actual disclosure dates are date-only and become usable at end of day"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([event.instrument for event in events])
+            accepted = self._store.upsert_fundamental_publication_events(events)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="publication_date_only",
+                warning_message=(
+                    "Actual disclosure dates are date-only and become usable at end of day"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -405,19 +415,20 @@ class DataIngestionPipeline:
             response.dataset,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([event.instrument for event in events])
-        accepted = self._store.upsert_fundamental_publication_events(events)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="publication_title_parsing",
-            warning_message=(
-                "Report period and revision order are parsed from announcement titles; "
-                "unrecognized titles remain excluded with source evidence retained raw"
-            ),
-            trust_level=DataTrustLevel.HIGH,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([event.instrument for event in events])
+            accepted = self._store.upsert_fundamental_publication_events(events)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="publication_title_parsing",
+                warning_message=(
+                    "Report period and revision order are parsed from announcement titles; "
+                    "unrecognized titles remain excluded with source evidence retained raw"
+                ),
+                trust_level=DataTrustLevel.HIGH,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -439,19 +450,22 @@ class DataIngestionPipeline:
             universe=f"index:{index_symbol}",
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([membership.instrument for membership in memberships])
-        accepted = self._store.upsert_universe_memberships(memberships)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="membership_availability_retrieval_time",
-            warning_message=(
-                "Index membership availability is treated as retrieval time "
-                "unless source publication is known"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments(
+                [membership.instrument for membership in memberships]
+            )
+            accepted = self._store.upsert_universe_memberships(memberships)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="membership_availability_retrieval_time",
+                warning_message=(
+                    "Index membership availability is treated as retrieval time "
+                    "unless source publication is known"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -472,25 +486,26 @@ class DataIngestionPipeline:
             asset_type=AssetType.EQUITY,
             available_at=response.dataset.retrieved_at,
         )
-        self._store.upsert_instruments([instrument])
         batch_id = str(uuid4())
         actions = normalize_corporate_actions(
             response.dataset,
             instrument,
             batch_id=batch_id,
         )
-        accepted = self._store.upsert_corporate_actions(actions)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code="corporate_action_not_adjustment_ready",
-            warning_message=(
-                "Corporate actions are stored for audit, but strict PIT adjusted "
-                "price reconstruction remains disabled until factors are complete"
-            ),
-            trust_level=DataTrustLevel.MEDIUM,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([instrument])
+            accepted = self._store.upsert_corporate_actions(actions)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code="corporate_action_not_adjustment_ready",
+                warning_message=(
+                    "Corporate actions are stored for audit, but strict PIT adjusted "
+                    "price reconstruction remains disabled until factors are complete"
+                ),
+                trust_level=DataTrustLevel.MEDIUM,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -520,16 +535,17 @@ class DataIngestionPipeline:
             is_tradable=is_tradable,
             batch_id=batch_id,
         )
-        self._store.upsert_instruments([item.instrument for item in statuses])
-        accepted = self._store.upsert_instrument_statuses(statuses)
-        recorded_batch_id, warnings = self._record_dataset_audit(
-            response,
-            accepted,
-            batch_id=batch_id,
-            warning_code=warning_code,
-            warning_message=warning_message,
-            trust_level=DataTrustLevel.LOW,
-        )
+        with self._store.transaction():
+            self._store.upsert_instruments([item.instrument for item in statuses])
+            accepted = self._store.upsert_instrument_statuses(statuses)
+            recorded_batch_id, warnings = self._record_dataset_audit(
+                response,
+                accepted,
+                batch_id=batch_id,
+                warning_code=warning_code,
+                warning_message=warning_message,
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),

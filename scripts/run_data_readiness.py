@@ -20,6 +20,8 @@ from tong_quant.data.providers.tushare_capabilities import (
     CapabilityProbeContext,
     DatasetCapabilityStatus,
     TushareCapabilityDetector,
+    TushareCapabilityReport,
+    TushareEnvironmentValidation,
     capability_json,
     render_capability_markdown,
     tushare_client_from_environment,
@@ -43,10 +45,23 @@ def main() -> None:
         description="Run real-provider calibration and generate a PIT dashboard"
     )
     parser.add_argument("--database", type=Path, default=Path("data/tong_quant.sqlite3"))
-    parser.add_argument("--output-dir", type=Path, default=Path("reports/phase3"))
+    parser.add_argument("--output-dir", type=Path, default=Path("docs/generated/phase3"))
     parser.add_argument("--symbol", default="600000")
     parser.add_argument("--trade-date")
     parser.add_argument("--period-end")
+    parser.add_argument(
+        "--require-secondary",
+        action="store_true",
+        help=(
+            "Fail if the Tushare secondary provider is not configured or has no "
+            "fully available calibration datasets."
+        ),
+    )
+    parser.add_argument(
+        "--tushare-capability-only",
+        action="store_true",
+        help="Probe Tushare endpoint and dataset capability, write the report, and exit.",
+    )
     args = parser.parse_args()
 
     as_of = datetime.now(UTC)
@@ -80,10 +95,34 @@ def main() -> None:
             end_date=end_date,
         ),
     )
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    capability_markdown_path = args.output_dir / "tushare-provider-capabilities.md"
+    capability_json_path = args.output_dir / "tushare-provider-capabilities.json"
+    _write_tushare_capability_report(
+        capability_report,
+        markdown_path=capability_markdown_path,
+        json_path=capability_json_path,
+    )
+    if args.tushare_capability_only:
+        print(capability_markdown_path)
+        print(capability_json_path)
+        return
     has_calibration_capability = any(
         dataset.status is DatasetCapabilityStatus.AVAILABLE
         for dataset in capability_report.datasets
     )
+    secondary_unavailable_reason = _secondary_unavailable_reason(
+        environment,
+        capability_report,
+        has_calibration_capability=has_calibration_capability,
+    )
+    if args.require_secondary and (
+        tushare_client is None or not has_calibration_capability
+    ):
+        raise SystemExit(
+            "Tushare secondary provider is required but unavailable: "
+            f"{secondary_unavailable_reason}"
+        )
     secondary = (
         TushareCalibrationAdapter(client=tushare_client, max_attempts=2)
         if tushare_client is not None and has_calibration_capability
@@ -106,10 +145,7 @@ def main() -> None:
         primary,
         secondary,
         specs,
-        secondary_unavailable_reason=(
-            "; ".join(environment.warnings)
-            or "No Tushare calibration dataset is fully available"
-        ),
+        secondary_unavailable_reason=secondary_unavailable_reason,
     )
     gap_report = build_readiness_gap_report(dashboard, capability_report)
     akshare_audit = AkShareQualityAuditor().audit(
@@ -118,19 +154,10 @@ def main() -> None:
         generated_at=as_of,
     )
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
     markdown_path = args.output_dir / "framework-data-readiness.md"
     json_path = args.output_dir / "framework-data-readiness.json"
     markdown_path.write_text(render_dashboard_markdown(dashboard), encoding="utf-8")
     json_path.write_text(dashboard_json(dashboard) + "\n", encoding="utf-8")
-    capability_markdown_path = args.output_dir / "tushare-provider-capabilities.md"
-    capability_json_path = args.output_dir / "tushare-provider-capabilities.json"
-    capability_markdown_path.write_text(
-        render_capability_markdown(capability_report), encoding="utf-8"
-    )
-    capability_json_path.write_text(
-        capability_json(capability_report) + "\n", encoding="utf-8"
-    )
     gap_markdown_path = args.output_dir / "pit-readiness-gap-report.md"
     gap_json_path = args.output_dir / "pit-readiness-gap-report.json"
     gap_markdown_path.write_text(render_gap_markdown(gap_report), encoding="utf-8")
@@ -151,6 +178,38 @@ def main() -> None:
     print(gap_json_path)
     print(akshare_markdown_path)
     print(akshare_json_path)
+
+
+def _write_tushare_capability_report(
+    capability_report: TushareCapabilityReport,
+    *,
+    markdown_path: Path,
+    json_path: Path,
+) -> None:
+    markdown_path.write_text(
+        render_capability_markdown(capability_report), encoding="utf-8"
+    )
+    json_path.write_text(capability_json(capability_report) + "\n", encoding="utf-8")
+
+
+def _secondary_unavailable_reason(
+    environment: TushareEnvironmentValidation,
+    capability_report: TushareCapabilityReport,
+    *,
+    has_calibration_capability: bool,
+) -> str:
+    if environment.warnings:
+        return "; ".join(environment.warnings)
+    if not has_calibration_capability:
+        endpoint_summary = ", ".join(
+            f"{endpoint.endpoint.value}={endpoint.status.value}"
+            for endpoint in capability_report.endpoints
+        )
+        return (
+            "No Tushare calibration dataset is fully available; "
+            f"endpoint statuses: {endpoint_summary}"
+        )
+    return "No Tushare client is available"
 
 
 def _query_specs(

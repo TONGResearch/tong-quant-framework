@@ -1,0 +1,43 @@
+name: Provider contract monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install -e .
+
+      - name: Probe provider contracts
+        run: |
+          timeout 300 python scripts/run_provider_contract_monitor.py \
+            --database /tmp/provider-contract-monitor.sqlite3 \
+            --output-dir provider-contract-artifacts \
+            --fail-on-defect
+
+      - name: Upload contract report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-contract-report
+          path: provider-contract-artifacts/
+          if-no-files-found: warn
+          retention-days: 30

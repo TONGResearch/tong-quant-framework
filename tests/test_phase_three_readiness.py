@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -126,6 +129,68 @@ def test_phase_three_dashboard_preserves_unmeasurable_secondary(tmp_path: Path) 
     assert "unmeasurable" in " ".join(report.pit_readiness.assumptions)
     assert "coverage is unmeasurable" in report.pit_readiness.warnings
     assert "N/A" in render_dashboard_markdown(dashboard)
+
+
+def test_data_readiness_runner_can_require_secondary_without_leaking_secret(
+    tmp_path: Path,
+) -> None:
+    env = os.environ.copy()
+    env.pop("TUSHARE_TOKEN", None)
+    env["PYTHONPATH"] = "src"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_data_readiness.py",
+            "--require-secondary",
+            "--database",
+            str(tmp_path / "require-secondary.sqlite3"),
+            "--output-dir",
+            str(tmp_path / "reports"),
+        ],
+        check=False,
+        capture_output=True,
+        env=env,
+        text=True,
+    )
+
+    output = f"{result.stdout}\n{result.stderr}"
+    assert result.returncode == 1
+    assert "Tushare secondary provider is required but unavailable" in output
+    assert "TUSHARE_TOKEN is not configured" in output
+
+
+def test_data_readiness_runner_can_generate_tushare_capability_only(
+    tmp_path: Path,
+) -> None:
+    env = os.environ.copy()
+    env.pop("TUSHARE_TOKEN", None)
+    env["PYTHONPATH"] = "src"
+    output_dir = tmp_path / "reports"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_data_readiness.py",
+            "--tushare-capability-only",
+            "--output-dir",
+            str(output_dir),
+        ],
+        check=False,
+        capture_output=True,
+        env=env,
+        text=True,
+    )
+
+    markdown = (output_dir / "tushare-provider-capabilities.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert result.returncode == 0
+    assert "Credential Diagnostics" in markdown
+    assert "Token detected: False" in markdown
+    assert "Endpoint Diagnostics" in markdown
+    assert "Dataset Capabilities" in markdown
 
 
 def test_phase_three_dashboard_marks_primary_failure_unsuitable(tmp_path: Path) -> None:

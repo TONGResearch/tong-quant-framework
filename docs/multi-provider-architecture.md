@@ -1,6 +1,6 @@
 # Tong Quant Multi-Provider Architecture
 
-Status: design proposal
+Status: provider-neutral evidence foundation implemented; provider rollout ongoing
 
 Framework version: 0.8.0
 
@@ -18,14 +18,31 @@ not block future data-platform progress.
 Tong Quant should evolve from an AKShare/Tushare-centered data platform into a
 provider-independent research data platform.
 
+## Evidence-First Provider Policy
+
+No provider is trusted by default.
+
+Tong Quant consumes evidence, not providers. Every provider and every dataset
+must be evaluated independently for:
+
+- Trust
+- Coverage
+- Availability precision
+- Historical continuity
+- Cross-provider consistency
+
+A provider brand, paid account, official API, open-source package, or prior
+successful ingestion does not automatically upgrade data trust. Trust upgrades
+must be earned by dataset-specific evidence and preserved as auditable metadata.
+
 ## Provider Priorities
 
 | Priority | Provider | Primary role | Markets | Planned status |
 |---:|---|---|---|---|
 | 1 | Massive / Polygon | US equity market data and reference data | US | Future primary US provider |
-| 2 | Yahoo Finance | Research-grade global market data | Global | Future low-cost fallback and research source |
+| 2 | Yahoo Finance | Research-grade global market data | Global | Evidence adapter implemented; live continuity unverified |
 | 3 | Finnhub | News, filings, fundamentals, events | Global | Future AI/research input provider |
-| 4 | CNInfo | Authoritative China disclosure timestamps and filings | China A | Future authoritative PIT disclosure source |
+| 4 | CNInfo | Authoritative China disclosure timestamps and filings | China A | AKShare-transport evidence adapter implemented; direct-source parity unverified |
 | 5 | Tushare | Optional calibration provider | China A | Frozen optional provider |
 | Existing | AKShare | China A open-source source and diagnostics | China A | Existing primary open source source |
 
@@ -42,12 +59,13 @@ provider-independent research data platform.
 ## Core Principles
 
 1. Provider independence has higher priority than provider-specific convenience.
-2. Every provider adapter must expose source limitations explicitly.
-3. `DataTrustLevel` and `AvailabilityPrecision` remain first-class metadata.
-4. Provider agreement can improve confidence but never proves PIT safety alone.
-5. Missing data, permission failures, and API changes must be visible artifacts.
-6. Calibration must fail closed when required evidence is unavailable.
-7. Research, Validation, Historical Replay, and future Portfolio layers consume
+2. No provider is trusted by default.
+3. Every provider adapter must expose source limitations explicitly.
+4. `DataTrustLevel` and `AvailabilityPrecision` remain first-class metadata.
+5. Provider agreement can improve confidence but never proves PIT safety alone.
+6. Missing data, permission failures, and API changes must be visible artifacts.
+7. Calibration must fail closed when required evidence is unavailable.
+8. Research, Validation, Historical Replay, and future Portfolio layers consume
    normalized data contracts, never provider-native payloads.
 
 ## Target Provider Stack
@@ -67,6 +85,17 @@ Provider Adapter
 Provider-specific SDKs and HTTP clients stay behind adapter boundaries. No
 strategy, research module, validation module, portfolio module, or notification
 module should call a provider SDK directly.
+
+The implemented `ProviderEvidenceAdapter` contract now carries capability,
+market, evidence timestamps, raw hash, trust, availability precision, and
+limitations through one ingestion service. Provider-native payloads are stored
+as auditable evidence and are not promoted into existing canonical research
+models without a dataset-specific normalizer and readiness review.
+
+CNInfo currently uses the provenance label `cninfo_via_akshare`. It must not be
+described as a direct CNInfo integration until direct-source parity and raw
+artifact capture are verified. Yahoo uses the unofficial chart interface and
+is intentionally `LOW` trust with `RETRIEVAL_TIME` availability.
 
 ## Shared Provider Contracts
 
@@ -334,7 +363,7 @@ No schema rewrite is recommended before the next provider adapter is designed.
 - Define bar, reference, corporate-action, and calendar datasets.
 - Decide how adjusted and unadjusted prices are represented.
 
-### Phase MP-3: Yahoo Finance Design
+### Phase MP-3: Yahoo Finance Evidence Foundation (implemented)
 
 - Define research-grade global provider boundaries.
 - Explicitly limit Yahoo usage in Historical Replay until calibrated.
@@ -346,7 +375,7 @@ No schema rewrite is recommended before the next provider adapter is designed.
 - Connect to Research/AI inputs only through normalized artifacts.
 - Preserve no-trading-decision boundary.
 
-### Phase MP-5: CNInfo Design
+### Phase MP-5: CNInfo Evidence Foundation (implemented through AKShare transport)
 
 - Define authoritative China filing and timestamp ingestion.
 - Link CNInfo announcements to instruments, fundamentals, and revision evidence.
@@ -386,4 +415,7 @@ MP-1 Provider Registry Design
 -> MP-5 CNInfo China Disclosure Provider Design
 ```
 
-Implementation should begin only after each provider design is reviewed.
+The provider-neutral ingestion contract, CNInfo/Yahoo evidence adapters, and
+scheduled contract monitor are now implemented. The next provider work should
+calibrate real coverage and continuity; it must not assume that successful
+contract probes grant higher trust or PIT readiness.

@@ -1,6 +1,6 @@
 # Framework Data Readiness Dashboard
 
-Generated at: 2026-06-21T08:26:29.222166+00:00
+Generated at: 2026-06-21T08:37:38.262662+00:00
 Overall: **UNSUITABLE**
 
 ## Dataset Readiness
@@ -33,9 +33,9 @@ Overall: **UNSUITABLE**
 
 ## Query Scope
 
-- `security_lifecycle`: trade_date=20260619
+- `security_lifecycle`: trade_date=20260620
 - `st_status`: no parameters
-- `suspension_status`: trade_date=20260619
+- `suspension_status`: trade_date=20260620
 - `delisting_records`: no parameters
 - `financial_publication_dates`: period_end=20251231
 - `fundamental_revisions`: end_date=20260621, start_date=20240101, symbol=600000

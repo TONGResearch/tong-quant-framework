@@ -11,7 +11,10 @@ from types import TracebackType
 from typing import cast
 from uuid import uuid4
 
-from tong_quant.core.security import reject_sensitive_persistence
+from tong_quant.core.security import (
+    reject_sensitive_persistence,
+    reject_sensitive_structure,
+)
 from tong_quant.data.calibration.models import (
     DatasetConfidenceAssessment,
     ProviderCalibrationResult,
@@ -30,7 +33,16 @@ from tong_quant.data.models import (
     RawDatasetFingerprint,
     SecurityLifecycleEvent,
 )
-from tong_quant.data.storage.migrations import MIGRATION_HEAD, run_migrations
+from tong_quant.data.providers.contracts import (
+    ProviderContractRun,
+    ProviderEvidenceRecord,
+)
+from tong_quant.data.storage.migrations import (
+    MIGRATION_HEAD,
+    record_or_validate_schema_fingerprint,
+    run_migrations,
+    validate_latest_schema_fingerprint,
+)
 from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
@@ -860,8 +872,17 @@ class SQLiteStore:
     def initialize(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
+            validate_latest_schema_fingerprint(
+                connection,
+                schema_definition=SCHEMA,
+            )
             connection.executescript(SCHEMA)
             run_migrations(connection)
+            physical_fingerprint = record_or_validate_schema_fingerprint(
+                connection,
+                migration_head=MIGRATION_HEAD,
+                schema_definition=SCHEMA,
+            )
             connection.execute(
                 """
                 INSERT INTO schema_metadata (key, value, updated_at)
@@ -881,6 +902,16 @@ class SQLiteStore:
                     updated_at = excluded.updated_at
                 """,
                 (MIGRATION_HEAD, _datetime_text(datetime.now(UTC))),
+            )
+            connection.execute(
+                """
+                INSERT INTO schema_metadata (key, value, updated_at)
+                VALUES ('schema_fingerprint', ?, ?)
+                ON CONFLICT (key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                (physical_fingerprint, _datetime_text(datetime.now(UTC))),
             )
 
     @contextmanager
@@ -1320,6 +1351,11 @@ class SQLiteStore:
         return len(rows)
 
     def save_ingestion_batch(self, batch: IngestionBatch) -> str:
+        reject_sensitive_structure(batch.parameters, path="ingestion_batch.parameters")
+        reject_sensitive_structure(
+            batch.failure_reason,
+            path="ingestion_batch.failure_reason",
+        )
         with self._connect() as connection:
             connection.execute(
                 """
@@ -1355,6 +1391,10 @@ class SQLiteStore:
         self,
         fingerprint: RawDatasetFingerprint,
     ) -> str:
+        reject_sensitive_structure(
+            fingerprint.parameters,
+            path="raw_dataset_fingerprint.parameters",
+        )
         with self._connect() as connection:
             connection.execute(
                 """
@@ -1376,10 +1416,163 @@ class SQLiteStore:
             )
         return fingerprint.raw_data_hash
 
+    def save_provider_evidence_records(
+        self,
+        records: tuple[ProviderEvidenceRecord, ...],
+        *,
+        batch_id: str,
+    ) -> int:
+        if not records:
+            return 0
+        for record in records:
+            reject_sensitive_structure(
+                record.payload,
+                path="provider_evidence.payload",
+            )
+            reject_sensitive_structure(
+                record.limitations,
+                path="provider_evidence.limitations",
+            )
+        ingested_at = _datetime_text(datetime.now(UTC))
+        rows = [
+            (
+                record.evidence_id,
+                record.provider,
+                record.dataset,
+                record.market.value,
+                record.subject,
+                None if record.observed_at is None else _datetime_text(record.observed_at),
+                None if record.published_at is None else _datetime_text(record.published_at),
+                _datetime_text(record.available_at),
+                _datetime_text(record.retrieved_at),
+                record.source_reference,
+                _json_dumps(record.payload),
+                record.raw_data_hash,
+                batch_id,
+                record.availability_precision.value,
+                record.trust_level.value,
+                _json_dumps(record.limitations),
+                ingested_at,
+            )
+            for record in records
+        ]
+        with self._connect() as connection:
+            before = connection.total_changes
+            connection.executemany(
+                """
+                INSERT OR IGNORE INTO provider_evidence_records (
+                    evidence_id, provider, dataset, market, subject,
+                    observed_at, published_at, available_at, retrieved_at,
+                    source_reference, payload_json, raw_data_hash, batch_id,
+                    availability_precision, trust_level, limitations_json,
+                    ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            return connection.total_changes - before
+
+    def provider_evidence_as_of(
+        self,
+        *,
+        provider: str,
+        dataset: str,
+        market: Market,
+        subject: str,
+        as_of: datetime,
+    ) -> list[sqlite3.Row]:
+        self._require_aware(as_of)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM provider_evidence_records
+                WHERE provider = ?
+                  AND dataset = ?
+                  AND market = ?
+                  AND subject = ?
+                  AND available_at <= ?
+                ORDER BY COALESCE(published_at, observed_at, available_at), evidence_id
+                """,
+                (provider, dataset, market.value, subject, _datetime_text(as_of)),
+            ).fetchall()
+        return list(rows)
+
+    def save_provider_contract_run(self, run: ProviderContractRun) -> str:
+        for check in run.checks:
+            reject_sensitive_structure(
+                {
+                    "required_fields": check.required_fields,
+                    "missing_fields": check.missing_fields,
+                    "limitations": check.limitations,
+                    "error_code": check.error_code,
+                },
+                path="provider_contract_check",
+            )
+        generated_at = _datetime_text(datetime.now(UTC))
+        with self.transaction(), self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO provider_contract_runs (
+                    run_id, started_at, completed_at, status,
+                    implementation_version, generated_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run.run_id,
+                    _datetime_text(run.started_at),
+                    _datetime_text(run.completed_at),
+                    run.status.value,
+                    run.implementation_version,
+                    generated_at,
+                ),
+            )
+            connection.executemany(
+                """
+                INSERT INTO provider_contract_checks (
+                    check_id, run_id, provider, dataset, market,
+                    subject, request_as_of, status, records_observed,
+                    trust_level, availability_precision, latency_ms,
+                    required_fields_json, missing_fields_json,
+                    limitations_json, error_code, checked_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        check.check_id,
+                        check.run_id,
+                        check.provider,
+                        check.dataset,
+                        check.market.value,
+                        check.subject,
+                        _datetime_text(check.request_as_of),
+                        check.status.value,
+                        check.records_observed,
+                        check.trust_level.value,
+                        check.availability_precision.value,
+                        check.latency_ms,
+                        _json_dumps(check.required_fields),
+                        _json_dumps(check.missing_fields),
+                        _json_dumps(check.limitations),
+                        check.error_code,
+                        _datetime_text(check.checked_at),
+                    )
+                    for check in run.checks
+                ],
+            )
+        return run.run_id
+
     def save_data_availability_warning(
         self,
         warning: DataAvailabilityWarning,
     ) -> str:
+        reject_sensitive_structure(
+            {
+                "warning_code": warning.warning_code,
+                "message": warning.message,
+            },
+            path="data_availability_warning",
+        )
         warning_id = str(uuid4())
         with self._connect() as connection:
             connection.execute(
@@ -1404,6 +1597,13 @@ class SQLiteStore:
         return warning_id
 
     def save_provider_limitation(self, limitation: ProviderLimitation) -> str:
+        reject_sensitive_structure(
+            {
+                "limitation_code": limitation.limitation_code,
+                "description": limitation.description,
+            },
+            path="provider_limitation",
+        )
         limitation_id = str(uuid4())
         with self._connect() as connection:
             connection.execute(
@@ -3955,6 +4155,15 @@ class SQLiteStore:
             raise ValueError("database migration head is unavailable")
         return str(row["value"])
 
+    def physical_schema_fingerprint(self) -> str:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value FROM schema_metadata WHERE key = 'schema_fingerprint'"
+            ).fetchone()
+        if row is None:
+            raise ValueError("database schema fingerprint is unavailable")
+        return str(row["value"])
+
     def latest_screening_score(
         self,
         instrument: Instrument,
@@ -4117,6 +4326,9 @@ class SQLiteStore:
             "provider_consistency_reports",
             "provider_conflicts",
             "dataset_confidence_assessments",
+            "provider_evidence_records",
+            "provider_contract_runs",
+            "provider_contract_checks",
             "historical_replay_manifests",
             "historical_replay_samples",
             "signals",
@@ -4139,6 +4351,7 @@ class SQLiteStore:
             "notification_dead_letters",
             "schema_metadata",
             "schema_migrations",
+            "schema_fingerprints",
             "validation_runs",
             "validation_oos_usage",
             "validation_splits",

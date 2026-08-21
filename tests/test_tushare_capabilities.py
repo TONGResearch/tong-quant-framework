@@ -67,6 +67,12 @@ class _AuthenticationFailureClient(_CapabilityClient):
         raise RuntimeError(f"invalid token {SECRET}")
 
 
+class _UnsupportedFieldClient(_CapabilityClient):
+    def stock_basic(self, **kwargs: object) -> pd.DataFrame:
+        del kwargs
+        raise RuntimeError("抱歉，指定字段不存在: delist_date")
+
+
 def _context() -> CapabilityProbeContext:
     return CapabilityProbeContext(
         as_of=NOW,
@@ -117,6 +123,22 @@ def test_invalid_environment_never_initializes_tushare_client(
     assert called is False
 
 
+def test_client_initialization_failure_preserves_safe_token_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _failing_client(token: str) -> object:
+        del token
+        raise RuntimeError("provider initialization failed")
+
+    monkeypatch.setattr(tushare_capabilities.ts, "pro_api", _failing_client)
+
+    validation, client = tushare_client_from_environment({"TUSHARE_TOKEN": SECRET})
+
+    assert validation.status is TushareEnvironmentStatus.INVALID
+    assert SECRET not in repr(validation)
+    assert client is None
+
+
 def test_missing_token_skips_live_capability_calls() -> None:
     environment = validate_tushare_environment({})
     report = TushareCapabilityDetector(client=None, clock=lambda: NOW).detect(
@@ -165,10 +187,16 @@ def test_permission_detection_maps_endpoints_to_datasets() -> None:
         endpoints[TushareEndpoint.INCOME].status
         is EndpointAccessStatus.PERMISSION_DENIED
     )
+    assert "permission" in endpoints[TushareEndpoint.INCOME].detail
+    assert endpoints[TushareEndpoint.INCOME].exception_detail is not None
+    assert "积分" in endpoints[TushareEndpoint.INCOME].exception_detail
     assert (
         datasets[CalibrationDataset.FUNDAMENTAL_REVISIONS].status
         is DatasetCapabilityStatus.UNAVAILABLE
     )
+    assert "income: permission_denied" in datasets[
+        CalibrationDataset.FUNDAMENTAL_REVISIONS
+    ].reason
     assert (
         datasets[CalibrationDataset.CSI300_MEMBERSHIP].status
         is DatasetCapabilityStatus.UNAVAILABLE
@@ -177,6 +205,28 @@ def test_permission_detection_maps_endpoints_to_datasets() -> None:
         datasets[CalibrationDataset.FINANCIAL_PUBLICATION_DATES].status
         is DatasetCapabilityStatus.AVAILABLE
     )
+
+
+def test_unsupported_endpoint_or_field_is_reported_separately() -> None:
+    environment = validate_tushare_environment({"TUSHARE_TOKEN": SECRET})
+    report = TushareCapabilityDetector(
+        client=_UnsupportedFieldClient(), clock=lambda: NOW
+    ).detect(environment, _context())
+    endpoints = {item.endpoint: item for item in report.endpoints}
+    datasets = {item.dataset: item for item in report.datasets}
+
+    assert (
+        endpoints[TushareEndpoint.STOCK_BASIC].status
+        is EndpointAccessStatus.UNSUPPORTED
+    )
+    assert "字段" in (endpoints[TushareEndpoint.STOCK_BASIC].exception_detail or "")
+    assert (
+        datasets[CalibrationDataset.UNIVERSE_COVERAGE].status
+        is DatasetCapabilityStatus.UNAVAILABLE
+    )
+    assert "stock_basic: unsupported" in datasets[
+        CalibrationDataset.UNIVERSE_COVERAGE
+    ].reason
 
 
 def test_authentication_failure_is_sanitized_and_stops_remaining_probes() -> None:
@@ -203,4 +253,9 @@ def test_capability_renderers_do_not_persist_credentials() -> None:
 
     assert SECRET not in markdown
     assert SECRET not in payload
-    assert json.loads(payload)["environment"]["configured"] is True
+    assert "Token length" not in markdown
+    assert "masked prefix" not in markdown
+    environment_payload = json.loads(payload)["environment"]
+    assert environment_payload["configured"] is True
+    assert "token_length" not in environment_payload
+    assert "token_masked_prefix" not in environment_payload

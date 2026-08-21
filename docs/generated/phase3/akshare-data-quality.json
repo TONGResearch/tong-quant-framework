@@ -14,7 +14,7 @@
         "AKShare delisting records do not prove complete warning-period coverage"
       ],
       "query_parameters": {
-        "trade_date": "20260619"
+        "trade_date": "20260620"
       },
       "recommended_usage": "Use as incomplete historical evidence; never infer missing intervals",
       "record_count": 1693,
@@ -48,7 +48,7 @@
         "AKShare suspension history is queried by date and retained at retrieval time"
       ],
       "query_parameters": {
-        "trade_date": "20260619"
+        "trade_date": "20260620"
       },
       "recommended_usage": "Use with explicit dates and provider limitations; backfill multiple periods",
       "record_count": 25,
@@ -201,6 +201,6 @@
       "snapshot_hash": null
     }
   ],
-  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "generated_at": "2026-06-21T08:37:38.262662+00:00",
   "model_version": "akshare-quality-audit-v0.8-phase3"
 }

@@ -47,6 +47,9 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("provider_consistency_reports") == 0
     assert store.table_count("provider_conflicts") == 0
     assert store.table_count("dataset_confidence_assessments") == 0
+    assert store.table_count("provider_evidence_records") == 0
+    assert store.table_count("provider_contract_runs") == 0
+    assert store.table_count("provider_contract_checks") == 0
     assert store.table_count("historical_replay_manifests") == 0
     assert store.table_count("historical_replay_samples") == 0
     assert store.table_count("signals") == 0
@@ -67,15 +70,25 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("notification_outbox") == 0
     assert store.table_count("notification_deliveries") == 0
     assert store.table_count("notification_dead_letters") == 0
-    assert store.table_count("schema_metadata") == 2
-    assert store.table_count("schema_migrations") == 3
+    assert store.table_count("schema_metadata") == 3
+    assert store.table_count("schema_migrations") == 6
+    assert store.table_count("schema_fingerprints") == 1
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
     assert store.migration_head() == MIGRATION_HEAD
+    assert len(store.physical_schema_fingerprint()) == 64
     with sqlite3.connect(store.path) as connection:
         dead_letter_foreign_keys = connection.execute(
             "PRAGMA foreign_key_list(notification_dead_letters)"
         ).fetchall()
+        evidence_foreign_keys = connection.execute(
+            "PRAGMA foreign_key_list(provider_evidence_records)"
+        ).fetchall()
+        contract_foreign_keys = connection.execute(
+            "PRAGMA foreign_key_list(provider_contract_checks)"
+        ).fetchall()
     assert any(row[2] == "notification_outbox" for row in dead_letter_foreign_keys)
+    assert any(row[2] == "ingestion_batches" for row in evidence_foreign_keys)
+    assert any(row[2] == "provider_contract_runs" for row in contract_foreign_keys)
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0
@@ -161,6 +174,51 @@ def test_migration_checksum_mismatch_fails_closed(tmp_path: Path) -> None:
         assert "checksum mismatch" in str(error)
     else:
         raise AssertionError("tampered migration checksum must fail closed")
+
+
+def test_physical_schema_drift_fails_closed(tmp_path: Path) -> None:
+    path = tmp_path / "test.sqlite3"
+    store = SQLiteStore(path)
+    store.initialize()
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE unauthorized_schema_change (id TEXT)")
+
+    try:
+        store.initialize()
+    except RuntimeError as error:
+        assert "physical schema fingerprint mismatch" in str(error)
+    else:
+        raise AssertionError("unmigrated physical schema changes must fail closed")
+
+
+def test_schema_fingerprint_validates_before_baseline_repair(tmp_path: Path) -> None:
+    path = tmp_path / "test.sqlite3"
+    store = SQLiteStore(path)
+    store.initialize()
+    with sqlite3.connect(path) as connection:
+        connection.execute("DROP TABLE screening_results")
+
+    try:
+        store.initialize()
+    except RuntimeError as error:
+        assert "before migration" in str(error)
+    else:
+        raise AssertionError("baseline creation must not hide a dropped table")
+
+
+def test_fresh_and_legacy_initialization_reach_same_schema_fingerprint(
+    tmp_path: Path,
+) -> None:
+    fresh = SQLiteStore(tmp_path / "fresh.sqlite3")
+    fresh.initialize()
+
+    legacy_path = tmp_path / "legacy.sqlite3"
+    with sqlite3.connect(legacy_path) as connection:
+        connection.executescript(SCHEMA)
+    legacy = SQLiteStore(legacy_path)
+    legacy.initialize()
+
+    assert fresh.physical_schema_fingerprint() == legacy.physical_schema_fingerprint()
 
 
 def test_investment_assessment_tables_store_status_and_score(tmp_path: Path) -> None:

@@ -14,6 +14,8 @@ DATASET_CONFIDENCE_VERSION = "dataset-confidence-v0.8-phase2"
 DATA_READINESS_VERSION = "data-readiness-v0.8-phase3"
 DATA_READINESS_GAP_VERSION = "data-readiness-gap-v0.8-phase3"
 PROVIDER_CAPABILITY_VERSION = "provider-capability-v0.8-phase3"
+PROVIDER_EVIDENCE_VERSION = "provider-evidence-v0.8-hardening"
+PROVIDER_CONTRACT_MONITOR_VERSION = "provider-contract-monitor-v0.8-hardening"
 
 
 __all__ = [
@@ -28,6 +30,8 @@ __all__ = [
     "NOTIFICATION_ENGINE_VERSION",
     "PIT_READINESS_VERSION",
     "PROVIDER_CAPABILITY_VERSION",
+    "PROVIDER_CONTRACT_MONITOR_VERSION",
+    "PROVIDER_EVIDENCE_VERSION",
     "PROVIDER_CALIBRATION_VERSION",
     "PROVIDER_CONFLICT_VERSION",
     "REPLAY_CONFIDENCE_VERSION",

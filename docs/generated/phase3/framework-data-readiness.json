@@ -1,7 +1,7 @@
 {
   "datasets": [
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "security_lifecycle",
@@ -17,7 +17,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -49,7 +49,7 @@
       "primary_status": "available",
       "provider_consistency_score": null,
       "query_parameters": {
-        "trade_date": "20260619"
+        "trade_date": "20260620"
       },
       "recommended_usage": "Diagnostics only; exclude from historical claims",
       "secondary_records": null,
@@ -57,7 +57,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "st_status",
@@ -71,7 +71,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -109,7 +109,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "suspension_status",
@@ -123,7 +123,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -155,7 +155,7 @@
       "primary_status": "available",
       "provider_consistency_score": null,
       "query_parameters": {
-        "trade_date": "20260619"
+        "trade_date": "20260620"
       },
       "recommended_usage": "Diagnostics only; exclude from historical claims",
       "secondary_records": null,
@@ -163,7 +163,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "delisting_records",
@@ -177,7 +177,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -215,7 +215,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "date_only",
       "coverage_percent": null,
       "dataset": "financial_publication_dates",
@@ -229,7 +229,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -269,7 +269,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "exact",
       "coverage_percent": null,
       "dataset": "fundamental_revisions",
@@ -283,7 +283,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -325,7 +325,7 @@
       "trust_level": "high"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "corporate_actions",
@@ -339,7 +339,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -379,7 +379,7 @@
       "trust_level": "medium"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "retrieval_time",
       "coverage_percent": null,
       "dataset": "universe_coverage",
@@ -394,7 +394,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "Cross-provider coverage and consistency are unmeasurable",
           "No secondary-provider calibration is available"
@@ -433,7 +433,7 @@
       "trust_level": "low"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "unknown",
       "coverage_percent": null,
       "dataset": "csi300_membership",
@@ -444,7 +444,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "No secondary-provider calibration is available"
         ],
@@ -487,7 +487,7 @@
       "trust_level": "unknown"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "unknown",
       "coverage_percent": null,
       "dataset": "csi500_membership",
@@ -498,7 +498,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "No secondary-provider calibration is available"
         ],
@@ -541,7 +541,7 @@
       "trust_level": "unknown"
     },
     {
-      "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+      "assessed_at": "2026-06-21T08:37:38.262662+00:00",
       "availability_precision": "unknown",
       "coverage_percent": null,
       "dataset": "csi1000_membership",
@@ -552,7 +552,7 @@
       ],
       "model_version": "data-readiness-v0.8-phase3",
       "pit_readiness": {
-        "assessed_at": "2026-06-21T08:26:29.222166+00:00",
+        "assessed_at": "2026-06-21T08:37:38.262662+00:00",
         "assumptions": [
           "No secondary-provider calibration is available"
         ],
@@ -689,7 +689,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "generated_at": "2026-06-21T08:37:38.262662+00:00",
   "model_version": "data-readiness-v0.8-phase3",
   "overall_classification": "unsuitable"
 }

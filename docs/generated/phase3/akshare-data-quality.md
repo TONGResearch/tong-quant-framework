@@ -1,6 +1,6 @@
 # AKShare Data Quality Audit
 
-Generated at: 2026-06-21T08:26:29.222166+00:00
+Generated at: 2026-06-21T08:37:38.262662+00:00
 AKShare version: `1.18.64`
 
 Quality metrics describe the observed normalized response. They do not upgrade point-in-time trust or prove historical continuity.
@@ -23,7 +23,7 @@ Quality metrics describe the observed normalized response. They do not upgrade p
 
 ### security_lifecycle
 - Usage: Use as incomplete historical evidence; never infer missing intervals
-- Query scope: trade_date=20260619
+- Query scope: trade_date=20260620
 - Limitation: AKShare dated ST name-change evidence currently covers Shenzhen only
 - Limitation: AKShare suspension history is queried by date and retained at retrieval time
 - Limitation: AKShare delisting records do not prove complete warning-period coverage
@@ -35,7 +35,7 @@ Quality metrics describe the observed normalized response. They do not upgrade p
 
 ### suspension_status
 - Usage: Use with explicit dates and provider limitations; backfill multiple periods
-- Query scope: trade_date=20260619
+- Query scope: trade_date=20260620
 - Limitation: AKShare suspension history is queried by date and retained at retrieval time
 
 ### delisting_records

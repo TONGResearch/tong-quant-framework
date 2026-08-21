@@ -68,6 +68,11 @@ hardening boundaries:
 - Phase III dataset and framework-area PIT readiness dashboards
 - Secure Tushare endpoint capability detection and readiness gap reporting
 - Independent AKShare normalized-data quality auditing with bounded CSI timeouts
+- Checksum-verified baseline migration and fail-closed physical schema fingerprint
+- Provider-neutral evidence ingestion with trust and availability metadata
+- CNInfo disclosure evidence through explicit AKShare transport provenance
+- Yahoo Finance unadjusted global daily-bar evidence with conservative trust
+- Scheduled CNInfo/Yahoo provider contract monitoring and audit persistence
 - PIT-safe HistoricalReplaySource with manifest and sample replay hashes
 - ReplayConfidence to separate weak reconstruction from weak research
 - PortfolioProposal and PositionProposal research artifacts
@@ -109,10 +114,22 @@ python scripts/ingest_data.py calendar
 python scripts/ingest_data.py company 600000
 python scripts/ingest_data.py daily-bars 600000 20240101 20241231
 python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
-python scripts/run_data_readiness.py --output-dir reports/phase3
+python scripts/run_data_readiness.py
+python scripts/run_provider_contract_monitor.py
+```
+
+Tushare cross-provider calibration is opt-in and requires an environment
+variable. Use `--require-secondary` when the run must fail instead of silently
+falling back to AKShare-only evidence:
+
+```bash
+export TUSHARE_TOKEN="<your token>"
+python scripts/run_data_readiness.py --tushare-capability-only
+python scripts/run_data_readiness.py --require-secondary
 ```
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
+`docs/provider-evidence-foundation.md`,
 `docs/provider-calibration-phase-iii.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,
 `docs/research-engine.md`, `docs/validation-engine.md`, and

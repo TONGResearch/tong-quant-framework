@@ -1,4 +1,4 @@
-# AKShare Data Trust Matrix
+# Data Trust Matrix
 
 This document records the current point-in-time quality of every dataset exposed
 by `AkShareAdapter`. Classification is conservative: retrieval success does not
@@ -47,6 +47,18 @@ Research, Validation, and Historical Replay must retain `DataTrustLevel`,
 Records classified as retrieval-time snapshots may be used only from their
 stored `available_at`. Incomplete records remain visible and must never be
 silently promoted to PIT-safe data.
+
+## Provider Evidence Adapters
+
+| Provider evidence | Current trust | Availability precision | Permitted use | Explicit limitation |
+|---|---|---|---|---|
+| CNInfo disclosures via AKShare transport | MEDIUM | EXACT per parsed announcement timestamp | Filing-timing evidence from the record's `available_at` | Direct CNInfo parity, coverage, correction continuity, and raw filing capture are unverified. |
+| Yahoo Finance unadjusted daily bars | LOW | RETRIEVAL_TIME | Global exploratory research and provider comparison from ingestion time | Unofficial API, no authoritative historical availability, and unverified delisting/symbol/correction continuity. |
+
+These adapter defaults are deliberately weaker than any dataset-specific trust
+that may be earned later. A scheduled provider contract check tests endpoint and
+field health only; it cannot upgrade trust, coverage, continuity, consistency,
+or PIT readiness.
 
 Runtime readiness is classified as `USABLE`, `CAUTION`, or `UNSUITABLE` and is
 calculated from coverage, trust, availability precision, revision support,

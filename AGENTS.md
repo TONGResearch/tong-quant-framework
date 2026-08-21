@@ -108,6 +108,17 @@ validation, risk management, and controlled execution.
   publication event when the earlier value is unavailable.
 - Provider calibration compares normalized evidence but cannot alone grant
   `VERIFIED` trust. Preserve provider-only records and disagreement warnings.
+- All new providers must implement `ProviderEvidenceAdapter` and enter through
+  `ProviderNeutralIngestionService`; provider SDKs must not create parallel
+  persistence paths.
+- No provider is trusted by default. Capability health, trust, coverage,
+  availability precision, continuity, and consistency are separate evidence.
+- CNInfo evidence transported through AKShare must retain the provider identity
+  `cninfo_via_akshare`; do not claim direct-source verification.
+- Yahoo Finance evidence is research-grade, unofficial, `LOW` trust, and
+  `RETRIEVAL_TIME` availability until calibration proves more.
+- Provider contract monitoring may detect access and schema drift but must never
+  upgrade `DataTrustLevel`, PIT readiness, or historical continuity.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
 - Validate Tushare credentials locally before live access and persist only

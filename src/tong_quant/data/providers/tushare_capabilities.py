@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -9,6 +10,7 @@ from typing import cast
 import pandas as pd
 import tushare as ts
 
+from tong_quant.core.security import redact_sensitive_text
 from tong_quant.data.calibration.models import CalibrationDataset
 from tong_quant.data.providers.tushare import TushareClient
 from tong_quant.domain.models import require_timezone
@@ -36,6 +38,7 @@ class EndpointAccessStatus(StrEnum):
     PERMISSION_DENIED = "permission_denied"
     AUTHENTICATION_FAILED = "authentication_failed"
     RATE_LIMITED = "rate_limited"
+    UNSUPPORTED = "unsupported"
     PROVIDER_ERROR = "provider_error"
     NOT_TESTED = "not_tested"
 
@@ -75,6 +78,8 @@ class EndpointCapability:
     status: EndpointAccessStatus
     records_observed: int | None
     detail: str
+    required_points: str = "unknown"
+    exception_detail: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +88,8 @@ class DatasetCapability:
     status: DatasetCapabilityStatus
     required_endpoints: tuple[TushareEndpoint, ...]
     unavailable_endpoints: tuple[TushareEndpoint, ...]
+    required_points: str
+    reason: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +123,16 @@ _DATASET_ENDPOINTS: dict[CalibrationDataset, tuple[TushareEndpoint, ...]] = {
     CalibrationDataset.CSI300_MEMBERSHIP: (TushareEndpoint.INDEX_WEIGHT,),
     CalibrationDataset.CSI500_MEMBERSHIP: (TushareEndpoint.INDEX_WEIGHT,),
     CalibrationDataset.CSI1000_MEMBERSHIP: (TushareEndpoint.INDEX_WEIGHT,),
+}
+
+_ENDPOINT_REQUIRED_POINTS: dict[TushareEndpoint, str] = {
+    TushareEndpoint.STOCK_BASIC: "provider/account-tier dependent",
+    TushareEndpoint.NAMECHANGE: "provider/account-tier dependent",
+    TushareEndpoint.SUSPEND_D: "provider/account-tier dependent",
+    TushareEndpoint.DISCLOSURE_DATE: "2000+ points",
+    TushareEndpoint.INCOME: "2000+ points",
+    TushareEndpoint.DIVIDEND: "2000+ points",
+    TushareEndpoint.INDEX_WEIGHT: "2000 points",
 }
 
 
@@ -194,6 +211,7 @@ class TushareCapabilityDetector:
                     status=EndpointAccessStatus.NOT_TESTED,
                     records_observed=None,
                     detail="credential validation did not permit a live probe",
+                    required_points=_ENDPOINT_REQUIRED_POINTS[endpoint],
                 )
                 for endpoint in TushareEndpoint
             )
@@ -227,6 +245,7 @@ class TushareCapabilityDetector:
                     status=EndpointAccessStatus.AUTHENTICATION_FAILED,
                     records_observed=None,
                     detail="authentication failed before endpoint probing",
+                    required_points=_ENDPOINT_REQUIRED_POINTS[endpoint],
                 )
                 for endpoint in TushareEndpoint
             )
@@ -249,8 +268,18 @@ class TushareCapabilityDetector:
             if not isinstance(frame, pd.DataFrame):
                 raise TypeError("Tushare endpoint did not return a DataFrame")
         except Exception as error:
-            status, detail = _classify_provider_error(error)
-            return EndpointCapability(endpoint, status, None, detail)
+            status, detail, exception_detail, required_points = _classify_provider_error(
+                error,
+                fallback_required_points=_ENDPOINT_REQUIRED_POINTS[endpoint],
+            )
+            return EndpointCapability(
+                endpoint,
+                status,
+                None,
+                detail,
+                required_points=required_points,
+                exception_detail=exception_detail,
+            )
         return EndpointCapability(
             endpoint=endpoint,
             status=EndpointAccessStatus.AVAILABLE,
@@ -258,6 +287,7 @@ class TushareCapabilityDetector:
             detail=(
                 "endpoint call succeeded; observed rows do not establish historical coverage"
             ),
+            required_points=_ENDPOINT_REQUIRED_POINTS[endpoint],
         )
 
     def _fetch(
@@ -335,10 +365,26 @@ def render_capability_markdown(report: TushareCapabilityReport) -> str:
     lines.extend(
         (
             "",
+            "## Endpoint Diagnostics",
+            "",
+            "| Endpoint | Required points | Exception detail |",
+            "|---|---|---|",
+        )
+    )
+    for endpoint_capability in report.endpoints:
+        lines.append(
+            f"| {endpoint_capability.endpoint.value} | "
+            f"{endpoint_capability.required_points} | "
+            f"{endpoint_capability.exception_detail or 'None'} |"
+        )
+    lines.extend(
+        (
+            "",
             "## Dataset Capabilities",
             "",
-            "| Dataset | Status | Required endpoints | Missing endpoints |",
-            "|---|---|---|---|",
+            "| Dataset | Status | Required endpoints | Missing endpoints | "
+            "Required points | Reason |",
+            "|---|---|---|---|---|---|",
         )
     )
     for dataset_capability in report.datasets:
@@ -352,7 +398,17 @@ def render_capability_markdown(report: TushareCapabilityReport) -> str:
             f"| {dataset_capability.dataset.value} | "
             f"{dataset_capability.status.value} | "
             f"{required} | {unavailable or 'None'} |"
+            f" {dataset_capability.required_points} | "
+            f"{dataset_capability.reason} |"
         )
+    lines.extend(
+        (
+            "",
+            "## Credential Diagnostics",
+            "",
+            f"- Token detected: {str(report.environment.configured)}",
+        )
+    )
     if report.environment.warnings:
         lines.extend(("", "## Environment Warnings", ""))
         lines.extend(f"- {warning}" for warning in report.environment.warnings)
@@ -366,11 +422,12 @@ def capability_json(report: TushareCapabilityReport) -> str:
 def _dataset_capabilities(
     endpoints: tuple[EndpointCapability, ...],
 ) -> tuple[DatasetCapability, ...]:
-    endpoint_status = {item.endpoint: item.status for item in endpoints}
+    endpoint_by_name = {item.endpoint: item for item in endpoints}
     capabilities = []
     for dataset in CalibrationDataset:
         required = _DATASET_ENDPOINTS[dataset]
-        statuses = tuple(endpoint_status[endpoint] for endpoint in required)
+        endpoint_capabilities = tuple(endpoint_by_name[endpoint] for endpoint in required)
+        statuses = tuple(item.status for item in endpoint_capabilities)
         if all(status is EndpointAccessStatus.AVAILABLE for status in statuses):
             status = DatasetCapabilityStatus.AVAILABLE
         elif all(status is EndpointAccessStatus.NOT_TESTED for status in statuses):
@@ -379,16 +436,19 @@ def _dataset_capabilities(
             status = DatasetCapabilityStatus.PARTIAL
         else:
             status = DatasetCapabilityStatus.UNAVAILABLE
+        missing = tuple(
+            endpoint
+            for endpoint, endpoint_status in zip(required, statuses, strict=True)
+            if endpoint_status is not EndpointAccessStatus.AVAILABLE
+        )
         capabilities.append(
             DatasetCapability(
                 dataset=dataset,
                 status=status,
                 required_endpoints=required,
-                unavailable_endpoints=tuple(
-                    endpoint
-                    for endpoint in required
-                    if endpoint_status[endpoint] is not EndpointAccessStatus.AVAILABLE
-                ),
+                unavailable_endpoints=missing,
+                required_points=_merge_required_points(endpoint_capabilities),
+                reason=_dataset_reason(endpoint_capabilities),
             )
         )
     return tuple(capabilities)
@@ -396,26 +456,91 @@ def _dataset_capabilities(
 
 def _classify_provider_error(
     error: Exception,
-) -> tuple[EndpointAccessStatus, str]:
+    *,
+    fallback_required_points: str,
+) -> tuple[EndpointAccessStatus, str, str, str]:
     message = str(error).lower()
+    sanitized = _safe_exception_detail(error)
+    required_points = _extract_required_points(sanitized) or fallback_required_points
     if any(marker in message for marker in ("token不对", "token无效", "invalid token")):
         return (
             EndpointAccessStatus.AUTHENTICATION_FAILED,
             "Tushare authentication failed; credential value was not recorded",
+            "authentication failed; provider credential text was redacted",
+            required_points,
         )
     if any(marker in message for marker in ("权限", "积分", "permission", "access denied")):
         return (
             EndpointAccessStatus.PERMISSION_DENIED,
             "account permission is insufficient for this endpoint",
+            sanitized,
+            required_points,
         )
-    if any(marker in message for marker in ("频率", "rate limit", "too many request")):
+    if any(
+        marker in message
+        for marker in ("频率", "每分钟", "每小时", "超过", "rate limit", "too many request")
+    ):
         return (
             EndpointAccessStatus.RATE_LIMITED,
             "provider rate limit prevented capability detection",
+            sanitized,
+            required_points,
+        )
+    if any(
+        marker in message
+        for marker in (
+            "接口不存在",
+            "api not found",
+            "unknown api",
+            "invalid api",
+            "字段",
+            "field",
+            "parameter",
+            "unsupported",
+        )
+    ):
+        return (
+            EndpointAccessStatus.UNSUPPORTED,
+            "endpoint or requested fields appear unsupported by the current Tushare API",
+            sanitized,
+            required_points,
         )
     return (
         EndpointAccessStatus.PROVIDER_ERROR,
         "endpoint probe failed; no exception text or credential was persisted",
+        sanitized,
+        required_points,
+    )
+
+
+def _safe_exception_detail(error: Exception) -> str:
+    detail = redact_sensitive_text(str(error)).replace("\n", " ").strip()
+    if not detail:
+        return type(error).__name__
+    return detail[:240]
+
+
+def _extract_required_points(detail: str) -> str | None:
+    match = re.search(r"(\d+)\s*(?:积分|points?)", detail, flags=re.IGNORECASE)
+    if not match:
+        return None
+    return f"{match.group(1)} points indicated by provider error"
+
+
+def _merge_required_points(endpoints: tuple[EndpointCapability, ...]) -> str:
+    values = tuple(dict.fromkeys(endpoint.required_points for endpoint in endpoints))
+    return ", ".join(values)
+
+
+def _dataset_reason(endpoints: tuple[EndpointCapability, ...]) -> str:
+    unavailable = tuple(
+        endpoint for endpoint in endpoints if endpoint.status is not EndpointAccessStatus.AVAILABLE
+    )
+    if not unavailable:
+        return "all required endpoints are available"
+    return "; ".join(
+        f"{endpoint.endpoint.value}: {endpoint.status.value} ({endpoint.detail})"
+        for endpoint in unavailable
     )
 
 

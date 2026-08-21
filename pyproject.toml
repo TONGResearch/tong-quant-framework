@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 authors = [{ name = "Tong Li" }]
 dependencies = [
   "akshare>=1.18,<2",
+  "certifi>=2024.0",
   "pandas>=2.2,<4",
   "tushare>=1.4,<2",
 ]

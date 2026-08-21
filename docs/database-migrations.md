@@ -12,6 +12,9 @@ migration head. The stabilization work keeps the public schema at `0.8.0`; the
 migration head distinguishes the hardened physical schema without declaring a
 new product milestone.
 
+Migration `0000_schema_baseline` registers the pre-ledger schema as an explicit
+baseline. It performs no DDL and fails when required legacy tables are absent.
+
 Migration `0001_notification_hardening` adds:
 
 - Notification lease expiration and dead-letter timestamps
@@ -31,9 +34,27 @@ Migration `0003_provider_calibration_phase_ii` adds:
 - `provider_conflicts` with stable fingerprints and per-run observations
 - `dataset_confidence_assessments` linked to calibration reports
 
-The current migration head is `0003_provider_calibration_phase_ii`. The public schema
+Migration `0004_schema_fingerprint_ledger` adds:
+
+- A canonical fingerprint of tables, indexes, views, and triggers
+- A hash of the baseline `SCHEMA` definition
+- Fail-closed validation before any later migration is applied
+
+Migration `0005_provider_evidence_foundation` adds:
+
+- `provider_evidence_records` for provider-neutral, PIT-annotated evidence
+- `provider_contract_runs` for scheduled monitor executions
+- `provider_contract_checks` for dataset-level health and field-contract results
+
+The current migration head is `0005_provider_evidence_foundation`. The public schema
 version remains `0.8.0`; this is data-foundation remediation rather than a new
 product milestone.
+
+`SQLiteStore.initialize()` validates the last recorded physical fingerprint
+before baseline creation or pending migrations. It records a new fingerprint
+only after the ordered migration set completes. Unmigrated additions, removals,
+or changes therefore fail closed instead of being adopted by a new migration
+head.
 
 ## Transaction Boundary
 

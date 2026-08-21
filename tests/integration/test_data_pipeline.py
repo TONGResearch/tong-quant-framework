@@ -246,6 +246,33 @@ def test_strict_pipeline_rejects_provider_adjusted_history(
 
 
 @pytest.mark.integration
+def test_ingestion_rolls_back_domain_and_audit_writes_together(
+    data_foundation: tuple[
+        FakeAkShareClient,
+        DataIngestionPipeline,
+        MarketDataService,
+        SQLiteStore,
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, pipeline, _, store = data_foundation
+
+    def fail_batch_write(batch: object) -> str:
+        del batch
+        raise RuntimeError("synthetic ingestion audit failure")
+
+    monkeypatch.setattr(store, "save_ingestion_batch", fail_batch_write)
+
+    with pytest.raises(RuntimeError, match="synthetic ingestion audit failure"):
+        pipeline.ingest_daily_bars(DailyBarRequest("600000", "20240102", "20240103"))
+
+    assert store.table_count("instruments") == 0
+    assert store.table_count("daily_bars") == 0
+    assert store.table_count("raw_dataset_fingerprints") == 0
+    assert store.table_count("ingestion_batches") == 0
+
+
+@pytest.mark.integration
 def test_index_calendar_company_and_universe_ingestion(
     data_foundation: tuple[
         FakeAkShareClient,

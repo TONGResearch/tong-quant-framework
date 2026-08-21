@@ -2,12 +2,14 @@
   "datasets": [
     {
       "dataset": "security_lifecycle",
+      "reason": "namechange: permission_denied (account permission is insufficient for this endpoint); suspend_d: permission_denied (account permission is insufficient for this endpoint); stock_basic: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "namechange",
         "suspend_d",
         "stock_basic"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "namechange",
         "suspend_d",
@@ -16,100 +18,120 @@
     },
     {
       "dataset": "st_status",
+      "reason": "namechange: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "namechange"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "namechange"
       ]
     },
     {
       "dataset": "suspension_status",
+      "reason": "suspend_d: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "suspend_d"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "suspend_d"
       ]
     },
     {
       "dataset": "delisting_records",
+      "reason": "stock_basic: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "stock_basic"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "stock_basic"
       ]
     },
     {
       "dataset": "financial_publication_dates",
+      "reason": "disclosure_date: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "disclosure_date"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "disclosure_date"
       ]
     },
     {
       "dataset": "fundamental_revisions",
+      "reason": "income: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "income"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "income"
       ]
     },
     {
       "dataset": "corporate_actions",
+      "reason": "dividend: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "dividend"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "dividend"
       ]
     },
     {
       "dataset": "universe_coverage",
+      "reason": "stock_basic: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "stock_basic"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "stock_basic"
       ]
     },
     {
       "dataset": "csi300_membership",
+      "reason": "index_weight: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "index_weight"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "index_weight"
       ]
     },
     {
       "dataset": "csi500_membership",
+      "reason": "index_weight: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "index_weight"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "index_weight"
       ]
     },
     {
       "dataset": "csi1000_membership",
+      "reason": "index_weight: permission_denied (account permission is insufficient for this endpoint)",
       "required_endpoints": [
         "index_weight"
       ],
-      "status": "not_tested",
+      "required_points": "provider/account-tier dependent",
+      "status": "unavailable",
       "unavailable_endpoints": [
         "index_weight"
       ]
@@ -117,64 +139,76 @@
   ],
   "endpoints": [
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "stock_basic",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(stock_basic)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "namechange",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(namechange)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "suspend_d",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(suspend_d)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "disclosure_date",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(disclosure_date)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "income",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(income)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "dividend",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(dividend)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     },
     {
-      "detail": "credential validation did not permit a live probe",
+      "detail": "account permission is insufficient for this endpoint",
       "endpoint": "index_weight",
+      "exception_detail": "\u62b1\u6b49\uff0c\u60a8\u6ca1\u6709\u63a5\u53e3(index_weight)\u8bbf\u95ee\u6743\u9650\uff0c\u6743\u9650\u7684\u5177\u4f53\u8be6\u60c5\u8bbf\u95ee\uff1ahttps://tushare.pro/document/1?doc_id=108\u3002",
       "records_observed": null,
-      "status": "not_tested"
+      "required_points": "provider/account-tier dependent",
+      "status": "permission_denied"
     }
   ],
   "environment": {
-    "configured": false,
+    "configured": true,
     "credential_source": "environment:TUSHARE_TOKEN",
     "model_version": "provider-capability-v0.8-phase3",
-    "status": "not_configured",
-    "warnings": [
-      "TUSHARE_TOKEN is not configured"
-    ]
+    "status": "ready_for_probe",
+    "warnings": []
   },
-  "generated_at": "2026-06-21T08:26:29.222166+00:00",
+  "generated_at": "2026-07-03T03:15:17.289650+00:00",
   "model_version": "provider-capability-v0.8-phase3",
   "probe_scope": {
-    "end_date": "20260621",
+    "end_date": "20260703",
     "period_end": "20251231",
-    "start_date": "20260601",
-    "trade_date": "20260619",
+    "start_date": "20260701",
+    "trade_date": "20260702",
     "ts_code": "600000.SH"
   }
 }

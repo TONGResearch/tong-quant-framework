@@ -128,15 +128,35 @@ the returned sample only. It never upgrades source trust or PIT readiness.
 
 ## Reproduction
 
+Run the Tushare capability probe first. This tests token visibility, endpoint
+access, dataset capability mapping, and sanitized provider errors without
+running the slower AKShare readiness audit:
+
 ```bash
+export TUSHARE_TOKEN="<your token>"
+.venv/bin/python scripts/run_data_readiness.py \
+  --output-dir docs/generated/phase3 \
+  --tushare-capability-only
+```
+
+Then run the full dual-provider readiness pass:
+
+```bash
+export TUSHARE_TOKEN="<your token>"
 .venv/bin/python scripts/run_data_readiness.py \
   --database /private/tmp/tongquant-phase3-real.sqlite3 \
   --output-dir docs/generated/phase3 \
+  --require-secondary \
   --trade-date 20260619 \
   --period-end 20251231
 ```
 
+`--require-secondary` is intended for real dual-provider calibration runs. It
+fails closed when `TUSHARE_TOKEN` is missing, invalid, or when no Tushare
+calibration dataset is fully available. Omit the flag only when the goal is an
+AKShare-only audit with explicit Tushare-unavailable warnings.
+
 Tushare calibration activates only when `TUSHARE_TOKEN` is available locally.
-Paid endpoints are not required by the runner, but endpoint access still
-depends on the account's actual permissions. Unavailable endpoints remain
-visible as limitations rather than being downgraded to empty results.
+Paid endpoints are not required by the runner, but endpoint access still depends
+on the account's actual permissions. Unavailable endpoints remain visible as
+limitations rather than being downgraded to empty results.

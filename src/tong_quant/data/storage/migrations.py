@@ -16,6 +16,16 @@ class Migration:
         return sha256(payload.encode("utf-8")).hexdigest()
 
 
+SCHEMA_BASELINE = Migration(
+    migration_id="0000_schema_baseline",
+    description="register and verify the legacy Tong Quant baseline schema",
+    definition="""
+    verify core baseline tables created before the migration ledger;
+    no DDL changes;
+    """,
+)
+
+
 NOTIFICATION_HARDENING = Migration(
     migration_id="0001_notification_hardening",
     description="add outbox leases, dead letters, and migration audit state",
@@ -58,10 +68,36 @@ PROVIDER_CALIBRATION_PHASE_II = Migration(
     """,
 )
 
+SCHEMA_FINGERPRINT_LEDGER = Migration(
+    migration_id="0004_schema_fingerprint_ledger",
+    description="add fail-closed physical schema fingerprint tracking",
+    definition="""
+    schema_fingerprints(
+        migration_head PRIMARY KEY,
+        schema_fingerprint,
+        schema_definition_hash,
+        recorded_at
+    );
+    """,
+)
+
+PROVIDER_EVIDENCE_FOUNDATION = Migration(
+    migration_id="0005_provider_evidence_foundation",
+    description="add provider-neutral evidence and contract monitoring ledgers",
+    definition="""
+    provider_evidence_records(... REFERENCES ingestion_batches);
+    provider_contract_runs(...);
+    provider_contract_checks(... REFERENCES provider_contract_runs);
+    """,
+)
+
 MIGRATIONS = (
+    SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
     PIT_DATA_CALIBRATION,
     PROVIDER_CALIBRATION_PHASE_II,
+    SCHEMA_FINGERPRINT_LEDGER,
+    PROVIDER_EVIDENCE_FOUNDATION,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -108,6 +144,9 @@ def run_migrations(connection: sqlite3.Connection) -> tuple[str, ...]:
 
 
 def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> None:
+    if migration is SCHEMA_BASELINE:
+        _apply_schema_baseline(connection)
+        return
     if migration is NOTIFICATION_HARDENING:
         _apply_notification_hardening(connection)
         return
@@ -117,7 +156,38 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
     if migration is PROVIDER_CALIBRATION_PHASE_II:
         _apply_provider_calibration_phase_ii(connection)
         return
+    if migration is SCHEMA_FINGERPRINT_LEDGER:
+        _apply_schema_fingerprint_ledger(connection)
+        return
+    if migration is PROVIDER_EVIDENCE_FOUNDATION:
+        _apply_provider_evidence_foundation(connection)
+        return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
+
+
+def _apply_schema_baseline(connection: sqlite3.Connection) -> None:
+    required = {
+        "schema_metadata",
+        "instruments",
+        "daily_bars",
+        "trading_calendar",
+        "fundamental_facts",
+        "ingestion_batches",
+        "research_reports",
+        "validation_runs",
+        "historical_replay_manifests",
+        "portfolio_proposals",
+        "notification_outbox",
+    }
+    existing = {
+        str(row[0])
+        for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'"
+        ).fetchall()
+    }
+    missing = sorted(required - existing)
+    if missing:
+        raise RuntimeError(f"schema baseline is incomplete: {', '.join(missing)}")
 
 
 def _apply_notification_hardening(connection: sqlite3.Connection) -> None:
@@ -343,6 +413,197 @@ def _apply_provider_calibration_phase_ii(connection: sqlite3.Connection) -> None
     )
 
 
+def _apply_schema_fingerprint_ledger(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_fingerprints (
+            migration_head TEXT PRIMARY KEY,
+            schema_fingerprint TEXT NOT NULL,
+            schema_definition_hash TEXT NOT NULL,
+            recorded_at TEXT NOT NULL
+        )
+        """
+    )
+
+
+def _apply_provider_evidence_foundation(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS provider_evidence_records (
+            evidence_id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            observed_at TEXT,
+            published_at TEXT,
+            available_at TEXT NOT NULL,
+            retrieved_at TEXT NOT NULL,
+            source_reference TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            raw_data_hash TEXT NOT NULL,
+            batch_id TEXT NOT NULL,
+            availability_precision TEXT NOT NULL,
+            trust_level TEXT NOT NULL,
+            limitations_json TEXT NOT NULL,
+            ingested_at TEXT NOT NULL,
+            FOREIGN KEY (batch_id)
+                REFERENCES ingestion_batches (batch_id) ON DELETE RESTRICT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_evidence_pit
+        ON provider_evidence_records (
+            provider, dataset, market, subject, available_at
+        );
+
+        CREATE TABLE IF NOT EXISTS provider_contract_runs (
+            run_id TEXT PRIMARY KEY,
+            started_at TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            status TEXT NOT NULL,
+            implementation_version TEXT NOT NULL,
+            generated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS provider_contract_checks (
+            check_id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            request_as_of TEXT NOT NULL,
+            status TEXT NOT NULL,
+            records_observed INTEGER NOT NULL,
+            trust_level TEXT NOT NULL,
+            availability_precision TEXT NOT NULL,
+            latency_ms REAL NOT NULL,
+            required_fields_json TEXT NOT NULL,
+            missing_fields_json TEXT NOT NULL,
+            limitations_json TEXT NOT NULL,
+            error_code TEXT NOT NULL,
+            checked_at TEXT NOT NULL,
+            FOREIGN KEY (run_id)
+                REFERENCES provider_contract_runs (run_id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_contract_history
+        ON provider_contract_checks (provider, dataset, checked_at);
+        """
+    )
+
+
+def schema_fingerprint(connection: sqlite3.Connection) -> str:
+    rows = connection.execute(
+        """
+        SELECT type, name, tbl_name, sql
+        FROM sqlite_master
+        WHERE type IN ('table', 'index', 'trigger', 'view')
+          AND name NOT LIKE 'sqlite_%'
+          AND sql IS NOT NULL
+        ORDER BY type, name
+        """
+    ).fetchall()
+    payload = "\n".join(
+        ":".join(
+            (
+                str(row[0]),
+                str(row[1]),
+                str(row[2]),
+                _canonical_sql(str(row[3])),
+            )
+        )
+        for row in rows
+    )
+    return sha256(payload.encode("utf-8")).hexdigest()
+
+
+def record_or_validate_schema_fingerprint(
+    connection: sqlite3.Connection,
+    *,
+    migration_head: str,
+    schema_definition: str,
+) -> str:
+    fingerprint = schema_fingerprint(connection)
+    definition_hash = sha256(_canonical_sql(schema_definition).encode("utf-8")).hexdigest()
+    row = connection.execute(
+        """
+        SELECT schema_fingerprint, schema_definition_hash
+        FROM schema_fingerprints
+        WHERE migration_head = ?
+        """,
+        (migration_head,),
+    ).fetchone()
+    if row is None:
+        connection.execute(
+            """
+            INSERT INTO schema_fingerprints (
+                migration_head, schema_fingerprint,
+                schema_definition_hash, recorded_at
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                migration_head,
+                fingerprint,
+                definition_hash,
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+        return fingerprint
+    if str(row[0]) != fingerprint:
+        raise RuntimeError(
+            f"physical schema fingerprint mismatch at migration head {migration_head}"
+        )
+    if str(row[1]) != definition_hash:
+        raise RuntimeError(
+            f"baseline schema definition changed without a migration at {migration_head}"
+        )
+    return fingerprint
+
+
+def validate_latest_schema_fingerprint(
+    connection: sqlite3.Connection,
+    *,
+    schema_definition: str,
+) -> None:
+    tables = {
+        str(row[0])
+        for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'"
+        ).fetchall()
+    }
+    if "schema_fingerprints" not in tables or "schema_migrations" not in tables:
+        return
+    row = connection.execute(
+        """
+        SELECT fingerprint.migration_head,
+               fingerprint.schema_fingerprint,
+               fingerprint.schema_definition_hash
+        FROM schema_fingerprints AS fingerprint
+        JOIN schema_migrations AS migration
+          ON migration.migration_id = fingerprint.migration_head
+        ORDER BY migration.migration_id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    if row is None:
+        return
+    migration_head = str(row[0])
+    if str(row[1]) != schema_fingerprint(connection):
+        raise RuntimeError(
+            f"physical schema fingerprint mismatch before migration at {migration_head}"
+        )
+    definition_hash = sha256(_canonical_sql(schema_definition).encode("utf-8")).hexdigest()
+    if str(row[2]) != definition_hash:
+        raise RuntimeError(
+            f"baseline schema definition changed without a migration at {migration_head}"
+        )
+
+
+def _canonical_sql(value: str) -> str:
+    return " ".join(value.split())
+
+
 def _add_column_if_missing(
     connection: sqlite3.Connection,
     table: str,
@@ -357,4 +618,12 @@ def _add_column_if_missing(
         connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
 
 
-__all__ = ["MIGRATION_HEAD", "MIGRATIONS", "Migration", "run_migrations"]
+__all__ = [
+    "MIGRATION_HEAD",
+    "MIGRATIONS",
+    "Migration",
+    "record_or_validate_schema_fingerprint",
+    "run_migrations",
+    "schema_fingerprint",
+    "validate_latest_schema_fingerprint",
+]

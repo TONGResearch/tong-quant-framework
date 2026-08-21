@@ -408,6 +408,21 @@ The remediation evidence and calibration rules are documented in
 `docs/pit-data-quality-audit.md`, `docs/historical-coverage-matrix.md`, and
 `docs/provider-calibration.md`.
 
+## Provider Evidence Hardening
+
+New provider integrations use `ProviderEvidenceAdapter` and
+`ProviderNeutralIngestionService`. Capabilities, point-in-time timestamps, raw
+hashes, trust, availability precision, and limitations cross one shared
+transactional boundary before evidence reaches SQLite. CNInfo disclosure
+evidence currently retains `cninfo_via_akshare` provenance; Yahoo unadjusted
+daily bars remain unofficial, low-trust, retrieval-time evidence.
+
+The physical database schema is registered by baseline migration and protected
+by a canonical fingerprint that is checked before pending migrations. Weekly
+provider contract monitoring records access and field health separately from
+data evidence. A healthy contract does not upgrade provider trust or PIT
+readiness. See `docs/provider-evidence-foundation.md`.
+
 Provider Calibration Phase II adds Tushare behind a canonical calibration
 adapter. Consistency reports, individual conflict observations, and dataset
 confidence are persisted separately. Credentials remain environment-only, and

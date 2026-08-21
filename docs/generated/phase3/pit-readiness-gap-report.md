@@ -1,6 +1,6 @@
 # PIT Readiness Gap Report
 
-Generated at: 2026-06-21T08:26:29.222166+00:00
+Generated at: 2026-06-21T08:37:38.262662+00:00
 Historical Replay reliable: **NO**
 Future Paper Trading research reliable: **NO**
 
