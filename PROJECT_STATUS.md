@@ -7,7 +7,7 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 - Framework version: `0.8.0`
 - Database schema version: `0.8.0`
-- Migration head: `0005_provider_evidence_foundation`
+- Migration head: `0006_provider_contract_baseline`
 - Current phase: Engineering continuity and data readiness
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
@@ -23,6 +23,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Yahoo US/Hong Kong/Malaysia research-grade daily-bar evidence
 - Schema baseline, checksum migrations, and physical fingerprint checks
 - Scheduled provider contract monitoring
+- Immutable longitudinal provider baselines with separate success, field
+  coverage, and schedule-continuity metrics
 - Discovery, Screening, Research, Validation, Historical Replay, Portfolio/Risk
   research artifacts, and disabled Notification infrastructure
 
@@ -35,8 +37,11 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-DATA-001`: longitudinal provider baseline
-2. `WP-DB-001`: database backup, restore, and integrity drills
+1. `WP-DB-001`: database backup, restore, and integrity drills
+
+`WP-DATA-002` and `WP-DATA-003` remain planned until their work state is
+explicitly promoted; completion of a dependency does not authorize work by
+itself.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

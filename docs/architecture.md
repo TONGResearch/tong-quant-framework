@@ -423,6 +423,22 @@ provider contract monitoring records access and field health separately from
 data evidence. A healthy contract does not upgrade provider trust or PIT
 readiness. See `docs/provider-evidence-foundation.md`.
 
+Stored contract checks feed a separate longitudinal baseline builder:
+
+```text
+ProviderContractRun + ProviderContractCheck history
+                         |
+           explicit period + cadence + scopes
+                         |
+             ProviderBaselineManifest
+                 /        |        \
+          success    field coverage  continuity
+```
+
+Baseline manifests are immutable and content-addressed. Missing scheduled
+periods and failed probes remain distinct, and observed trust is reported
+without producing a new trust assessment or changing PIT readiness.
+
 Provider Calibration Phase II adds Tushare behind a canonical calibration
 adapter. Consistency reports, individual conflict observations, and dataset
 confidence are persisted separately. Credentials remain environment-only, and

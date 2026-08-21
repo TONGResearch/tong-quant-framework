@@ -64,13 +64,42 @@ Run locally:
 python scripts/run_provider_contract_monitor.py --fail-on-defect
 ```
 
-The GitHub Actions workflow runs weekly and can also be started manually.
+The GitHub Actions workflow runs twice weekly and can also be started manually.
 External downtime produces `unavailable`; missing records or known provider
 limitations produce `degraded`; parser or implementation exceptions produce
 `defect`. Only `defect` fails the scheduled job.
 
 Contract health does not upgrade provider trust, coverage, availability
 precision, historical continuity, cross-provider consistency, or PIT readiness.
+
+## Longitudinal Baseline
+
+`ProviderBaselineBuilder` reads stored contract checks and creates an immutable,
+content-addressed manifest for an explicit time window, cadence, and set of
+provider/dataset/market/subject scopes. It reports three separate concepts:
+
+- successful-observation ratio for provider responses containing evidence;
+- required-field coverage across attempted checks;
+- schedule continuity across expected observation periods.
+
+Missing periods, unavailable/defect checks, empty responses, observed trust,
+availability precision, and provider limitations remain visible. The baseline
+does not calculate a promoted trust level and cannot change PIT readiness.
+Generation time is retained in SQLite audit metadata but excluded from rendered
+summaries, so identical inputs and query scope produce byte-stable JSON and
+Markdown.
+
+Run locally after one or more contract monitor runs:
+
+```bash
+python scripts/build_provider_contract_baseline.py \
+  --database data/provider-contract-monitor.sqlite3
+```
+
+Scheduled CI restores and saves a small SQLite history cache, publishes a
+uniquely named baseline artifact for every run, and retains artifacts for 90
+days. If a probe identifies an implementation defect, baseline generation and
+artifact upload still run before the job fails closed.
 
 ### Initial Live Contract Baseline
 
@@ -88,19 +117,24 @@ bundle. This fixed transport compatibility without weakening TLS validation.
 
 ## Database
 
-The migration head is `0005_provider_evidence_foundation`. New tables are:
+The migration head is `0006_provider_contract_baseline`. Provider evidence and
+baseline tables are:
 
 - `schema_fingerprints`
 - `provider_evidence_records`
 - `provider_contract_runs`
 - `provider_contract_checks`
+- `provider_baseline_manifests`
+- `provider_baseline_entries`
+- `provider_baseline_inputs`
 
 The public schema version remains `0.8.0`. This is engineering hardening, not a
 new framework feature milestone.
 
 ## Remaining Gates
 
-- Run real CNInfo/Yahoo coverage probes over representative symbols and dates.
+- Accumulate and review representative CNInfo/Yahoo baselines across multiple
+  calendar periods.
 - Add direct CNInfo raw document capture and parity checks.
 - Compare Yahoo against an independent provider before any trust reassessment.
 - Measure corrections, delistings, symbol changes, and historical continuity.

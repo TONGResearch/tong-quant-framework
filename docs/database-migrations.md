@@ -46,9 +46,18 @@ Migration `0005_provider_evidence_foundation` adds:
 - `provider_contract_runs` for scheduled monitor executions
 - `provider_contract_checks` for dataset-level health and field-contract results
 
-The current migration head is `0005_provider_evidence_foundation`. The public schema
-version remains `0.8.0`; this is data-foundation remediation rather than a new
-product milestone.
+Migration `0006_provider_contract_baseline` adds:
+
+- `provider_baseline_manifests` for immutable query, version, input-hash, and
+  baseline-hash metadata
+- `provider_baseline_entries` for scope-level success, field coverage,
+  continuity, gaps, trust observations, and limitations
+- `provider_baseline_inputs` linking each manifest to its original contract
+  checks with `RESTRICT` history semantics
+
+The current migration head is `0006_provider_contract_baseline`. The public
+schema version remains `0.8.0`; this is data-foundation remediation rather than
+a new product milestone.
 
 `SQLiteStore.initialize()` validates the last recorded physical fingerprint
 before baseline creation or pending migrations. It records a new fingerprint

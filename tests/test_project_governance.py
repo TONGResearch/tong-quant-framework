@@ -20,7 +20,10 @@ def test_canonical_project_governance_is_consistent() -> None:
     assert governance.readiness.pit == "unsuitable"
     assert tuple(
         item.package_id for item in governance.work_packages if item.status == "ready"
-    ) == ("WP-DATA-001", "WP-DB-001")
+    ) == ("WP-DB-001",)
+    assert next(
+        item for item in governance.work_packages if item.package_id == "WP-DATA-001"
+    ).status == "completed"
 
 
 def test_governance_rejects_disabled_trading_freeze(tmp_path: Path) -> None:

@@ -91,6 +91,19 @@ PROVIDER_EVIDENCE_FOUNDATION = Migration(
     """,
 )
 
+PROVIDER_CONTRACT_BASELINE = Migration(
+    migration_id="0006_provider_contract_baseline",
+    description="add immutable longitudinal provider baseline manifests",
+    definition="""
+    provider_baseline_manifests(...);
+    provider_baseline_entries(... REFERENCES provider_baseline_manifests);
+    provider_baseline_inputs(
+        ... REFERENCES provider_baseline_manifests,
+        ... REFERENCES provider_contract_checks
+    );
+    """,
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -98,6 +111,7 @@ MIGRATIONS = (
     PROVIDER_CALIBRATION_PHASE_II,
     SCHEMA_FINGERPRINT_LEDGER,
     PROVIDER_EVIDENCE_FOUNDATION,
+    PROVIDER_CONTRACT_BASELINE,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -161,6 +175,9 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
         return
     if migration is PROVIDER_EVIDENCE_FOUNDATION:
         _apply_provider_evidence_foundation(connection)
+        return
+    if migration is PROVIDER_CONTRACT_BASELINE:
+        _apply_provider_contract_baseline(connection)
         return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
 
@@ -489,6 +506,65 @@ def _apply_provider_evidence_foundation(connection: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_provider_contract_history
         ON provider_contract_checks (provider, dataset, checked_at);
+        """
+    )
+
+
+def _apply_provider_contract_baseline(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS provider_baseline_manifests (
+            manifest_id TEXT PRIMARY KEY,
+            baseline_hash TEXT NOT NULL UNIQUE,
+            input_hash TEXT NOT NULL,
+            period_start TEXT NOT NULL,
+            period_end TEXT NOT NULL,
+            expected_interval_days INTEGER NOT NULL,
+            implementation_version TEXT NOT NULL,
+            query_json TEXT NOT NULL,
+            generated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS provider_baseline_entries (
+            manifest_id TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            expected_periods INTEGER NOT NULL,
+            observed_periods INTEGER NOT NULL,
+            observation_count INTEGER NOT NULL,
+            successful_observations INTEGER NOT NULL,
+            successful_observation_ratio REAL NOT NULL,
+            field_coverage_ratio REAL NOT NULL,
+            continuity_ratio REAL NOT NULL,
+            field_coverage_json TEXT NOT NULL,
+            status_counts_json TEXT NOT NULL,
+            observed_trust_levels_json TEXT NOT NULL,
+            observed_availability_precisions_json TEXT NOT NULL,
+            missing_periods_json TEXT NOT NULL,
+            failed_check_ids_json TEXT NOT NULL,
+            limitations_json TEXT NOT NULL,
+            PRIMARY KEY (manifest_id, provider, dataset, market, subject),
+            FOREIGN KEY (manifest_id)
+                REFERENCES provider_baseline_manifests (manifest_id) ON DELETE RESTRICT
+        );
+
+        CREATE TABLE IF NOT EXISTS provider_baseline_inputs (
+            manifest_id TEXT NOT NULL,
+            check_id TEXT NOT NULL,
+            PRIMARY KEY (manifest_id, check_id),
+            FOREIGN KEY (manifest_id)
+                REFERENCES provider_baseline_manifests (manifest_id) ON DELETE RESTRICT,
+            FOREIGN KEY (check_id)
+                REFERENCES provider_contract_checks (check_id) ON DELETE RESTRICT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_baseline_scope
+        ON provider_baseline_entries (provider, dataset, market, subject);
+
+        CREATE INDEX IF NOT EXISTS idx_provider_baseline_period
+        ON provider_baseline_manifests (period_start, period_end);
         """
     )
 

@@ -1,6 +1,6 @@
 # Work Package: WP-DATA-001
 
-Status: `ready`
+Status: `completed`
 
 ## Objective
 
@@ -47,3 +47,16 @@ availability, field coverage, and continuity over repeated observations.
 ## Required Verification
 
 Run all commands in `PROJECT_STATUS.md` and fake-provider failure tests.
+
+## Completion Record
+
+- Added content-addressed `ProviderBaselineManifest` records and deterministic
+  scope aggregation.
+- Added migration `0006_provider_contract_baseline` with immutable manifest,
+  entry, and input-reference tables.
+- Added a local baseline builder covering China A, US, Hong Kong, and Malaysia.
+- Scheduled CI now retains the SQLite observation ledger, emits per-run
+  Markdown/JSON baselines, uploads 90-day artifacts, and preserves probe
+  failures before failing closed on implementation defects.
+- Trust and PIT readiness remain unchanged. Representative longitudinal history
+  must still accumulate before any evidence-quality reassessment.

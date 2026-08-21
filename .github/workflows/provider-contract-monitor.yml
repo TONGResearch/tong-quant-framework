@@ -3,7 +3,7 @@ name: Provider contract monitor
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 2 * * 1"
+    - cron: "17 2 * * 1,4"
 
 permissions:
   contents: read
@@ -26,18 +26,48 @@ jobs:
       - name: Install project
         run: python -m pip install -e .
 
+      - name: Restore provider contract history
+        uses: actions/cache/restore@v4
+        with:
+          path: data/provider-contract-monitor.sqlite3
+          key: provider-contract-monitor-${{ github.repository_id }}-${{ github.run_id }}
+          restore-keys: |
+            provider-contract-monitor-${{ github.repository_id }}-
+
       - name: Probe provider contracts
+        id: provider-probe
+        continue-on-error: true
         run: |
           timeout 300 python scripts/run_provider_contract_monitor.py \
-            --database /tmp/provider-contract-monitor.sqlite3 \
+            --database data/provider-contract-monitor.sqlite3 \
             --output-dir provider-contract-artifacts \
             --fail-on-defect
+
+      - name: Build longitudinal baseline
+        if: always()
+        run: |
+          python scripts/build_provider_contract_baseline.py \
+            --database data/provider-contract-monitor.sqlite3 \
+            --output-dir provider-contract-artifacts
+
+      - name: Save provider contract history
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/provider-contract-monitor.sqlite3
+          key: provider-contract-monitor-${{ github.repository_id }}-${{ github.run_id }}
 
       - name: Upload contract report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: provider-contract-report
-          path: provider-contract-artifacts/
+          name: provider-contract-baseline-${{ github.run_id }}
+          path: |
+            provider-contract-artifacts/
+            data/provider-contract-monitor.sqlite3
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 90
+
+      - name: Fail closed on implementation defects
+        if: steps.provider-probe.outcome == 'failure'
+        run: exit 1

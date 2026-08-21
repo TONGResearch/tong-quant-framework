@@ -9,18 +9,18 @@ feature development.
 | Item | Frozen value |
 |---|---|
 | Review date | 2026-08-21 |
-| Code baseline | `8409def731e02b14d3bdb6130e514af4fd138509` plus current provider hardening worktree |
-| Remote baseline | Not revalidated during this local hardening phase |
+| Code baseline | Current Git HEAD; exact published commit is reported with each release |
+| Remote baseline | Revalidated after each requested push with `git ls-remote` |
 | Framework version | `0.8.0` |
 | Public database schema version | `0.8.0` |
-| Migration head | `0005_provider_evidence_foundation` |
+| Migration head | `0006_provider_contract_baseline` |
 | Latest data evidence | Phase III reports plus live CNInfo/Yahoo contract probe on `2026-08-21` |
 | Scope boundary | Research platform only; no live trading capability |
 
-The committed baseline is followed by an uncommitted provider hardening phase.
-Existing Phase III report changes are retained as current evidence and are not
-silently reverted. The project becomes a new baseline only after the complete
-worktree is reviewed and committed.
+Provider-neutral evidence, engineering continuity governance, and longitudinal
+provider baseline infrastructure are part of the current architecture. Phase
+III reports remain evidence snapshots; they are not silently reinterpreted as
+new readiness conclusions.
 
 ## Executive Assessment
 
@@ -145,7 +145,7 @@ flowchart LR
     Execution --> Foundation
 ```
 
-Static imports across 166 source files show no top-level package cycle. The
+Static imports across 175 source files show no top-level package cycle. The
 important directional properties are intact:
 
 - Risk does not import Portfolio; Portfolio imports the generic Risk contract.
@@ -163,7 +163,7 @@ changing independently or are moved to separate services.
 
 ## 3. Database Schema Inventory
 
-The initialized SQLite schema contains 57 application tables, excluding SQLite
+The initialized SQLite schema contains 60 application tables, excluding SQLite
 internal tables.
 
 ### Metadata and Migrations (3)
@@ -181,10 +181,11 @@ internal tables.
 `provider_consistency_reports`, `provider_conflicts`,
 `dataset_confidence_assessments`
 
-### Provider Evidence and Monitoring (3)
+### Provider Evidence and Monitoring (6)
 
 `provider_evidence_records`, `provider_contract_runs`,
-`provider_contract_checks`
+`provider_contract_checks`, `provider_baseline_manifests`,
+`provider_baseline_entries`, `provider_baseline_inputs`
 
 ### Historical Replay (2)
 
@@ -221,7 +222,7 @@ internal tables.
 ### Schema Engineering Status
 
 - Public schema version: `0.8.0`.
-- Migration head: `0005_provider_evidence_foundation`.
+- Migration head: `0006_provider_contract_baseline`.
 - Migrations are ordered and checksum-verified.
 - Research and Validation final writes have transaction boundaries.
 - A fresh schema passes `PRAGMA foreign_key_check`.
@@ -538,17 +539,17 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 174 | Python files under `src/` |
-| Source lines | 25,283 | Python lines under `src/`, including blanks/comments |
-| Test files | 39 | Python test modules under `tests/` |
-| Test cases | 193 | Pytest collection |
-| Test lines | 7,345 | Python lines under `tests/` |
-| Database tables | 57 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 41 | Markdown files under `docs/` |
-| Runtime scripts | 4 | Files under `scripts/` |
+| Source files | 175 | Python files under `src/` |
+| Source lines | 26,075 | Python lines under `src/`, including blanks/comments |
+| Test files | 40 | Python test modules under `tests/` |
+| Test cases | 196 | Pytest collection |
+| Test lines | 7,598 | Python lines under `tests/` |
+| Database tables | 60 | Initialized application tables, excluding SQLite internals |
+| Documentation files | 42 | Markdown files under `docs/` |
+| Runtime scripts | 5 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 188 passed and 5 skipped tests. Skips are the
+The verification baseline is 191 passed and 5 skipped tests. Skips are the
 expected opt-in live AKShare, Tushare, and notification network checks. CI runs
 Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 
@@ -571,6 +572,9 @@ Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 | V0.8 | `a1650b9` | Research-only Notification Engine and SQLite outbox |
 | Stabilization | `5ef3c2d` | Lease recovery, dead letters, secret protection, migrations, audits |
 | Provider calibration II | `277236a` | Tushare adapter, capabilities, conflict registry, confidence calibration |
+| Provider evidence foundation | `ccfe0ee` | Provider-neutral ingestion, CNInfo/Yahoo evidence, schema fingerprint, contract monitoring |
+| Engineering continuity | `e842f50` | Canonical status, machine-readable governance, bounded work packages, CI audit |
+| Longitudinal provider baseline | Current baseline | Immutable manifests, scope metrics, retained CI history, deterministic reports |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
 
 ## Baseline Freeze Decision

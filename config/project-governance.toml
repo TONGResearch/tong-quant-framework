@@ -1,7 +1,7 @@
 [baseline]
 framework_version = "0.8.0"
 database_schema_version = "0.8.0"
-migration_head = "0005_provider_evidence_foundation"
+migration_head = "0006_provider_contract_baseline"
 current_phase = "engineering-continuity-and-data-readiness"
 canonical_status_document = "PROJECT_STATUS.md"
 
@@ -55,7 +55,7 @@ promotion_requirement = "Critical replay datasets require reviewed PIT readiness
 [[work_packages]]
 id = "WP-DATA-001"
 title = "Longitudinal provider baseline"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-data-001.md"
 depends_on = []
 

@@ -126,6 +126,10 @@ in the same commit.
   `RETRIEVAL_TIME` availability until calibration proves more.
 - Provider contract monitoring may detect access and schema drift but must never
   upgrade `DataTrustLevel`, PIT readiness, or historical continuity.
+- Longitudinal provider baselines must keep successful observations, required
+  field coverage, and scheduled-run continuity as separate metrics. Missing
+  periods, failed probes, and empty responses remain visible; baseline history
+  cannot promote provider trust or PIT readiness.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
 - Validate Tushare credentials locally before live access and persist only

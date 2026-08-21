@@ -15,6 +15,12 @@ from tong_quant.core.security import (
     reject_sensitive_persistence,
     reject_sensitive_structure,
 )
+from tong_quant.data.baselines import (
+    ProviderBaselineManifest,
+    ProviderBaselineQuery,
+    ProviderBaselineScope,
+    ProviderContractObservation,
+)
 from tong_quant.data.calibration.models import (
     DatasetConfidenceAssessment,
     ProviderCalibrationResult,
@@ -35,6 +41,7 @@ from tong_quant.data.models import (
 )
 from tong_quant.data.providers.contracts import (
     ProviderContractRun,
+    ProviderContractStatus,
     ProviderEvidenceRecord,
 )
 from tong_quant.data.storage.migrations import (
@@ -1561,6 +1568,213 @@ class SQLiteStore:
                 ],
             )
         return run.run_id
+
+    def provider_contract_observations(
+        self,
+        query: ProviderBaselineQuery,
+    ) -> tuple[ProviderContractObservation, ...]:
+        scope_filters = " OR ".join(
+            "(checks.provider = ? AND checks.dataset = ? "
+            "AND checks.market = ? AND checks.subject = ?)"
+            for _ in query.scopes
+        )
+        parameters: list[object] = [
+            _datetime_text(query.period_start),
+            _datetime_text(query.period_end),
+        ]
+        for scope in query.scopes:
+            parameters.extend(
+                (scope.provider, scope.dataset, scope.market.value, scope.subject)
+            )
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT checks.*, runs.implementation_version
+                FROM provider_contract_checks AS checks
+                JOIN provider_contract_runs AS runs
+                  ON runs.run_id = checks.run_id
+                WHERE checks.checked_at >= ?
+                  AND checks.checked_at <= ?
+                  AND ({scope_filters})
+                ORDER BY checks.provider, checks.dataset, checks.market,
+                         checks.subject, checks.checked_at, checks.check_id
+                """,
+                parameters,
+            ).fetchall()
+        return tuple(_provider_contract_observation_from_row(row) for row in rows)
+
+    def save_provider_baseline(self, manifest: ProviderBaselineManifest) -> str:
+        query_document = {
+            "period_start": manifest.query.period_start,
+            "period_end": manifest.query.period_end,
+            "expected_interval_days": manifest.query.expected_interval_days,
+            "scopes": [
+                {
+                    "provider": scope.provider,
+                    "dataset": scope.dataset,
+                    "market": scope.market,
+                    "subject": scope.subject,
+                }
+                for scope in sorted(manifest.query.scopes)
+            ],
+        }
+        entry_documents = [
+            {
+                "scope": {
+                    "provider": entry.scope.provider,
+                    "dataset": entry.scope.dataset,
+                    "market": entry.scope.market,
+                    "subject": entry.scope.subject,
+                },
+                "field_coverage": entry.field_coverage,
+                "status_counts": entry.status_counts,
+                "observed_trust_levels": entry.observed_trust_levels,
+                "observed_availability_precisions": (
+                    entry.observed_availability_precisions
+                ),
+                "missing_periods": entry.missing_periods,
+                "failed_check_ids": entry.failed_check_ids,
+                "limitations": entry.limitations,
+            }
+            for entry in manifest.entries
+        ]
+        reject_sensitive_structure(
+            {
+                "query": query_document,
+                "entries": entry_documents,
+                "implementation_version": manifest.implementation_version,
+            },
+            path="provider_baseline_manifest",
+        )
+        query_json = _json_dumps(query_document)
+        with self.transaction(), self._connect() as connection:
+            existing = connection.execute(
+                """
+                SELECT baseline_hash, input_hash, implementation_version, query_json
+                FROM provider_baseline_manifests
+                WHERE manifest_id = ?
+                """,
+                (manifest.manifest_id,),
+            ).fetchone()
+            if existing is not None:
+                expected = (
+                    manifest.baseline_hash,
+                    manifest.input_hash,
+                    manifest.implementation_version,
+                    query_json,
+                )
+                actual = tuple(existing)
+                if actual != expected:
+                    raise ValueError("provider baseline manifest identity conflict")
+                return manifest.manifest_id
+            connection.execute(
+                """
+                INSERT INTO provider_baseline_manifests (
+                    manifest_id, baseline_hash, input_hash, period_start,
+                    period_end, expected_interval_days, implementation_version,
+                    query_json, generated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    manifest.manifest_id,
+                    manifest.baseline_hash,
+                    manifest.input_hash,
+                    _datetime_text(manifest.query.period_start),
+                    _datetime_text(manifest.query.period_end),
+                    manifest.query.expected_interval_days,
+                    manifest.implementation_version,
+                    query_json,
+                    _datetime_text(manifest.generated_at),
+                ),
+            )
+            connection.executemany(
+                """
+                INSERT INTO provider_baseline_entries (
+                    manifest_id, provider, dataset, market, subject,
+                    expected_periods, observed_periods, observation_count,
+                    successful_observations, successful_observation_ratio,
+                    field_coverage_ratio, continuity_ratio, field_coverage_json,
+                    status_counts_json, observed_trust_levels_json,
+                    observed_availability_precisions_json, missing_periods_json,
+                    failed_check_ids_json, limitations_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        manifest.manifest_id,
+                        entry.scope.provider,
+                        entry.scope.dataset,
+                        entry.scope.market.value,
+                        entry.scope.subject,
+                        entry.expected_periods,
+                        entry.observed_periods,
+                        entry.observation_count,
+                        entry.successful_observations,
+                        entry.successful_observation_ratio,
+                        entry.field_coverage_ratio,
+                        entry.continuity_ratio,
+                        _json_dumps(entry.field_coverage),
+                        _json_dumps(entry.status_counts),
+                        _json_dumps(entry.observed_trust_levels),
+                        _json_dumps(entry.observed_availability_precisions),
+                        _json_dumps(entry.missing_periods),
+                        _json_dumps(entry.failed_check_ids),
+                        _json_dumps(entry.limitations),
+                    )
+                    for entry in manifest.entries
+                ],
+            )
+            connection.executemany(
+                """
+                INSERT INTO provider_baseline_inputs (manifest_id, check_id)
+                VALUES (?, ?)
+                """,
+                [
+                    (manifest.manifest_id, check_id)
+                    for check_id in manifest.observation_ids
+                ],
+            )
+        return manifest.manifest_id
+
+    def provider_baseline_manifest(self, manifest_id: str) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM provider_baseline_manifests
+                WHERE manifest_id = ?
+                """,
+                (manifest_id,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def provider_baseline_entries(self, manifest_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM provider_baseline_entries
+                WHERE manifest_id = ?
+                ORDER BY provider, dataset, market, subject
+                """,
+                (manifest_id,),
+            ).fetchall()
+        return list(rows)
+
+    def provider_baseline_inputs(self, manifest_id: str) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT inputs.*, checks.run_id, checks.checked_at, checks.status
+                FROM provider_baseline_inputs AS inputs
+                JOIN provider_contract_checks AS checks
+                  ON checks.check_id = inputs.check_id
+                WHERE inputs.manifest_id = ?
+                ORDER BY checks.checked_at, inputs.check_id
+                """,
+                (manifest_id,),
+            ).fetchall()
+        return list(rows)
 
     def save_data_availability_warning(
         self,
@@ -4329,6 +4543,9 @@ class SQLiteStore:
             "provider_evidence_records",
             "provider_contract_runs",
             "provider_contract_checks",
+            "provider_baseline_manifests",
+            "provider_baseline_entries",
+            "provider_baseline_inputs",
             "historical_replay_manifests",
             "historical_replay_samples",
             "signals",
@@ -4636,6 +4853,32 @@ def _dataset_confidence_from_row(
         critical_conflict_count=int(row["critical_conflict_count"]),
         warnings=tuple(json.loads(row["warnings_json"])),
         model_version=row["model_version"],
+    )
+
+
+def _provider_contract_observation_from_row(
+    row: sqlite3.Row,
+) -> ProviderContractObservation:
+    return ProviderContractObservation(
+        check_id=row["check_id"],
+        run_id=row["run_id"],
+        scope=ProviderBaselineScope(
+            provider=row["provider"],
+            dataset=row["dataset"],
+            market=Market(row["market"]),
+            subject=row["subject"],
+        ),
+        request_as_of=datetime.fromisoformat(row["request_as_of"]),
+        checked_at=datetime.fromisoformat(row["checked_at"]),
+        status=ProviderContractStatus(row["status"]),
+        records_observed=int(row["records_observed"]),
+        trust_level=DataTrustLevel(row["trust_level"]),
+        availability_precision=AvailabilityPrecision(row["availability_precision"]),
+        required_fields=tuple(json.loads(row["required_fields_json"])),
+        missing_fields=tuple(json.loads(row["missing_fields_json"])),
+        limitations=tuple(json.loads(row["limitations_json"])),
+        error_code=row["error_code"],
+        implementation_version=row["implementation_version"],
     )
 
 
