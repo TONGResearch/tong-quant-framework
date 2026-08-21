@@ -2,10 +2,12 @@
 
 from tong_quant.data.ingestion import ProviderNeutralIngestionService
 from tong_quant.data.pipeline import DataIngestionPipeline
+from tong_quant.data.provider_health import ProviderHealthAssessor
 from tong_quant.data.service import MarketDataService
 
 __all__ = [
     "DataIngestionPipeline",
     "MarketDataService",
+    "ProviderHealthAssessor",
     "ProviderNeutralIngestionService",
 ]

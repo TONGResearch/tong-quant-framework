@@ -20,7 +20,7 @@ def test_canonical_project_governance_is_consistent() -> None:
     assert governance.readiness.pit == "unsuitable"
     assert tuple(
         item.package_id for item in governance.work_packages if item.status == "ready"
-    ) == ("WP-OPS-001",)
+    ) == ("WP-READINESS-001",)
     assert next(
         item for item in governance.work_packages if item.package_id == "WP-DATA-001"
     ).status == "completed"
@@ -33,6 +33,14 @@ def test_canonical_project_governance_is_consistent() -> None:
     assert next(
         item for item in governance.work_packages if item.package_id == "WP-DATA-003"
     ).status == "completed"
+    assert next(
+        item for item in governance.work_packages if item.package_id == "WP-OPS-001"
+    ).status == "completed"
+    assert next(
+        item
+        for item in governance.work_packages
+        if item.package_id == "WP-READINESS-001"
+    ).status == "ready"
 
 
 def test_governance_rejects_disabled_trading_freeze(tmp_path: Path) -> None:
@@ -90,3 +98,15 @@ def test_governance_rejects_unknown_work_package_dependency(tmp_path: Path) -> N
 
     with pytest.raises(ValueError, match="unknown work package dependencies"):
         load_project_governance(path)
+
+
+def test_provider_monitor_workflow_exposes_health_and_retention_controls() -> None:
+    workflow = (PROJECT_ROOT / ".github/workflows/provider-contract-monitor.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'PROVIDER_ARTIFACT_RETENTION_DAYS: "90"' in workflow
+    assert "--artifact-retention-days" in workflow
+    assert "provider-contract-ops-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
+    assert "provider-health-*.md" in workflow
+    assert "--fail-on-defect" in workflow

@@ -141,6 +141,14 @@ in the same commit.
   HTTPS paths.
 - Provider contract monitoring may detect access and schema drift but must never
   upgrade `DataTrustLevel`, PIT readiness, or historical continuity.
+- Provider health is repository operations data. It must not import or call the
+  Notification Engine, external message channels, Portfolio, or trading code.
+- Only implementation/contract defects fail the scheduled monitor. External
+  unavailability and repeated degradation remain visible, acknowledged audit
+  conditions and must preserve their historical gaps.
+- Provider monitor outputs use run IDs or content hashes. Keep CI artifacts for
+  90 days and retain the contract-history database until an archive and restore
+  have been verified.
 - Longitudinal provider baselines must keep successful observations, required
   field coverage, and scheduled-run continuity as separate metrics. Missing
   periods, failed probes, and empty responses remain visible; baseline history

@@ -62,12 +62,14 @@ def main() -> None:
     manifest = ProviderBaselineBuilder(repository=store).build(query)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    markdown_path = args.output_dir / "provider-contract-baseline.md"
-    json_path = args.output_dir / "provider-contract-baseline.json"
-    markdown_path.write_text(
-        render_provider_baseline_markdown(manifest), encoding="utf-8"
+    stem = f"provider-contract-baseline-{manifest.baseline_hash}"
+    markdown_path = args.output_dir / f"{stem}.md"
+    json_path = args.output_dir / f"{stem}.json"
+    _write_idempotent(
+        markdown_path,
+        render_provider_baseline_markdown(manifest),
     )
-    json_path.write_text(serialize_provider_baseline(manifest) + "\n", encoding="utf-8")
+    _write_idempotent(json_path, serialize_provider_baseline(manifest) + "\n")
     print(markdown_path)
     print(json_path)
 
@@ -105,6 +107,17 @@ def _default_scopes(
             subject=malaysia_symbol,
         ),
     )
+
+
+def _write_idempotent(path: Path, content: str) -> None:
+    if path.is_symlink():
+        raise ValueError("provider baseline output must not be a symbolic link")
+    if path.exists():
+        if path.read_text(encoding="utf-8") != content:
+            raise ValueError("provider baseline output identity collision")
+        return
+    with path.open("x", encoding="utf-8") as output:
+        output.write(content)
 
 
 if __name__ == "__main__":

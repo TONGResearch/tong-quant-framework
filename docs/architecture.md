@@ -460,6 +460,25 @@ Baseline manifests are immutable and content-addressed. Missing scheduled
 periods and failed probes remain distinct, and observed trust is reported
 without producing a new trust assessment or changing PIT readiness.
 
+The repository-operations path evaluates the latest run against its stored
+history without entering the Notification Engine:
+
+```text
+ProviderContractRun + prior observations
+                    |
+          ProviderHealthAssessor
+                    |
+       ProviderHealthReport (operations only)
+          /          |             \
+    one-off      repeated       implementation
+    condition     condition          defect
+```
+
+Only implementation defects fail CI. Repeated degradation or unavailability
+requires operator acknowledgement but remains distinct from a code failure.
+Reports carry ownership, recovery steps, run/check identities, versions, and
+retention metadata. See `docs/provider-monitor-operations.md`.
+
 ## Database Engineering Boundary
 
 Database recovery is isolated from domain repositories:

@@ -42,5 +42,6 @@ user explicitly approves a separate architecture proposal.
 
 This roadmap is now implemented through machine-readable work state in
 `config/project-governance.toml`. `WP-DATA-001`, `WP-DB-001`, `WP-DATA-002`,
-and `WP-DATA-003` are completed; `WP-OPS-001` is the only ready package. All
-trading-related development remains frozen.
+`WP-DATA-003`, and `WP-OPS-001` are completed. `WP-READINESS-001` is the only
+ready package and may reassess evidence without automatically promoting trust
+or PIT readiness. All trading-related development remains frozen.

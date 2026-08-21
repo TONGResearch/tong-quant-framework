@@ -79,6 +79,8 @@ hardening boundaries:
 - Provider-neutral Yahoo daily-bar calibration with deterministic fixtures,
   fail-closed unavailable/incompatible attempts, and optional Massive evidence
 - Scheduled CNInfo/Yahoo provider contract monitoring and audit persistence
+- Provider health escalation for one-off, repeated, defective, and recovered
+  contract states without Notification Engine coupling
 - PIT-safe HistoricalReplaySource with manifest and sample replay hashes
 - ReplayConfidence to separate weak reconstruction from weak research
 - PortfolioProposal and PositionProposal research artifacts
@@ -148,13 +150,14 @@ python scripts/run_data_readiness.py --require-secondary
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/provider-evidence-foundation.md`,
+`docs/provider-monitor-operations.md`,
 `docs/cninfo-direct-artifacts.md`,
 `docs/yahoo-daily-bar-calibration.md`,
 `docs/database-backup-restore.md`,
 `docs/engineering-continuity.md`,
 `docs/provider-calibration-phase-iii.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,
-`docs/research-engine.md`, `docs/validation-engine.md`, and
+`docs/research-engine.md`, `docs/validation-engine.md`,
 `docs/notification-engine.md`, and `docs/development-roadmap.md`. The current
 cross-project risk review is
 `docs/project-review-v0.6.md`.

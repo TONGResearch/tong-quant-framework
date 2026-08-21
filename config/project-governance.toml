@@ -44,6 +44,7 @@ required_documents = [
   "docs/data-trust-matrix.md",
   "docs/database-migrations.md",
   "docs/engineering-continuity.md",
+  "docs/provider-monitor-operations.md",
   "docs/risk-register.md",
   "docs/technical-debt-register.md",
   "docs/yahoo-daily-bar-calibration.md",
@@ -84,6 +85,19 @@ depends_on = ["WP-DATA-001"]
 [[work_packages]]
 id = "WP-OPS-001"
 title = "Provider monitor alerting and retention"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-ops-001.md"
 depends_on = ["WP-DATA-001", "WP-DB-001"]
+
+[[work_packages]]
+id = "WP-READINESS-001"
+title = "Evidence-backed PIT readiness reassessment"
+status = "ready"
+document = "docs/work-packages/wp-readiness-001.md"
+depends_on = [
+  "WP-DATA-001",
+  "WP-DB-001",
+  "WP-DATA-002",
+  "WP-DATA-003",
+  "WP-OPS-001",
+]

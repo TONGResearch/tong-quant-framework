@@ -18,6 +18,7 @@ PROVIDER_CAPABILITY_VERSION = "provider-capability-v0.8-phase3"
 PROVIDER_EVIDENCE_VERSION = "provider-evidence-v0.8-hardening"
 PROVIDER_CONTRACT_MONITOR_VERSION = "provider-contract-monitor-v0.8-hardening"
 PROVIDER_CONTRACT_BASELINE_VERSION = "provider-contract-baseline-v0.8-hardening"
+PROVIDER_HEALTH_POLICY_VERSION = "provider-health-policy-v0.8-hardening"
 DAILY_BAR_CALIBRATION_VERSION = "daily-bar-calibration-v0.8-hardening"
 
 
@@ -37,6 +38,7 @@ __all__ = [
     "PROVIDER_CAPABILITY_VERSION",
     "PROVIDER_CONTRACT_BASELINE_VERSION",
     "PROVIDER_CONTRACT_MONITOR_VERSION",
+    "PROVIDER_HEALTH_POLICY_VERSION",
     "PROVIDER_EVIDENCE_VERSION",
     "PROVIDER_CALIBRATION_VERSION",
     "PROVIDER_CONFLICT_VERSION",

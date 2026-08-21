@@ -1,6 +1,6 @@
 # Work Package: WP-OPS-001
 
-Status: `ready`
+Status: `completed`
 
 ## Objective
 
@@ -25,3 +25,17 @@ coupling it to the Tong Quant Notification Engine.
 
 - Do not change `tong_quant.notifications`.
 - No Telegram, WeChat, Email, trading, or live alert delivery.
+
+## Completion Record
+
+- Added deterministic provider-health reports with explicit owner, severity,
+  acknowledgement requirement, recovery steps, and 90-day artifact retention.
+- Separated one-off degradation/unavailability, repeated conditions,
+  implementation defects, and recovery.
+- Kept CI fail-closed only for implementation/contract defects; external
+  downtime and persistent limitations remain visible without becoming code
+  failures.
+- Added content-addressed health and baseline filenames plus run-identified
+  contract artifacts, GitHub annotations, and Job Summary output.
+- Added an operator runbook and tests confirming zero Notification or trading
+  dependencies.

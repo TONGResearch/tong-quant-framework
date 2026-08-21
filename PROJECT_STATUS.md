@@ -26,6 +26,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
   incompatible outcomes
 - Schema baseline, checksum migrations, and physical fingerprint checks
 - Scheduled provider contract monitoring
+- Provider health operations with explicit owner, acknowledgement, recovery,
+  repeated-condition escalation, content-addressed reports, and 90-day CI
+  artifact retention
 - Immutable longitudinal provider baselines with separate success, field
   coverage, and schedule-continuity metrics
 - Direct CNInfo disclosure metadata and content-addressed filing artifacts with
@@ -44,10 +47,11 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-OPS-001`: provider monitor alerting and retention
+1. `WP-READINESS-001`: evidence-backed PIT readiness reassessment
 
-All data calibration work packages currently authorized by governance are
-complete. Planned work still requires explicit promotion to `ready`.
+All current data foundation and provider-operations packages are complete. The
+readiness reassessment may recommend another remediation package; it cannot
+promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

@@ -96,6 +96,13 @@ External downtime produces `unavailable`; missing records or known provider
 limitations produce `degraded`; parser or implementation exceptions produce
 `defect`. Only `defect` fails the scheduled job.
 
+`ProviderHealthAssessor` evaluates each run against 84 days of stored history.
+It distinguishes one-off unavailability/degradation, repeated conditions,
+implementation defects, and recovery. Warning and critical reports identify an
+owner, acknowledgement requirement, related checks, and recovery steps. This is
+repository operations data and has no dependency on `tong_quant.notifications`.
+See `docs/provider-monitor-operations.md`.
+
 Contract health does not upgrade provider trust, coverage, availability
 precision, historical continuity, cross-provider consistency, or PIT readiness.
 
@@ -123,10 +130,12 @@ python scripts/build_provider_contract_baseline.py \
   --database data/provider-contract-monitor.sqlite3
 ```
 
-Scheduled CI restores and saves a small SQLite history cache, publishes a
-uniquely named baseline artifact for every run, and retains artifacts for 90
-days. If a probe identifies an implementation defect, baseline generation and
-artifact upload still run before the job fails closed.
+Scheduled CI restores and saves a small SQLite history cache, publishes
+run-identified contract files plus content-addressed health and baseline files,
+and retains the uniquely named artifact for 90 days. Health findings are copied
+to the private Actions Job Summary. If a probe identifies an implementation
+defect, baseline generation and artifact upload still run before the job fails
+closed.
 
 ### Initial Live Contract Baseline
 

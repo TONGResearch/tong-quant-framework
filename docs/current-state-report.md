@@ -14,7 +14,7 @@ feature development.
 | Framework version | `0.8.0` |
 | Public database schema version | `0.8.0` |
 | Migration head | `0008_provider_calibration_attempts` |
-| Latest data evidence | Phase III reports; live CNInfo/Yahoo contract probes; bounded direct CNInfo metadata/PDF checks; deterministic Yahoo/independent daily-bar calibration contract |
+| Latest data evidence | Phase III reports; live CNInfo/Yahoo contract probes; bounded direct CNInfo metadata/PDF checks; deterministic Yahoo/independent daily-bar calibration; owner-assigned provider-health operations |
 | Scope boundary | Research platform only; no live trading capability |
 
 Provider-neutral evidence, engineering continuity governance, and longitudinal
@@ -77,7 +77,7 @@ Execution remains disabled and outside this workflow.
 | `core` | Cross-cutting exceptions and small shared contracts | Must not own business workflows |
 | `config` | Typed settings and fail-closed defaults | Credentials remain environment-only |
 | `markets` | Shared market rules plus China A, US, Hong Kong, Malaysia reservations | Funds are extension scaffolding only |
-| `data` | Provider adapters, normalization, quality, calibration, cache, SQLite, PIT reads | No strategy or order creation |
+| `data` | Provider adapters, normalization, quality, calibration, provider health, cache, SQLite, PIT reads | Operations reports do not use Notification or trading modules |
 | `discovery` | Opportunity discovery boundary | Does not rank the entire market into trades |
 | `screening` | Hard screening, seven dimensions, watchlist, Research Queue | Does not own research outcomes |
 | `market_regime` | Bull, Sideways, Bear and transition research states | Weighted variable, not a hard trading switch |
@@ -334,7 +334,7 @@ samples remain visible instead of being silently dropped.
 | TD-010 | P1 | Generated live reports change timestamps and query dates, producing worktree churn | Generated reports are reviewable evidence | Reproducible run manifest and explicit evidence snapshot policy |
 | TD-011 | P2 | Notification directly imports four concrete artifact models | Layer tests constrain fan-in | Stable read-only notification artifact contracts |
 | TD-012 | P2 | Portfolio and Risk are explainable heuristics, not calibrated models | Proposal-only semantics | Validation against reliable samples and tail/liquidity evidence |
-| TD-013 | P2 | Live provider tests are skipped by default | Deterministic fakes | Scheduled isolated provider contract monitoring |
+| TD-013 | P2 | Live provider tests are skipped by default | Deterministic fakes plus twice-weekly isolated provider monitoring and health escalation | Accumulate and review a representative observation horizon |
 | TD-014 | P2 | No enforced coverage threshold or PIT property-test suite | CI runs tests, Ruff, mypy | Coverage policy and time-ordering properties |
 | TD-015 | P2 | Overseas identifier and reference normalization remains incomplete | Yahoo/Massive share session, OHLCV, price-basis, and action-date contracts | Tested exchange, identifier-history, currency, calendar, and delisting mappings |
 
@@ -356,7 +356,7 @@ an intentional safety and sequencing decision.
 | R-009 | High | Portfolio heuristics are mistaken for investment authority | Proposal naming, status, disclaimers, no orders | Human governance and calibrated validation |
 | R-010 | High | Notification crash or retry duplicates external delivery | Leases, deterministic dedup, dead letter | Provider acknowledgement reconciliation |
 | R-011 | High | Credentials enter persistent content | Environment-only values and repository-level rejection | Access controls and secret scanning remain required |
-| R-012 | Medium | AKShare endpoint or column drift silently changes data | Schema checks, hashes, fakes, quality audit | Scheduled live contract monitor |
+| R-012 | Medium | AKShare endpoint or column drift silently changes data | Schema checks, hashes, fakes, quality audit, scheduled live monitor, repeated-condition escalation, and defect-only CI failure | Representative history and approved service-level thresholds |
 | R-013 | Medium | Dirty generated evidence is mistaken for a clean release | Baseline records both commit and runtime evidence | Commit reviewed evidence or exclude it before tagging |
 | R-014 | Medium | SQLite becomes a scaling and maintenance bottleneck | Single-user scope and transaction manager | Split ownership first; benchmark before changing database |
 | R-015 | Medium | Overseas free-source data is over-trusted | Yahoo evidence defaults to LOW/retrieval-time and contract checks do not upgrade it | Calibrate Yahoo against independent providers before claims |
@@ -378,8 +378,9 @@ an intentional safety and sequencing decision.
   audit for validation use.
 - News, policy, sentiment, industry heat, and macro datasets are architectural
   modules rather than calibrated historical evidence pipelines.
-- US, Hong Kong, and Malaysia share contracts but do not yet have operational
-  data adapters or validated market-specific datasets.
+- Yahoo supplies research-grade US, Hong Kong, and Malaysia bars, but these
+  markets still lack authoritative lifecycle, universe, calendar, correction,
+  and delisting evidence.
 - MarketRules models only a conservative subset of A-share settlement, limits,
   sessions, board-specific rules, and fees.
 - SQLite remains appropriate for a personal single-writer research platform,
@@ -400,9 +401,10 @@ execution. These are necessary but not sufficient.
 
 Production readiness is blocked by `UNSUITABLE` PIT data, lack of verified
 secondary-provider evidence, manual backup scheduling/off-device retention,
-absence of provider-monitor alert ownership, and unproven provider service
-levels. Execution must remain disabled. The current system should not manage
-capital or publish broad historical performance claims.
+and unproven provider service levels. Provider-monitor ownership and recovery
+procedures now exist, but their observation horizon is not representative.
+Execution must remain disabled. The current system should not manage capital or
+publish broad historical performance claims.
 
 Exit gate: critical research datasets reach at least `CAUTION` with verified
 provider consistency, database backup/restore and migration checks are tested,
@@ -532,8 +534,8 @@ calendar, instrument lifecycle, and universe evidence with explicit trust.
 - Rebuild representative replay samples from verified provider evidence.
 - Calibrate ResearchConfidence, ReplayConfidence, InvestmentAssessmentStatus,
   and portfolio-risk limitations against reviewed cases.
-- Add PIT property tests, coverage thresholds, monitor alert ownership, and
-  runtime-derived framework snapshots.
+- Add PIT property tests, coverage thresholds, reviewed provider service-level
+  thresholds, and runtime-derived framework snapshots.
 - Operationalize Notification in preview only if dead-letter and worker
   procedures pass drills.
 - Conduct a Paper Trading architecture review only if Gates A-C pass. A review
@@ -548,17 +550,17 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 180 | Python files under `src/` |
-| Source lines | 29,971 | Python lines under `src/`, including blanks/comments |
-| Test files | 44 | Python test modules under `tests/` |
-| Test cases | 231 | Pytest collection |
-| Test lines | 8,920 | Python lines under `tests/` |
+| Source files | 181 | Python files under `src/` |
+| Source lines | 30,662 | Python lines under `src/`, including blanks/comments |
+| Test files | 45 | Python test modules under `tests/` |
+| Test cases | 240 | Pytest collection |
+| Test lines | 9,248 | Python lines under `tests/` |
 | Database tables | 63 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 46 | Markdown files under `docs/` |
+| Documentation files | 48 | Markdown files under `docs/` |
 | Runtime scripts | 8 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 225 passed and 6 skipped tests. Skips are the
+The verification baseline is 234 passed and 6 skipped tests. Skips are the
 expected opt-in live AKShare, direct CNInfo, Tushare, and notification network
 checks. CI runs Pytest, Ruff, mypy, and the project governance audit on push and
 pull request.
@@ -588,6 +590,7 @@ pull request.
 | Database recovery hardening | Current baseline | Read-only audit, verified backup, isolated restore drill, corruption/interruption tests, runbook |
 | Direct CNInfo artifact evidence | Current baseline | Official metadata adapter, bounded PDF capture, content-addressed storage, immutable observations, parity contract |
 | Independent Yahoo calibration | Current baseline | Deterministic unadjusted contract, optional Massive evidence, trust ceiling, unavailable/incompatible audit states |
+| Provider health operations | Current baseline | Owner-assigned alerts, acknowledgement/recovery policy, repeated-condition escalation, immutable 90-day CI artifacts |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
 
 ## Baseline Freeze Decision

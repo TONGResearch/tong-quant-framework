@@ -8,6 +8,13 @@ from tong_quant.data.monitoring import (
     render_provider_contract_markdown,
     serialize_provider_contract,
 )
+from tong_quant.data.provider_health import (
+    ProviderHealthAssessor,
+    ProviderHealthPolicy,
+    provider_health_annotations,
+    render_provider_health_markdown,
+    serialize_provider_health,
+)
 from tong_quant.data.providers.akshare import AkShareAdapter
 from tong_quant.data.providers.cninfo import (
     CNINFO_DISCLOSURES_DATASET,
@@ -49,6 +56,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--hong-kong-symbol", default="0700.HK")
     parser.add_argument("--malaysia-symbol", default="1155.KL")
     parser.add_argument("--lookback-days", type=int, default=14)
+    parser.add_argument("--health-history-days", type=int, default=84)
+    parser.add_argument("--degradation-threshold", type=int, default=3)
+    parser.add_argument("--unavailable-threshold", type=int, default=2)
+    parser.add_argument("--artifact-retention-days", type=int, default=90)
+    parser.add_argument("--owner", default="TONGResearch")
     parser.add_argument(
         "--fail-on-defect",
         action="store_true",
@@ -59,8 +71,18 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    if args.lookback_days < 1:
-        raise SystemExit("--lookback-days must be positive")
+    if min(
+        args.lookback_days,
+        args.health_history_days,
+        args.degradation_threshold,
+        args.unavailable_threshold,
+        args.artifact_retention_days,
+    ) < 1:
+        raise SystemExit(
+            "provider monitor window, threshold, and retention values must be positive"
+        )
+    if not args.owner.strip():
+        raise SystemExit("--owner must not be empty")
 
     now = datetime.now(UTC)
     start = (now.date() - timedelta(days=args.lookback_days)).isoformat()
@@ -129,14 +151,39 @@ def main() -> None:
     report = ProviderContractMonitor(repository=store).run(probes)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    markdown_path = args.output_dir / "provider-contract-monitor.md"
-    json_path = args.output_dir / "provider-contract-monitor.json"
-    markdown_path.write_text(
-        render_provider_contract_markdown(report), encoding="utf-8"
+    monitor_stem = f"provider-contract-run-{report.run_id}"
+    markdown_path = args.output_dir / f"{monitor_stem}.md"
+    json_path = args.output_dir / f"{monitor_stem}.json"
+    _write_idempotent(
+        markdown_path,
+        render_provider_contract_markdown(report),
     )
-    json_path.write_text(serialize_provider_contract(report) + "\n", encoding="utf-8")
+    _write_idempotent(json_path, serialize_provider_contract(report) + "\n")
     print(markdown_path)
     print(json_path)
+
+    health = ProviderHealthAssessor(
+        repository=store,
+        policy=ProviderHealthPolicy(
+            history_window_days=args.health_history_days,
+            repeated_degradation_threshold=args.degradation_threshold,
+            repeated_unavailable_threshold=args.unavailable_threshold,
+            artifact_retention_days=args.artifact_retention_days,
+            owner=args.owner,
+        ),
+    ).assess(report)
+    health_stem = f"provider-health-{health.report_id}"
+    health_markdown_path = args.output_dir / f"{health_stem}.md"
+    health_json_path = args.output_dir / f"{health_stem}.json"
+    _write_idempotent(
+        health_markdown_path,
+        render_provider_health_markdown(health),
+    )
+    _write_idempotent(health_json_path, serialize_provider_health(health) + "\n")
+    print(health_markdown_path)
+    print(health_json_path)
+    for annotation in provider_health_annotations(health):
+        print(annotation)
 
     if args.fail_on_defect and report.status is ProviderContractStatus.DEFECT:
         raise SystemExit("Provider contract monitor found an implementation defect")
@@ -171,6 +218,17 @@ def _yahoo_probes(
         )
         for market, symbol in symbols
     )
+
+
+def _write_idempotent(path: Path, content: str) -> None:
+    if path.is_symlink():
+        raise ValueError("provider monitor output must not be a symbolic link")
+    if path.exists():
+        if path.read_text(encoding="utf-8") != content:
+            raise ValueError("provider monitor output identity collision")
+        return
+    with path.open("x", encoding="utf-8") as output:
+        output.write(content)
 
 
 if __name__ == "__main__":

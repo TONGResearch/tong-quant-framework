@@ -82,6 +82,28 @@ def test_notifications_do_not_depend_on_execution_or_order_models() -> None:
     assert offenders == []
 
 
+def test_provider_health_does_not_depend_on_notifications_or_trading() -> None:
+    forbidden_roots = {
+        "notifications",
+        "execution",
+        "brokers",
+        "orders",
+        "trades",
+        "fills",
+        "paper",
+        "portfolio",
+    }
+    offenders = sorted(
+        module
+        for module in _imported_modules(
+            Path("src/tong_quant/data/provider_health.py")
+        )
+        if len(module.split(".")) > 1 and module.split(".")[1] in forbidden_roots
+    )
+
+    assert offenders == []
+
+
 def test_notification_service_is_research_artifact_oriented() -> None:
     text = Path("src/tong_quant/notifications/service.py").read_text(encoding="utf-8")
 
