@@ -94,7 +94,7 @@ def main() -> None:
     _write_idempotent(json_path, serialize_evidence_readiness(report) + "\n")
     _write_idempotent(
         markdown_path,
-        render_evidence_readiness_markdown(report) + "\n",
+        render_evidence_readiness_markdown(report),
     )
     print(markdown_path)
     print(json_path)

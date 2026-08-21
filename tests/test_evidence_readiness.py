@@ -14,6 +14,7 @@ from tong_quant.data.evidence_readiness import (
     EvidenceConclusionCause,
     EvidenceReadinessEvaluator,
     OperationalDatasetEvidence,
+    render_evidence_readiness_markdown,
     stable_evidence_hash,
 )
 from tong_quant.data.evidence_sources import (
@@ -59,6 +60,9 @@ def test_evidence_report_is_deterministic_and_cannot_promote_automatically() -> 
     assert first.decisions[0].promotion_review_eligible is True
     assert first.historical_replay_ready is False
     assert first.trading_freeze_remains is True
+    markdown = render_evidence_readiness_markdown(first)
+    assert markdown.endswith("\n")
+    assert not markdown.endswith("\n\n")
 
 
 def test_missing_measurements_and_provider_restrictions_remain_explicit() -> None:
