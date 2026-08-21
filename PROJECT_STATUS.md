@@ -7,7 +7,7 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 - Framework version: `0.8.0`
 - Database schema version: `0.8.0`
-- Migration head: `0007_cninfo_artifact_capture`
+- Migration head: `0008_provider_calibration_attempts`
 - Current phase: Engineering continuity and data readiness
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
@@ -21,6 +21,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Optional Tushare capability and calibration adapters
 - CNInfo disclosure evidence through explicit AKShare transport provenance
 - Yahoo US/Hong Kong/Malaysia research-grade daily-bar evidence
+- Provider-neutral unadjusted daily-bar calibration with deterministic fixtures,
+  optional Massive US evidence, trust ceilings, and auditable unavailable or
+  incompatible outcomes
 - Schema baseline, checksum migrations, and physical fingerprint checks
 - Scheduled provider contract monitoring
 - Immutable longitudinal provider baselines with separate success, field
@@ -41,10 +44,10 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-DATA-003`: independent Yahoo calibration
+1. `WP-OPS-001`: provider monitor alerting and retention
 
-`WP-OPS-001` remains planned until its work state is explicitly promoted;
-completion of dependencies does not authorize work by itself.
+All data calibration work packages currently authorized by governance are
+complete. Planned work still requires explicit promotion to `ready`.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

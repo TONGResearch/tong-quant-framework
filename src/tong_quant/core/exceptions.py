@@ -22,5 +22,14 @@ class DataProviderError(TongQuantError):
     """Raised when an external data provider remains unavailable after retries."""
 
 
+class DataProviderUnavailableError(DataProviderError):
+    """Raised with a sanitized reason when provider access is unavailable."""
+
+    def __init__(self, provider: str, reason_code: str) -> None:
+        super().__init__(f"{provider} unavailable ({reason_code})")
+        self.provider = provider
+        self.reason_code = reason_code
+
+
 class DatabaseIntegrityError(TongQuantError):
     """Raised when database audit, backup, or restore cannot complete safely."""

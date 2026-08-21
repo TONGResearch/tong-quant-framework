@@ -16,8 +16,8 @@ from tong_quant.data.storage.engineering import (
     database_integrity_json,
 )
 from tong_quant.data.storage.migrations import (
+    CNINFO_ARTIFACT_CAPTURE,
     MIGRATION_HEAD,
-    PROVIDER_CONTRACT_BASELINE,
     SCHEMA_DEFINITION_HASHES,
     schema_fingerprint,
 )
@@ -113,10 +113,9 @@ def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> No
     source = tmp_path / "source.sqlite3"
     restored = tmp_path / "restored.sqlite3"
     _database(source)
-    previous_head = PROVIDER_CONTRACT_BASELINE.migration_id
+    previous_head = CNINFO_ARTIFACT_CAPTURE.migration_id
     with sqlite3.connect(source) as connection:
-        connection.execute("DROP TABLE provider_artifact_observations")
-        connection.execute("DROP TABLE provider_artifacts")
+        connection.execute("DROP TABLE provider_calibration_attempts")
         fingerprint = schema_fingerprint(connection)
         connection.execute(
             "DELETE FROM schema_migrations WHERE migration_id = ?",

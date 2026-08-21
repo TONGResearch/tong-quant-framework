@@ -76,6 +76,8 @@ hardening boundaries:
 - Provider-neutral evidence ingestion with trust and availability metadata
 - CNInfo disclosure evidence through explicit AKShare transport provenance
 - Yahoo Finance unadjusted global daily-bar evidence with conservative trust
+- Provider-neutral Yahoo daily-bar calibration with deterministic fixtures,
+  fail-closed unavailable/incompatible attempts, and optional Massive evidence
 - Scheduled CNInfo/Yahoo provider contract monitoring and audit persistence
 - PIT-safe HistoricalReplaySource with manifest and sample replay hashes
 - ReplayConfidence to separate weak reconstruction from weak research
@@ -125,6 +127,13 @@ python scripts/manage_database.py audit --database data/tong_quant.sqlite3
 python scripts/capture_cninfo_artifacts.py \
   --symbol 600000 --start-date 2026-01-01 --end-date 2026-03-31 \
   --metadata-only
+python scripts/run_yahoo_calibration.py \
+  --market us --symbol MSFT \
+  --start-date 2026-06-18 --end-date 2026-06-19 \
+  --as-of 2026-06-20T12:00:00+00:00 \
+  --yahoo-fixture tests/fixtures/yahoo_daily_bars.json \
+  --secondary-fixture tests/fixtures/independent_daily_bars.json \
+  --require-secondary
 ```
 
 Tushare cross-provider calibration is opt-in and requires an environment
@@ -140,6 +149,7 @@ python scripts/run_data_readiness.py --require-secondary
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/provider-evidence-foundation.md`,
 `docs/cninfo-direct-artifacts.md`,
+`docs/yahoo-daily-bar-calibration.md`,
 `docs/database-backup-restore.md`,
 `docs/engineering-continuity.md`,
 `docs/provider-calibration-phase-iii.md`,

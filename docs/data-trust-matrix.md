@@ -55,6 +55,7 @@ silently promoted to PIT-safe data.
 | CNInfo disclosures via AKShare transport | MEDIUM | EXACT per parsed announcement timestamp | Filing-timing evidence from the record's `available_at` | Direct CNInfo parity, coverage, correction continuity, and raw filing capture are unverified. |
 | Direct CNInfo disclosures and artifacts | MEDIUM | EXACT per official announcement timestamp | Direct filing metadata and content-hash evidence from `available_at`; artifact bytes are research evidence only | Public web contract, representative parity, historical coverage, URL-change behavior, and correction continuity remain unverified. |
 | Yahoo Finance unadjusted daily bars | LOW | RETRIEVAL_TIME | Global exploratory research and provider comparison from ingestion time | Unofficial API, no authoritative historical availability, and unverified delisting/symbol/correction continuity. |
+| Massive unadjusted US daily bars and action dates | LOW | RETRIEVAL_TIME | Optional independent calibration after authorized retrieval | No provider is trusted by default; permissions, corrections, identifier history, and continuity are unverified. |
 
 These adapter defaults are deliberately weaker than any dataset-specific trust
 that may be earned later. A scheduled provider contract check tests endpoint and
@@ -71,6 +72,10 @@ Tushare is implemented as the first secondary calibration provider. A dataset
 remains `UNKNOWN` until an actual same-period comparison has been run; adapter
 availability alone is not evidence of agreement. High-severity conflicts cap
 readiness below `USABLE`.
+
+The offline Yahoo calibration fixtures prove only deterministic contract
+behavior. Even perfect fixture agreement is capped at `LOW/RETRIEVAL_TIME` and
+does not change this matrix or PIT readiness.
 
 ## Upgrade Evidence
 

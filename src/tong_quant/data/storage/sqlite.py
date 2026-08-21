@@ -24,6 +24,9 @@ from tong_quant.data.baselines import (
 )
 from tong_quant.data.calibration.models import (
     DatasetConfidenceAssessment,
+    ProviderCalibrationAttempt,
+    ProviderCalibrationAttemptStatus,
+    ProviderCalibrationOutcome,
     ProviderCalibrationResult,
     ProviderConflict,
     ProviderConflictSeverity,
@@ -2103,6 +2106,71 @@ class SQLiteStore:
             self.save_provider_conflicts(result.conflicts)
             self.save_dataset_confidence_assessment(result.confidence)
 
+    def save_provider_calibration_attempt(
+        self,
+        attempt: ProviderCalibrationAttempt,
+    ) -> str:
+        reject_sensitive_structure(
+            {
+                "unavailable_provider": attempt.unavailable_provider,
+                "reason_code": attempt.reason_code,
+                "limitations": attempt.limitations,
+            },
+            path="provider_calibration_attempt",
+        )
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO provider_calibration_attempts (
+                    attempt_id, dataset, market, subject,
+                    primary_provider, secondary_provider, as_of, status,
+                    primary_price_basis, secondary_price_basis,
+                    primary_trust_level, secondary_trust_level,
+                    primary_availability_precision,
+                    secondary_availability_precision,
+                    primary_input_hash, secondary_input_hash, report_id,
+                    unavailable_provider, reason_code, limitations_json,
+                    model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    attempt.attempt_id,
+                    attempt.dataset,
+                    attempt.market.value,
+                    attempt.subject,
+                    attempt.primary_provider,
+                    attempt.secondary_provider,
+                    _datetime_text(attempt.as_of),
+                    attempt.status.value,
+                    attempt.primary_price_basis,
+                    attempt.secondary_price_basis,
+                    attempt.primary_trust_level.value,
+                    attempt.secondary_trust_level.value,
+                    attempt.primary_availability_precision.value,
+                    attempt.secondary_availability_precision.value,
+                    attempt.primary_input_hash,
+                    attempt.secondary_input_hash,
+                    attempt.report_id,
+                    attempt.unavailable_provider,
+                    attempt.reason_code,
+                    _json_dumps(attempt.limitations),
+                    attempt.model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+        return attempt.attempt_id
+
+    def save_provider_calibration_outcome(
+        self,
+        outcome: ProviderCalibrationOutcome,
+    ) -> None:
+        with self.transaction():
+            if outcome.result is not None:
+                self.save_provider_consistency_report(outcome.result.report)
+                self.save_provider_conflicts(outcome.result.conflicts)
+                self.save_dataset_confidence_assessment(outcome.result.confidence)
+            self.save_provider_calibration_attempt(outcome.attempt)
+
     def save_provider_conflicts(
         self,
         conflicts: tuple[ProviderConflict, ...],
@@ -2246,6 +2314,38 @@ class SQLiteStore:
                 (dataset, primary_provider, secondary_provider),
             ).fetchone()
         return None if row is None else _provider_consistency_from_row(row)
+
+    def latest_provider_calibration_attempt(
+        self,
+        *,
+        dataset: str,
+        primary_provider: str,
+        secondary_provider: str,
+        market: Market,
+        subject: str,
+    ) -> ProviderCalibrationAttempt | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM provider_calibration_attempts
+                WHERE dataset = ?
+                  AND primary_provider = ?
+                  AND secondary_provider = ?
+                  AND market = ?
+                  AND subject = ?
+                ORDER BY as_of DESC, ingested_at DESC
+                LIMIT 1
+                """,
+                (
+                    dataset,
+                    primary_provider,
+                    secondary_provider,
+                    market.value,
+                    subject,
+                ),
+            ).fetchone()
+        return None if row is None else _provider_calibration_attempt_from_row(row)
 
     def provider_conflict_history(
         self,
@@ -4681,6 +4781,7 @@ class SQLiteStore:
             "provider_evidence_records",
             "provider_artifacts",
             "provider_artifact_observations",
+            "provider_calibration_attempts",
             "provider_contract_runs",
             "provider_contract_checks",
             "provider_baseline_manifests",
@@ -4955,6 +5056,38 @@ def _provider_consistency_from_row(row: sqlite3.Row) -> ProviderConsistencyRepor
         trust_level=DataTrustLevel(row["trust_level"]),
         limitations=tuple(json.loads(row["limitations_json"])),
         comparison_hash=row["comparison_hash"],
+        model_version=row["model_version"],
+    )
+
+
+def _provider_calibration_attempt_from_row(
+    row: sqlite3.Row,
+) -> ProviderCalibrationAttempt:
+    return ProviderCalibrationAttempt(
+        attempt_id=row["attempt_id"],
+        dataset=row["dataset"],
+        market=Market(row["market"]),
+        subject=row["subject"],
+        primary_provider=row["primary_provider"],
+        secondary_provider=row["secondary_provider"],
+        as_of=datetime.fromisoformat(row["as_of"]),
+        status=ProviderCalibrationAttemptStatus(row["status"]),
+        primary_price_basis=row["primary_price_basis"],
+        secondary_price_basis=row["secondary_price_basis"],
+        primary_trust_level=DataTrustLevel(row["primary_trust_level"]),
+        secondary_trust_level=DataTrustLevel(row["secondary_trust_level"]),
+        primary_availability_precision=AvailabilityPrecision(
+            row["primary_availability_precision"]
+        ),
+        secondary_availability_precision=AvailabilityPrecision(
+            row["secondary_availability_precision"]
+        ),
+        primary_input_hash=row["primary_input_hash"],
+        secondary_input_hash=row["secondary_input_hash"],
+        report_id=row["report_id"],
+        unavailable_provider=row["unavailable_provider"],
+        reason_code=row["reason_code"],
+        limitations=tuple(json.loads(row["limitations_json"])),
         model_version=row["model_version"],
     )
 

@@ -123,6 +123,19 @@ CNINFO_ARTIFACT_CAPTURE = Migration(
     """,
 )
 
+PROVIDER_CALIBRATION_ATTEMPTS = Migration(
+    migration_id="0008_provider_calibration_attempts",
+    description="add fail-closed provider calibration attempt audit records",
+    definition="""
+    provider_calibration_attempts(
+        dataset, market, subject, primary_provider, secondary_provider,
+        status, price bases, trust levels, availability precision,
+        input hashes, report_id, unavailable_provider, reason_code,
+        ... REFERENCES provider_consistency_reports
+    );
+    """,
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -132,6 +145,7 @@ MIGRATIONS = (
     PROVIDER_EVIDENCE_FOUNDATION,
     PROVIDER_CONTRACT_BASELINE,
     CNINFO_ARTIFACT_CAPTURE,
+    PROVIDER_CALIBRATION_ATTEMPTS,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -146,6 +160,9 @@ SCHEMA_DEFINITION_HASHES = {
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
     CNINFO_ARTIFACT_CAPTURE.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
+    PROVIDER_CALIBRATION_ATTEMPTS.migration_id: (
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
 }
@@ -216,6 +233,9 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
         return
     if migration is CNINFO_ARTIFACT_CAPTURE:
         _apply_cninfo_artifact_capture(connection)
+        return
+    if migration is PROVIDER_CALIBRATION_ATTEMPTS:
+        _apply_provider_calibration_attempts(connection)
         return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
 
@@ -679,6 +699,78 @@ def _apply_cninfo_artifact_capture(connection: sqlite3.Connection) -> None:
     )
 
 
+def _apply_provider_calibration_attempts(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS provider_calibration_attempts (
+            attempt_id TEXT PRIMARY KEY,
+            dataset TEXT NOT NULL,
+            market TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            primary_provider TEXT NOT NULL,
+            secondary_provider TEXT NOT NULL,
+            as_of TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (
+                status IN ('completed', 'unavailable', 'incompatible')
+            ),
+            primary_price_basis TEXT NOT NULL,
+            secondary_price_basis TEXT NOT NULL,
+            primary_trust_level TEXT NOT NULL,
+            secondary_trust_level TEXT NOT NULL,
+            primary_availability_precision TEXT NOT NULL,
+            secondary_availability_precision TEXT NOT NULL,
+            primary_input_hash TEXT NOT NULL CHECK (
+                primary_input_hash = '' OR length(primary_input_hash) = 64
+            ),
+            secondary_input_hash TEXT NOT NULL CHECK (
+                secondary_input_hash = '' OR length(secondary_input_hash) = 64
+            ),
+            report_id TEXT,
+            unavailable_provider TEXT NOT NULL,
+            reason_code TEXT NOT NULL,
+            limitations_json TEXT NOT NULL,
+            model_version TEXT NOT NULL,
+            ingested_at TEXT NOT NULL,
+            CHECK (
+                (
+                    status = 'completed'
+                    AND report_id IS NOT NULL
+                    AND primary_input_hash != ''
+                    AND secondary_input_hash != ''
+                    AND unavailable_provider = ''
+                    AND reason_code = ''
+                )
+                OR
+                (
+                    status = 'unavailable'
+                    AND report_id IS NULL
+                    AND unavailable_provider != ''
+                    AND reason_code != ''
+                )
+                OR
+                (
+                    status = 'incompatible'
+                    AND report_id IS NULL
+                    AND primary_input_hash != ''
+                    AND secondary_input_hash != ''
+                    AND unavailable_provider = ''
+                    AND reason_code != ''
+                )
+            ),
+            FOREIGN KEY (report_id)
+                REFERENCES provider_consistency_reports (report_id)
+                ON DELETE RESTRICT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_provider_calibration_attempt_scope
+        ON provider_calibration_attempts (
+            dataset, primary_provider, secondary_provider,
+            market, subject, as_of
+        );
+        """
+    )
+
+
 def schema_fingerprint(connection: sqlite3.Connection) -> str:
     rows = connection.execute(
         """
@@ -825,6 +917,7 @@ __all__ = [
     "MIGRATION_HEAD",
     "MIGRATIONS",
     "Migration",
+    "PROVIDER_CALIBRATION_ATTEMPTS",
     "SCHEMA_DEFINITION_HASHES",
     "expected_schema_definition_hash",
     "record_or_validate_schema_fingerprint",

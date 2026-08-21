@@ -135,10 +135,11 @@ Primary future use:
 
 Expected trust posture:
 
-- `DataTrustLevel.HIGH` for paid historical bars and reference data after
-  calibration.
-- `AvailabilityPrecision.DATE_ONLY` or better when provider timestamps support it.
-- `UNKNOWN` until real capability and coverage reports are generated.
+- `UNKNOWN` before real capability and coverage evidence exists.
+- The implemented optional calibration adapter starts at
+  `DataTrustLevel.LOW` and `AvailabilityPrecision.RETRIEVAL_TIME`.
+- Higher classifications require separate reviewed longitudinal evidence; a
+  paid plan or one successful comparison is insufficient.
 
 Design notes:
 
@@ -358,17 +359,22 @@ No schema rewrite is recommended before the next provider adapter is designed.
   and PIT capability.
 - No network integration required.
 
-### Phase MP-2: Massive / Polygon Design
+### Phase MP-2: Massive / Polygon Calibration Foundation (implemented)
 
-- Design US equity market-data adapter contracts.
-- Define bar, reference, corporate-action, and calendar datasets.
-- Decide how adjusted and unadjusted prices are represented.
+- Implemented optional US unadjusted aggregates plus dividend/split date
+  evidence behind `ProviderEvidenceAdapter`.
+- Credentials remain environment-only and header-only; unavailable access is a
+  calibration attempt state, not zero coverage.
+- Reference data, calendars, identifier history, and representative real
+  continuity remain future evidence work.
 
 ### Phase MP-3: Yahoo Finance Evidence Foundation (implemented)
 
 - Define research-grade global provider boundaries.
 - Explicitly limit Yahoo usage in Historical Replay until calibrated.
 - Map supported markets: US, Hong Kong, Malaysia, and broad global equities.
+- Compare only explicit unadjusted series and persist completed, unavailable,
+  or incompatible calibration attempts.
 
 ### Phase MP-4: Finnhub Design
 
@@ -406,18 +412,20 @@ Before implementing any provider, require:
 
 ## Current Roadmap Recommendation
 
-Do not wait for Tushare account upgrades. The next design milestone should be:
+Do not wait for Tushare account upgrades. Current provider state is:
 
 ```text
-MP-1 Provider Registry Design
--> MP-2 Massive / Polygon US Equity Provider Design
--> MP-3 Yahoo Finance Global Research Provider Design
--> MP-4 Finnhub News/Filings Provider Design
--> MP-5 CNInfo China Disclosure Provider Design
+MP-1 Provider-neutral evidence foundation [implemented]
+MP-2 Massive US calibration evidence [implemented, real evidence optional]
+MP-3 Yahoo global research evidence [implemented]
+MP-5 CNInfo China disclosure evidence [implemented]
+WP-OPS-001 Provider monitor operations [next ready package]
+MP-4 Finnhub news/filings design [future proposal only]
 ```
 
 The provider-neutral ingestion contract, direct/transported CNInfo evidence,
-Yahoo evidence adapter, content-addressed artifact store, and scheduled contract
-monitor are now implemented. The next provider work should calibrate real
-coverage and continuity; it must not assume that successful contract probes
+Yahoo and optional Massive evidence adapters, deterministic daily-bar
+calibration, content-addressed artifact storage, and scheduled contract
+monitoring are now implemented. The next provider work should accumulate real
+coverage and continuity evidence; successful fixture or contract checks cannot
 grant higher trust or PIT readiness.

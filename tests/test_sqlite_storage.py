@@ -50,6 +50,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("provider_evidence_records") == 0
     assert store.table_count("provider_artifacts") == 0
     assert store.table_count("provider_artifact_observations") == 0
+    assert store.table_count("provider_calibration_attempts") == 0
     assert store.table_count("provider_contract_runs") == 0
     assert store.table_count("provider_contract_checks") == 0
     assert store.table_count("provider_baseline_manifests") == 0
@@ -76,7 +77,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("notification_deliveries") == 0
     assert store.table_count("notification_dead_letters") == 0
     assert store.table_count("schema_metadata") == 3
-    assert store.table_count("schema_migrations") == 8
+    assert store.table_count("schema_migrations") == 9
     assert store.table_count("schema_fingerprints") == 1
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
     assert store.migration_head() == MIGRATION_HEAD
@@ -103,6 +104,9 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
         baseline_input_foreign_keys = connection.execute(
             "PRAGMA foreign_key_list(provider_baseline_inputs)"
         ).fetchall()
+        calibration_attempt_foreign_keys = connection.execute(
+            "PRAGMA foreign_key_list(provider_calibration_attempts)"
+        ).fetchall()
     assert any(row[2] == "notification_outbox" for row in dead_letter_foreign_keys)
     assert any(row[2] == "ingestion_batches" for row in evidence_foreign_keys)
     assert any(row[2] == "ingestion_batches" for row in artifact_foreign_keys)
@@ -119,6 +123,10 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
         "provider_baseline_manifests",
         "provider_contract_checks",
     }
+    assert any(
+        row[2] == "provider_consistency_reports"
+        for row in calibration_attempt_foreign_keys
+    )
     assert store.table_count("validation_runs") == 0
     assert store.table_count("validation_oos_usage") == 0
     assert store.table_count("validation_splits") == 0

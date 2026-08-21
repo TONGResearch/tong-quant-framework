@@ -58,6 +58,25 @@ before production use.
 Provider adapters fetch external data. Normalizers convert it into canonical
 models. Strategies never call AKShare, Tushare, or brokers directly.
 
+Comparable global daily bars use an explicit unadjusted contract:
+
+```text
+Yahoo / Massive / deterministic fixture
+              |
+      ProviderEvidenceAdapter
+              |
+ exchange session + OHLCV + action dates + price basis
+              |
+ DailyBarCalibrationCoordinator
+              |
+ completed | unavailable | incompatible
+              |
+ SQLite calibration attempt + optional consistency report
+```
+
+Agreement is bounded by the weakest declared provider trust. Missing access and
+adjusted/unadjusted mismatches never become successful empty comparisons.
+
 ### Strategy
 
 Strategies consume immutable, point-in-time inputs and return explainable

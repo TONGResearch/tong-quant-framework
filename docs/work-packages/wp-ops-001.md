@@ -1,6 +1,6 @@
 # Work Package: WP-OPS-001
 
-Status: `planned`
+Status: `ready`
 
 ## Objective
 

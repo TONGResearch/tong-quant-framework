@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 
-from tong_quant.domain.enums import DataTrustLevel
+from tong_quant.domain.enums import AvailabilityPrecision, DataTrustLevel, Market
 from tong_quant.domain.models import require_timezone
 from tong_quant.version import (
     DATASET_CONFIDENCE_VERSION,
@@ -60,6 +60,12 @@ class ProviderConflictSeverity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+class ProviderCalibrationAttemptStatus(StrEnum):
+    COMPLETED = "completed"
+    UNAVAILABLE = "unavailable"
+    INCOMPATIBLE = "incompatible"
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,6 +203,88 @@ class ProviderCalibrationResult:
     confidence: DatasetConfidenceAssessment
 
 
+@dataclass(frozen=True, slots=True)
+class ProviderCalibrationAttempt:
+    attempt_id: str
+    dataset: str
+    market: Market
+    subject: str
+    primary_provider: str
+    secondary_provider: str
+    as_of: datetime
+    status: ProviderCalibrationAttemptStatus
+    primary_price_basis: str
+    secondary_price_basis: str
+    primary_trust_level: DataTrustLevel
+    secondary_trust_level: DataTrustLevel
+    primary_availability_precision: AvailabilityPrecision
+    secondary_availability_precision: AvailabilityPrecision
+    primary_input_hash: str
+    secondary_input_hash: str
+    report_id: str | None
+    unavailable_provider: str
+    reason_code: str
+    limitations: tuple[str, ...]
+    model_version: str
+
+    def __post_init__(self) -> None:
+        require_timezone(self.as_of, "provider calibration attempt as_of")
+        if len(self.attempt_id) != 64:
+            raise ValueError("calibration attempt ID must be a SHA-256 digest")
+        if not all(
+            value.strip()
+            for value in (
+                self.dataset,
+                self.subject,
+                self.primary_provider,
+                self.secondary_provider,
+                self.model_version,
+            )
+        ):
+            raise ValueError("calibration attempt identity fields are required")
+        for value in (self.primary_input_hash, self.secondary_input_hash):
+            if value and len(value) != 64:
+                raise ValueError("calibration input hashes must be SHA-256 digests")
+        if self.status is ProviderCalibrationAttemptStatus.COMPLETED:
+            if (
+                self.report_id is None
+                or len(self.report_id) != 64
+                or not self.primary_input_hash
+                or not self.secondary_input_hash
+                or self.unavailable_provider
+                or self.reason_code
+            ):
+                raise ValueError("completed calibration attempt is inconsistent")
+        elif self.status is ProviderCalibrationAttemptStatus.UNAVAILABLE:
+            if self.report_id is not None or not (
+                self.unavailable_provider and self.reason_code
+            ):
+                raise ValueError("unavailable calibration attempt is inconsistent")
+        elif (
+            self.report_id is not None
+            or not self.reason_code
+            or not self.primary_input_hash
+            or not self.secondary_input_hash
+            or self.unavailable_provider
+        ):
+            raise ValueError("incompatible calibration attempt is inconsistent")
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderCalibrationOutcome:
+    attempt: ProviderCalibrationAttempt
+    result: ProviderCalibrationResult | None
+
+    def __post_init__(self) -> None:
+        completed = self.attempt.status is ProviderCalibrationAttemptStatus.COMPLETED
+        if completed != (self.result is not None):
+            raise ValueError("calibration outcome does not match attempt status")
+        if self.result is not None and (
+            self.attempt.report_id != self.result.report.report_id
+        ):
+            raise ValueError("calibration attempt references the wrong report")
+
+
 __all__ = [
     "CalibrationDataset",
     "CalibrationQuery",
@@ -205,6 +293,9 @@ __all__ = [
     "DatasetConfidenceAssessment",
     "DEFAULT_CALIBRATION_FIELDS",
     "ProviderCalibrationSnapshot",
+    "ProviderCalibrationAttempt",
+    "ProviderCalibrationAttemptStatus",
+    "ProviderCalibrationOutcome",
     "ProviderCalibrationResult",
     "ProviderConflict",
     "ProviderConflictSeverity",

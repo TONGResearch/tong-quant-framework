@@ -7,6 +7,12 @@ from tong_quant.data.providers.cninfo_direct import (
     CnInfoDirectEvidenceAdapter,
     CnInfoHttpClient,
 )
+from tong_quant.data.providers.massive import (
+    MASSIVE_PROVIDER_ID,
+    MassiveEvidenceAdapter,
+    MassiveHttpClient,
+    MassiveMarketDataClient,
+)
 from tong_quant.data.providers.tushare import TushareCalibrationAdapter
 from tong_quant.data.providers.yahoo import YahooFinanceEvidenceAdapter
 
@@ -16,6 +22,10 @@ __all__ = [
     "CnInfoEvidenceAdapter",
     "CnInfoDirectEvidenceAdapter",
     "CnInfoHttpClient",
+    "MASSIVE_PROVIDER_ID",
+    "MassiveEvidenceAdapter",
+    "MassiveHttpClient",
+    "MassiveMarketDataClient",
     "TushareCalibrationAdapter",
     "YahooFinanceEvidenceAdapter",
 ]

@@ -27,6 +27,7 @@ class ProviderCalibrationEngine:
         *,
         fields: tuple[str, ...],
         compared_at: datetime | None = None,
+        trust_ceiling: DataTrustLevel = DataTrustLevel.VERIFIED,
     ) -> ProviderConsistencyReport:
         if primary.dataset != secondary.dataset:
             raise ValueError("provider calibration requires the same dataset")
@@ -81,6 +82,8 @@ class ProviderCalibrationEngine:
             "fields": fields,
             "model_version": self.model_version,
         }
+        if trust_ceiling is not DataTrustLevel.VERIFIED:
+            payload["trust_ceiling"] = trust_ceiling.value
         comparison_hash = sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
@@ -100,7 +103,10 @@ class ProviderCalibrationEngine:
                 key: round(value, 2) for key, value in field_scores.items()
             },
             consistency_score=round(consistency, 2),
-            trust_level=_trust_for_consistency(consistency),
+            trust_level=_weakest_trust(
+                _trust_for_consistency(consistency),
+                trust_ceiling,
+            ),
             limitations=tuple(dict.fromkeys(limitations)),
             comparison_hash=comparison_hash,
             model_version=self.model_version,
@@ -230,7 +236,10 @@ class ProviderCalibrationEngine:
             dataset=report.dataset,
             assessed_at=report.compared_at,
             confidence_score=round(score, 2),
-            trust_level=_trust_for_consistency(score),
+            trust_level=_weakest_trust(
+                _trust_for_consistency(score),
+                report.trust_level,
+            ),
             component_scores={
                 key: round(value, 2) for key, value in components.items()
             },
@@ -254,6 +263,20 @@ def _trust_for_consistency(score: float) -> DataTrustLevel:
     if score >= 50:
         return DataTrustLevel.LOW
     return DataTrustLevel.UNKNOWN
+
+
+def _weakest_trust(
+    left: DataTrustLevel,
+    right: DataTrustLevel,
+) -> DataTrustLevel:
+    strength = {
+        DataTrustLevel.UNKNOWN: 0,
+        DataTrustLevel.LOW: 1,
+        DataTrustLevel.MEDIUM: 2,
+        DataTrustLevel.HIGH: 3,
+        DataTrustLevel.VERIFIED: 4,
+    }
+    return left if strength[left] <= strength[right] else right
 
 
 def _conflict(

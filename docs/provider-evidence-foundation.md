@@ -64,6 +64,20 @@ ingest adjusted close. Evidence defaults to `LOW` trust and
 `RETRIEVAL_TIME` availability because historical availability, corrections,
 delistings, and symbol continuity are not authoritative.
 
+Yahoo records now expose exchange-local session date, explicit unadjusted price
+basis, and chart-reported corporate-action types. `DailyBarCalibrationCoordinator`
+can compare them with any compatible `ProviderEvidenceAdapter`, deterministic
+fixtures, or the optional Massive US adapter. Completed, unavailable, and
+incompatible attempts remain distinct and auditable. See
+`docs/yahoo-daily-bar-calibration.md`.
+
+### Optional Massive Calibration
+
+`MassiveEvidenceAdapter` implements the same daily-bar evidence contract for US
+equities. It fetches unadjusted aggregates plus dividend and split dates from
+official HTTPS endpoints. `MASSIVE_API_KEY` stays in the Authorization header;
+the provider starts at `LOW/RETRIEVAL_TIME`, and no live access is assumed.
+
 ## Contract Monitoring
 
 `ProviderContractMonitor` checks declared capability, normalized record count,
@@ -130,7 +144,7 @@ bundle. This fixed transport compatibility without weakening TLS validation.
 
 ## Database
 
-The migration head is `0007_cninfo_artifact_capture`. Provider evidence,
+The migration head is `0008_provider_calibration_attempts`. Provider evidence,
 artifact, and baseline tables are:
 
 - `schema_fingerprints`
@@ -142,6 +156,7 @@ artifact, and baseline tables are:
 - `provider_baseline_manifests`
 - `provider_baseline_entries`
 - `provider_baseline_inputs`
+- `provider_calibration_attempts`
 
 The public schema version remains `0.8.0`. This is engineering hardening, not a
 new framework feature milestone.
@@ -152,7 +167,8 @@ new framework feature milestone.
   calendar periods.
 - Accumulate direct CNInfo/AKShare-transport parity and correction-continuity
   evidence; the capture and comparison contracts are implemented.
-- Compare Yahoo against an independent provider before any trust reassessment.
+- Accumulate real Yahoo/Massive comparisons before any trust reassessment; the
+  deterministic and fail-closed calibration mechanism is implemented.
 - Measure corrections, delistings, symbol changes, and historical continuity.
 - Keep all trading-related development frozen while required replay datasets
   remain below approved PIT readiness.

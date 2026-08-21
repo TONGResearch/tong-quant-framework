@@ -3,6 +3,8 @@ from typing import Protocol
 from tong_quant.data.calibration.models import (
     CalibrationQuery,
     DatasetConfidenceAssessment,
+    ProviderCalibrationAttempt,
+    ProviderCalibrationOutcome,
     ProviderCalibrationResult,
     ProviderCalibrationSnapshot,
     ProviderConflict,
@@ -67,6 +69,14 @@ class ProviderCalibrationRepository(Protocol):
     def save_dataset_confidence_assessment(
         self, assessment: DatasetConfidenceAssessment
     ) -> str: ...
+
+    def save_provider_calibration_attempt(
+        self, attempt: ProviderCalibrationAttempt
+    ) -> str: ...
+
+    def save_provider_calibration_outcome(
+        self, outcome: ProviderCalibrationOutcome
+    ) -> None: ...
 
 
 __all__ = [

@@ -1,0 +1,33 @@
+{
+  "availability_precision": "retrieval_time",
+  "bars": [
+    {
+      "close": 483,
+      "corporate_actions": [
+        "dividend"
+      ],
+      "high": 485,
+      "low": 478,
+      "open": 480,
+      "session_date": "2026-06-18",
+      "volume": 20000000
+    },
+    {
+      "close": 481.5,
+      "corporate_actions": [],
+      "high": 484,
+      "low": 480,
+      "open": 483,
+      "session_date": "2026-06-19",
+      "volume": 18000000
+    }
+  ],
+  "limitations": [
+    "Synthetic independent fixture for deterministic contract verification"
+  ],
+  "market": "us",
+  "price_basis": "unadjusted",
+  "provider": "independent_fixture",
+  "subject": "MSFT",
+  "trust_level": "low"
+}

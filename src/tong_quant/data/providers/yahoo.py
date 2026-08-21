@@ -1,17 +1,20 @@
 import json
 import ssl
+from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, tzinfo
 from hashlib import sha256
 from time import sleep
 from typing import Protocol
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import certifi
 
-from tong_quant.core.exceptions import DataProviderError
+from tong_quant.core.exceptions import DataProviderUnavailableError
 from tong_quant.data.providers.contracts import (
     EvidenceLimitation,
     ProviderCapabilityStatus,
@@ -66,7 +69,7 @@ class YahooChartHttpClient:
         )
         request = Request(url, headers={"User-Agent": "TongQuant/0.8 research-data"})
         ssl_context = ssl.create_default_context(cafile=certifi.where())
-        last_error: Exception | None = None
+        last_reason = "transport_unavailable"
         for attempt in range(1, self.max_attempts + 1):
             try:
                 with urlopen(  # noqa: S310
@@ -74,18 +77,20 @@ class YahooChartHttpClient:
                     timeout=self.timeout_seconds,
                     context=ssl_context,
                 ) as response:
-                    payload = json.loads(response.read().decode("utf-8"))
+                    raw = response.read()
+                payload = json.loads(raw.decode("utf-8"))
                 if not isinstance(payload, dict):
-                    raise TypeError("Yahoo chart response is not an object")
+                    raise ValueError("Yahoo chart response is not an object")
                 return payload
-            except Exception as error:
-                last_error = error
-                if attempt < self.max_attempts:
-                    self.sleeper(float(attempt))
-        error_code = type(last_error).__name__ if last_error is not None else "UnknownError"
-        raise DataProviderError(
-            f"Yahoo chart request failed after {self.max_attempts} attempts ({error_code})"
-        ) from last_error
+            except HTTPError as error:
+                last_reason = f"http_{error.code}"
+            except (TimeoutError, URLError, OSError) as error:
+                last_reason = type(error).__name__
+            except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                raise ValueError("Yahoo chart response is not valid JSON") from error
+            if attempt < self.max_attempts:
+                self.sleeper(float(attempt))
+        raise DataProviderUnavailableError("yahoo_finance", last_reason)
 
 
 @dataclass(slots=True)
@@ -129,17 +134,29 @@ class YahooFinanceEvidenceAdapter:
         quote_rows = _quote_rows(result)
         meta = result.get("meta")
         metadata = meta if isinstance(meta, dict) else {}
+        exchange_timezone, timezone_limitation = _exchange_timezone(metadata)
+        limitations = list(_yahoo_limitations())
+        if timezone_limitation is not None:
+            limitations.append(timezone_limitation)
+        corporate_actions = _corporate_actions_by_session(
+            result,
+            exchange_timezone,
+        )
         records = []
         for index, timestamp in enumerate(timestamps):
             observed_at = datetime.fromtimestamp(timestamp, tz=UTC)
             if observed_at > request.as_of:
                 continue
+            session_date = observed_at.astimezone(exchange_timezone).date().isoformat()
             payload = {
+                "session_date": session_date,
                 "open": _at(quote_rows, "open", index),
                 "high": _at(quote_rows, "high", index),
                 "low": _at(quote_rows, "low", index),
                 "close": _at(quote_rows, "close", index),
                 "volume": _at(quote_rows, "volume", index),
+                "price_basis": "unadjusted",
+                "corporate_actions": list(corporate_actions.get(session_date, ())),
                 "currency": metadata.get("currency"),
                 "exchange": metadata.get("exchangeName"),
                 "timezone": metadata.get("exchangeTimezoneName"),
@@ -169,7 +186,7 @@ class YahooFinanceEvidenceAdapter:
                     availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
                     trust_level=DataTrustLevel.LOW,
                     limitations=tuple(
-                        limitation.description for limitation in _yahoo_limitations()
+                        limitation.description for limitation in limitations
                     ),
                 )
             )
@@ -183,7 +200,7 @@ class YahooFinanceEvidenceAdapter:
             raw_data_hash=raw_hash,
             raw_record_count=len(timestamps),
             records=tuple(records),
-            limitations=_yahoo_limitations(),
+            limitations=tuple(limitations),
         )
 
 
@@ -223,13 +240,16 @@ def _epoch(value: str, *, end_of_range: bool = False) -> int:
 def _chart_result(payload: dict[str, object]) -> dict[str, object]:
     chart = payload.get("chart")
     if not isinstance(chart, dict):
-        raise DataProviderError("Yahoo chart payload is missing chart data")
+        raise ValueError("Yahoo chart payload is missing chart data")
     error = chart.get("error")
     if error:
-        raise DataProviderError("Yahoo chart payload reports a provider error")
+        raise DataProviderUnavailableError(
+            "yahoo_finance",
+            "provider_response_error",
+        )
     results = chart.get("result")
     if not isinstance(results, list) or not results or not isinstance(results[0], dict):
-        raise DataProviderError("Yahoo chart payload has no result")
+        raise ValueError("Yahoo chart payload has no result")
     return results[0]
 
 
@@ -256,6 +276,56 @@ def _at(values: dict[str, object], field: str, index: int) -> object:
         return None
     value = series[index]
     return value if isinstance(value, int | float | str) or value is None else str(value)
+
+
+def _exchange_timezone(
+    metadata: dict[str, object],
+) -> tuple[tzinfo, EvidenceLimitation | None]:
+    name = str(metadata.get("exchangeTimezoneName", "")).strip()
+    try:
+        return ZoneInfo(name), None
+    except (ZoneInfoNotFoundError, ValueError):
+        return UTC, EvidenceLimitation(
+            code="yahoo_exchange_timezone_unavailable",
+            description=(
+                "Yahoo exchange timezone was missing or invalid; UTC session dates "
+                "were retained with reduced confidence"
+            ),
+            trust_level=DataTrustLevel.UNKNOWN,
+        )
+
+
+def _corporate_actions_by_session(
+    result: dict[str, object],
+    exchange_timezone: tzinfo,
+) -> dict[str, tuple[str, ...]]:
+    events = result.get("events")
+    if not isinstance(events, dict):
+        return {}
+    normalized_names = {
+        "dividends": "dividend",
+        "splits": "split",
+        "capitalGains": "capital_gain",
+    }
+    actions: defaultdict[str, set[str]] = defaultdict(set)
+    for provider_name, normalized_name in normalized_names.items():
+        values = events.get(provider_name)
+        if not isinstance(values, dict):
+            continue
+        for item in values.values():
+            if not isinstance(item, dict):
+                continue
+            timestamp = item.get("date")
+            if not isinstance(timestamp, int | float):
+                continue
+            session = (
+                datetime.fromtimestamp(timestamp, tz=UTC)
+                .astimezone(exchange_timezone)
+                .date()
+                .isoformat()
+            )
+            actions[session].add(normalized_name)
+    return {key: tuple(sorted(value)) for key, value in actions.items()}
 
 
 __all__ = [

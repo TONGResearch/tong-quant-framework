@@ -130,7 +130,15 @@ in the same commit.
   credentials. Direct-source success cannot promote trust without measured
   parity, coverage, and continuity review.
 - Yahoo Finance evidence is research-grade, unofficial, `LOW` trust, and
-  `RETRIEVAL_TIME` availability until calibration proves more.
+  `RETRIEVAL_TIME` availability. Calibration agreement alone cannot change
+  either classification.
+- Daily-bar calibration compares only explicitly unadjusted series. Persist
+  `unavailable` or `incompatible` attempts; never turn missing secondary access
+  into zero coverage or agreement.
+- Massive is an optional US calibration provider. Read `MASSIVE_API_KEY` only
+  from the environment, send it only in an Authorization header, require
+  `adjusted=false`, and keep redirects/pagination inside approved official
+  HTTPS paths.
 - Provider contract monitoring may detect access and schema drift but must never
   upgrade `DataTrustLevel`, PIT readiness, or historical continuity.
 - Longitudinal provider baselines must keep successful observations, required

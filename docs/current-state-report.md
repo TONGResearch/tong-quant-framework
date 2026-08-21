@@ -8,13 +8,13 @@ feature development.
 
 | Item | Frozen value |
 |---|---|
-| Review date | 2026-08-21 |
+| Review date | 2026-08-22 |
 | Code baseline | Current Git HEAD; exact published commit is reported with each release |
 | Remote baseline | Revalidated after each requested push with `git ls-remote` |
 | Framework version | `0.8.0` |
 | Public database schema version | `0.8.0` |
-| Migration head | `0007_cninfo_artifact_capture` |
-| Latest data evidence | Phase III reports, live CNInfo/Yahoo contract probe, and bounded direct CNInfo metadata/PDF smoke checks on `2026-08-21` |
+| Migration head | `0008_provider_calibration_attempts` |
+| Latest data evidence | Phase III reports; live CNInfo/Yahoo contract probes; bounded direct CNInfo metadata/PDF checks; deterministic Yahoo/independent daily-bar calibration contract |
 | Scope boundary | Research platform only; no live trading capability |
 
 Provider-neutral evidence, engineering continuity governance, and longitudinal
@@ -145,7 +145,7 @@ flowchart LR
     Execution --> Foundation
 ```
 
-Static imports across 176 source files show no top-level package cycle. The
+Static imports across 180 source files show no top-level package cycle. The
 important directional properties are intact:
 
 - Risk does not import Portfolio; Portfolio imports the generic Risk contract.
@@ -163,14 +163,14 @@ changing independently or are moved to separate services.
 
 ## 3. Database Schema Inventory
 
-The initialized SQLite schema contains 60 application tables, excluding SQLite
+The initialized SQLite schema contains 63 application tables, excluding SQLite
 internal tables.
 
 ### Metadata and Migrations (3)
 
 `schema_metadata`, `schema_migrations`, `schema_fingerprints`
 
-### Data Foundation and Calibration (18)
+### Data Foundation and Calibration (19)
 
 `instruments`, `daily_bars`, `trading_calendar`, `fundamental_facts`,
 `instrument_status_history`, `universe_memberships`, `corporate_actions`,
@@ -179,11 +179,12 @@ internal tables.
 `pit_readiness_assessments`, `security_lifecycle_events`,
 `fundamental_publication_events`, `historical_coverage_assessments`,
 `provider_consistency_reports`, `provider_conflicts`,
-`dataset_confidence_assessments`
+`dataset_confidence_assessments`, `provider_calibration_attempts`
 
-### Provider Evidence and Monitoring (6)
+### Provider Evidence and Monitoring (8)
 
-`provider_evidence_records`, `provider_contract_runs`,
+`provider_evidence_records`, `provider_artifacts`,
+`provider_artifact_observations`, `provider_contract_runs`,
 `provider_contract_checks`, `provider_baseline_manifests`,
 `provider_baseline_entries`, `provider_baseline_inputs`
 
@@ -222,7 +223,7 @@ internal tables.
 ### Schema Engineering Status
 
 - Public schema version: `0.8.0`.
-- Migration head: `0007_cninfo_artifact_capture`.
+- Migration head: `0008_provider_calibration_attempts`.
 - Migrations are ordered and checksum-verified.
 - Research and Validation final writes have transaction boundaries.
 - A fresh schema passes `PRAGMA foreign_key_check`.
@@ -234,7 +235,7 @@ internal tables.
   table counts.
 - Migrations remain forward-only; downgrade, free-space checks, automated
   encrypted retention, and broad post-migration domain invariants are incomplete.
-- `data/storage/sqlite.py` is 5,047 lines and is the largest maintainability
+- `data/storage/sqlite.py` is 5,180 lines and is the largest maintainability
   hotspot.
 
 ## 4. Provider Inventory
@@ -247,7 +248,7 @@ internal tables.
 | CNInfo via AKShare | China A disclosure evidence | Provider-neutral adapter implemented | Fake-client and live contract checks | Transported announcement timestamps with explicit provenance |
 | CNInfo direct | China A disclosure metadata/artifacts | Direct adapter and content-addressed store implemented | Real bounded metadata, one-PDF, and 3/3 same-day transport-parity smoke checks; representative continuity unverified | Official timestamp, URL, relation and content-hash evidence |
 | Yahoo Finance | Overseas bootstrap | Provider-neutral adapter implemented | Fake-client contract tests; live continuity unverified | Low-trust retrieval-time US/HK/Malaysia bars |
-| Massive/Polygon | Overseas commercial provider | Future reservation only | No adapter or capability study | Higher-quality market/reference data if justified |
+| Massive/Polygon | Optional US calibration provider | Provider-neutral unadjusted bar/action adapter implemented | Fake-client and security tests; no committed real provider evidence | Independent Yahoo comparison when credentials and permissions allow |
 | Finnhub | Overseas news/fundamental provider | Future reservation only | No adapter or capability study | News, filings, fundamentals, event augmentation |
 | Telegram / WeChat / Email | Notification delivery channels | Implemented and disabled by default | Fake-channel tests; live tests opt-in and skipped | Research information only |
 | QMT / PTrade / IBKR / Moomoo | Broker/execution providers | Not implemented | No connectivity | Explicitly outside current readiness |
@@ -258,8 +259,9 @@ the same exchange or portal records. Calibration must preserve raw provenance
 and identify common upstream sources. Yahoo Finance is reasonable for an
 overseas research bootstrap, but it should not be treated as the final source
 for exchange-grade PIT fundamentals, corporate actions, or production service
-levels. Massive/Polygon and Finnhub should be introduced only after endpoint,
-licensing, timestamp, revision, and identifier coverage are measured.
+levels. Massive is now an optional low-trust calibration source, not an
+authority. Finnhub should be introduced only after endpoint, licensing,
+timestamp, revision, and identifier coverage are measured.
 
 ## 5. PIT Readiness Inventory
 
@@ -309,6 +311,7 @@ No integrated AKShare dataset is universally PIT-safe.
 | Delisting records | MEDIUM, partial | Terminal-event evidence, not complete warning history |
 | CSI constituents | LOW-MEDIUM snapshot; currently unavailable | No backward survivorship-safe reconstruction |
 | Corporate actions | MEDIUM content, LOW timing | Audit evidence; not PIT adjustment authority |
+| Yahoo/Massive unadjusted daily bars | LOW, retrieval-time | Provider comparison and exploratory research only; fixture agreement is not real coverage |
 
 `DataTrustLevel` and `AvailabilityPrecision` remain separate. Research,
 Validation, and Replay must preserve both together with provider limitations,
@@ -321,9 +324,9 @@ samples remain visible instead of being silently dropped.
 |---|---|---|---|---|
 | TD-001 | P0 | Complete PIT publication, lifecycle, and universe history is unavailable | Conservative trust and warnings | Verified historical coverage and reconciliation |
 | TD-002 | P0 | Corporate-action timing and dated adjustment factors are incomplete | Strict PIT rejects adjusted bars | Reproducible PIT factor ledger |
-| TD-003 | P0 | No real secondary-provider consistency baseline | Tushare remains UNKNOWN, never assumed | Date-aligned dual-provider runs across multiple periods |
+| TD-003 | P0 | No representative real secondary-provider consistency baseline | Tushare absence and optional Massive access remain explicit; fixture agreement cannot promote trust | Date-aligned real dual-provider runs across multiple periods |
 | TD-004 | P1 | Most analytical tables lack database foreign keys | Repository contracts and tests | Orphan audit plus staged FK migrations |
-| TD-005 | P1 | SQLite storage is a 4,451-line ownership monolith | Module-facing repository contracts | Split by domain behind one transaction manager |
+| TD-005 | P1 | SQLite storage remains a large ownership monolith | Module-facing repository contracts | Split by domain behind one transaction manager |
 | TD-006 | P1 | Recovery scheduling, encrypted off-device retention, downgrade, free-space checks, and broad migration invariants remain incomplete | Verified online backup, isolated restore, checksums, fingerprints, row counts, and runbook | Recurring encrypted recovery exercises plus staged domain-invariant checks |
 | TD-007 | P1 | Runtime framework snapshots are partly caller-supplied | Stored hashes and versions | Runtime factory verifies Git state and effective config |
 | TD-008 | P1 | Notification lacks worker supervision, alerting, replay policy, and retention policy | Lease recovery and dead letters | Operational runbook and monitoring |
@@ -333,7 +336,7 @@ samples remain visible instead of being silently dropped.
 | TD-012 | P2 | Portfolio and Risk are explainable heuristics, not calibrated models | Proposal-only semantics | Validation against reliable samples and tail/liquidity evidence |
 | TD-013 | P2 | Live provider tests are skipped by default | Deterministic fakes | Scheduled isolated provider contract monitoring |
 | TD-014 | P2 | No enforced coverage threshold or PIT property-test suite | CI runs tests, Ruff, mypy | Coverage policy and time-ordering properties |
-| TD-015 | P2 | Overseas provider and identifier normalization is unimplemented | Shared Instrument vocabulary reserved | Tested mapping for exchange, currency, timezone, and corporate actions |
+| TD-015 | P2 | Overseas identifier and reference normalization remains incomplete | Yahoo/Massive share session, OHLCV, price-basis, and action-date contracts | Tested exchange, identifier-history, currency, calendar, and delisting mappings |
 
 No trading-strategy implementation is listed as technical debt. Its absence is
 an intentional safety and sequencing decision.
@@ -545,17 +548,17 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 178 | Python files under `src/` |
-| Source lines | 28,351 | Python lines under `src/`, including blanks/comments |
-| Test files | 43 | Python test modules under `tests/` |
-| Test cases | 222 | Pytest collection |
-| Test lines | 8,559 | Python lines under `tests/` |
-| Database tables | 62 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 45 | Markdown files under `docs/` |
-| Runtime scripts | 7 | Files under `scripts/` |
+| Source files | 180 | Python files under `src/` |
+| Source lines | 29,971 | Python lines under `src/`, including blanks/comments |
+| Test files | 44 | Python test modules under `tests/` |
+| Test cases | 231 | Pytest collection |
+| Test lines | 8,920 | Python lines under `tests/` |
+| Database tables | 63 | Initialized application tables, excluding SQLite internals |
+| Documentation files | 46 | Markdown files under `docs/` |
+| Runtime scripts | 8 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 216 passed and 6 skipped tests. Skips are the
+The verification baseline is 225 passed and 6 skipped tests. Skips are the
 expected opt-in live AKShare, direct CNInfo, Tushare, and notification network
 checks. CI runs Pytest, Ruff, mypy, and the project governance audit on push and
 pull request.
@@ -584,6 +587,7 @@ pull request.
 | Longitudinal provider baseline | Current baseline | Immutable manifests, scope metrics, retained CI history, deterministic reports |
 | Database recovery hardening | Current baseline | Read-only audit, verified backup, isolated restore drill, corruption/interruption tests, runbook |
 | Direct CNInfo artifact evidence | Current baseline | Official metadata adapter, bounded PDF capture, content-addressed storage, immutable observations, parity contract |
+| Independent Yahoo calibration | Current baseline | Deterministic unadjusted contract, optional Massive evidence, trust ceiling, unavailable/incompatible audit states |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
 
 ## Baseline Freeze Decision

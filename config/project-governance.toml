@@ -1,7 +1,7 @@
 [baseline]
 framework_version = "0.8.0"
 database_schema_version = "0.8.0"
-migration_head = "0007_cninfo_artifact_capture"
+migration_head = "0008_provider_calibration_attempts"
 current_phase = "engineering-continuity-and-data-readiness"
 canonical_status_document = "PROJECT_STATUS.md"
 
@@ -46,6 +46,7 @@ required_documents = [
   "docs/engineering-continuity.md",
   "docs/risk-register.md",
   "docs/technical-debt-register.md",
+  "docs/yahoo-daily-bar-calibration.md",
 ]
 
 [next_phase]
@@ -76,13 +77,13 @@ depends_on = ["WP-DATA-001"]
 [[work_packages]]
 id = "WP-DATA-003"
 title = "Independent Yahoo calibration"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-data-003.md"
 depends_on = ["WP-DATA-001"]
 
 [[work_packages]]
 id = "WP-OPS-001"
 title = "Provider monitor alerting and retention"
-status = "planned"
+status = "ready"
 document = "docs/work-packages/wp-ops-001.md"
 depends_on = ["WP-DATA-001", "WP-DB-001"]

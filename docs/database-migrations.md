@@ -62,7 +62,16 @@ Migration `0007_cninfo_artifact_capture` adds:
 - `provider_artifact_observations` for captured, missing, unavailable, changed
   URL, and relation evidence over time
 
-The current migration head is `0007_cninfo_artifact_capture`. The public
+Migration `0008_provider_calibration_attempts` adds:
+
+- `provider_calibration_attempts` for completed, unavailable, and incompatible
+  cross-provider calibration outcomes
+- trust, availability precision, price basis, input hashes, sanitized failure
+  reason, and an optional foreign key to a completed consistency report
+- one atomic write boundary for a completed report, conflicts, confidence, and
+  attempt record
+
+The current migration head is `0008_provider_calibration_attempts`. The public
 schema version remains `0.8.0`; this is data-foundation remediation rather than
 a new product milestone.
 

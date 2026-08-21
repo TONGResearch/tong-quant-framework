@@ -1,0 +1,33 @@
+{
+  "availability_precision": "retrieval_time",
+  "bars": [
+    {
+      "close": 483.0,
+      "corporate_actions": [
+        "dividend"
+      ],
+      "high": 485.0,
+      "low": 478.0,
+      "open": 480.0,
+      "session_date": "2026-06-18",
+      "volume": 20000000
+    },
+    {
+      "close": 481.5,
+      "corporate_actions": [],
+      "high": 484.0,
+      "low": 480.0,
+      "open": 483.0,
+      "session_date": "2026-06-19",
+      "volume": 18000000
+    }
+  ],
+  "limitations": [
+    "Synthetic Yahoo fixture for deterministic contract verification"
+  ],
+  "market": "us",
+  "price_basis": "unadjusted",
+  "provider": "yahoo_finance",
+  "subject": "MSFT",
+  "trust_level": "low"
+}
