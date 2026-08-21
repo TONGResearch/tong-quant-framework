@@ -145,7 +145,7 @@ flowchart LR
     Execution --> Foundation
 ```
 
-Static imports across 175 source files show no top-level package cycle. The
+Static imports across 176 source files show no top-level package cycle. The
 important directional properties are intact:
 
 - Risk does not import Portfolio; Portfolio imports the generic Risk contract.
@@ -226,12 +226,15 @@ internal tables.
 - Migrations are ordered and checksum-verified.
 - Research and Validation final writes have transaction boundaries.
 - A fresh schema passes `PRAGMA foreign_key_check`.
-- Only `notification_deliveries` and `notification_dead_letters` currently have
-  declared foreign keys. Most analytical ownership relationships are enforced
-  in repositories and tests rather than by SQLite.
-- Migrations are forward-only; backup, downgrade, free-space checks, and broad
-  post-migration domain invariants remain incomplete.
-- `data/storage/sqlite.py` is 4,451 lines and is the largest maintainability
+- Notification hardening, provider evidence, and provider baseline tables have
+  explicit foreign keys. Most older analytical ownership relationships remain
+  enforced in repositories and tests rather than by SQLite.
+- Read-only audits, SQLite online backups, and isolated no-overwrite restore
+  drills verify integrity, foreign keys, migration checksums, fingerprints, and
+  table counts.
+- Migrations remain forward-only; downgrade, free-space checks, automated
+  encrypted retention, and broad post-migration domain invariants are incomplete.
+- `data/storage/sqlite.py` is 4,907 lines and is the largest maintainability
   hotspot.
 
 ## 4. Provider Inventory
@@ -319,7 +322,7 @@ samples remain visible instead of being silently dropped.
 | TD-003 | P0 | No real secondary-provider consistency baseline | Tushare remains UNKNOWN, never assumed | Date-aligned dual-provider runs across multiple periods |
 | TD-004 | P1 | Most analytical tables lack database foreign keys | Repository contracts and tests | Orphan audit plus staged FK migrations |
 | TD-005 | P1 | SQLite storage is a 4,451-line ownership monolith | Module-facing repository contracts | Split by domain behind one transaction manager |
-| TD-006 | P1 | Backup, downgrade, and full migration invariants are missing | Checksums and migration head | Tested backup/restore and post-migration audit |
+| TD-006 | P1 | Recovery scheduling, encrypted off-device retention, downgrade, free-space checks, and broad migration invariants remain incomplete | Verified online backup, isolated restore, checksums, fingerprints, row counts, and runbook | Recurring encrypted recovery exercises plus staged domain-invariant checks |
 | TD-007 | P1 | Runtime framework snapshots are partly caller-supplied | Stored hashes and versions | Runtime factory verifies Git state and effective config |
 | TD-008 | P1 | Notification lacks worker supervision, alerting, replay policy, and retention policy | Lease recovery and dead letters | Operational runbook and monitoring |
 | TD-009 | P1 | At-least-once notification can duplicate an externally accepted send | Dedup key and lease recovery | Provider idempotency/reconciliation support |
@@ -344,7 +347,7 @@ an intentional safety and sequencing decision.
 | R-005 | High | Fundamental values are paired with optimistic publication times | Separate availability precision and announcement evidence | Backfill publication/revision ledgers |
 | R-006 | High | Corporate actions contaminate historical prices | Adjusted histories rejected in strict mode | Dated adjustment-factor reconstruction |
 | R-007 | High | CSI/universe endpoint failure blocks market breadth and membership research | Bounded retries and visible failure | Stable primary plus independent secondary source |
-| R-008 | High | Orphaned rows or partial migrations corrupt analytical reconstruction | Transactions, checksums, limited FKs | Backup, orphan audit, staged FK program |
+| R-008 | High | Orphaned rows or partial migrations corrupt analytical reconstruction | Transactions, checksums, verified backups/restores, fingerprints, limited FKs | Orphan audit, staged FK program, recurring recovery drill |
 | R-009 | High | Portfolio heuristics are mistaken for investment authority | Proposal naming, status, disclaimers, no orders | Human governance and calibrated validation |
 | R-010 | High | Notification crash or retry duplicates external delivery | Leases, deterministic dedup, dead letter | Provider acknowledgement reconciliation |
 | R-011 | High | Credentials enter persistent content | Environment-only values and repository-level rejection | Access controls and secret scanning remain required |
@@ -391,8 +394,8 @@ persistence rejection, notification leases/dead letters, and fail-closed
 execution. These are necessary but not sufficient.
 
 Production readiness is blocked by `UNSUITABLE` PIT data, lack of verified
-secondary-provider evidence, incomplete database integrity and backup controls,
-absence of operational monitoring/runbooks, and unproven provider service
+secondary-provider evidence, manual backup scheduling/off-device retention,
+absence of provider-monitor alert ownership, and unproven provider service
 levels. Execution must remain disabled. The current system should not manage
 capital or publish broad historical performance claims.
 
@@ -481,7 +484,8 @@ phase.
 - Add run manifests that separate query date, retrieval date, code commit,
   environment, and raw hashes without making reports falsely deterministic.
 - Resolve CSI endpoint reliability with a documented fallback source.
-- Complete database backup/restore drills and orphan audits.
+- Schedule recurring database restore drills, encrypted off-device rotation,
+  and orphan audits.
 - Split SQLite ownership incrementally without changing domain behavior.
 - Keep Tushare `UNKNOWN` until registration and permissions are available; do
   not block AKShare continuity work while waiting.
@@ -539,17 +543,17 @@ remediation.
 
 | Metric | Current value | Counting rule |
 |---|---:|---|
-| Source files | 175 | Python files under `src/` |
-| Source lines | 26,075 | Python lines under `src/`, including blanks/comments |
-| Test files | 40 | Python test modules under `tests/` |
-| Test cases | 196 | Pytest collection |
-| Test lines | 7,598 | Python lines under `tests/` |
+| Source files | 176 | Python files under `src/` |
+| Source lines | 26,869 | Python lines under `src/`, including blanks/comments |
+| Test files | 41 | Python test modules under `tests/` |
+| Test cases | 208 | Pytest collection |
+| Test lines | 7,933 | Python lines under `tests/` |
 | Database tables | 60 | Initialized application tables, excluding SQLite internals |
-| Documentation files | 42 | Markdown files under `docs/` |
-| Runtime scripts | 5 | Files under `scripts/` |
+| Documentation files | 44 | Markdown files under `docs/` |
+| Runtime scripts | 6 | Files under `scripts/` |
 | Static top-level dependency cycles | 0 | Package import audit |
 
-The verification baseline is 191 passed and 5 skipped tests. Skips are the
+The verification baseline is 203 passed and 5 skipped tests. Skips are the
 expected opt-in live AKShare, Tushare, and notification network checks. CI runs
 Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 
@@ -575,6 +579,7 @@ Pytest, Ruff, mypy, and the project governance audit on push and pull request.
 | Provider evidence foundation | `ccfe0ee` | Provider-neutral ingestion, CNInfo/Yahoo evidence, schema fingerprint, contract monitoring |
 | Engineering continuity | `e842f50` | Canonical status, machine-readable governance, bounded work packages, CI audit |
 | Longitudinal provider baseline | Current baseline | Immutable manifests, scope metrics, retained CI history, deterministic reports |
+| Database recovery hardening | Current baseline | Read-only audit, verified backup, isolated restore drill, corruption/interruption tests, runbook |
 | AKShare PIT remediation | `1020896` | Real AKShare audit, readiness dashboard, historical gaps and usage guidance |
 
 ## Baseline Freeze Decision

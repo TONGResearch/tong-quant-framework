@@ -193,6 +193,15 @@ in the same commit.
 - Every notification must carry the mandatory research-only disclaimer.
 - Database schema changes must use ordered checksum-verified migrations. Do not
   update schema metadata without completing the migration.
+- Before changing `SCHEMA`, preserve the previous fingerprinted migration
+  head's schema-definition hash in `SCHEMA_DEFINITION_HASHES`; otherwise newer
+  code cannot authenticate and restore that historical backup safely.
+- Never copy a live SQLite database with filesystem copy commands. Use
+  `SQLiteBackupService`, run a read-only audit before and after copying, and
+  publish only to a new destination after verification.
+- Restore drills must use a separate new path. Never overwrite or migrate an
+  active source database during recovery testing, and keep backups on an
+  approved encrypted volume with no credentials in command arguments.
 - Multi-step final Research and Validation writes must use one transaction
   boundary.
 - `docs/data-trust-matrix.md` is authoritative for AKShare PIT suitability. Do

@@ -115,6 +115,18 @@ MIGRATIONS = (
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
+# Freeze the schema-definition hash for every migration head that may have a
+# persisted fingerprint. This lets newer code authenticate an older snapshot
+# before applying forward migrations in an isolated restore copy.
+SCHEMA_DEFINITION_HASHES = {
+    PROVIDER_EVIDENCE_FOUNDATION.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
+    PROVIDER_CONTRACT_BASELINE.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
+}
+
 
 def run_migrations(connection: sqlite3.Connection) -> tuple[str, ...]:
     connection.execute(
@@ -669,11 +681,27 @@ def validate_latest_schema_fingerprint(
         raise RuntimeError(
             f"physical schema fingerprint mismatch before migration at {migration_head}"
         )
-    definition_hash = sha256(_canonical_sql(schema_definition).encode("utf-8")).hexdigest()
-    if str(row[2]) != definition_hash:
+    definition_hash = expected_schema_definition_hash(
+        migration_head,
+        current_schema_definition=schema_definition,
+    )
+    if definition_hash is None or str(row[2]) != definition_hash:
         raise RuntimeError(
-            f"baseline schema definition changed without a migration at {migration_head}"
+            f"unrecognized schema definition at migration head {migration_head}"
         )
+
+
+def expected_schema_definition_hash(
+    migration_head: str,
+    *,
+    current_schema_definition: str,
+) -> str | None:
+    current_hash = sha256(
+        _canonical_sql(current_schema_definition).encode("utf-8")
+    ).hexdigest()
+    if migration_head == MIGRATION_HEAD:
+        return current_hash
+    return SCHEMA_DEFINITION_HASHES.get(migration_head)
 
 
 def _canonical_sql(value: str) -> str:
@@ -698,6 +726,8 @@ __all__ = [
     "MIGRATION_HEAD",
     "MIGRATIONS",
     "Migration",
+    "SCHEMA_DEFINITION_HASHES",
+    "expected_schema_definition_hash",
     "record_or_validate_schema_fingerprint",
     "run_migrations",
     "schema_fingerprint",

@@ -72,11 +72,29 @@ commits or rolls back the entire unit. Research and Validation final-run writes
 use this boundary. Run creation remains separate so a failed run can retain an
 explicit audit record.
 
+## Backup And Restore Assurance
+
+`SQLiteIntegrityService` audits databases through a read-only connection. It
+checks SQLite integrity, foreign keys, migration order and checksums, schema
+metadata, the physical fingerprint ledger, table row counts, and
+credential-like schema columns.
+
+`SQLiteBackupService` uses SQLite's online backup API and never publishes a
+destination until a temporary snapshot passes the same audit and matches the
+source table counts, migration head, and fingerprint. Restore drills copy into
+a separate temporary database, run supported forward migrations there, verify
+all source table counts, and publish only to a new destination. Existing files
+are never overwritten.
+
+See `docs/database-backup-restore.md` for commands, retention, and recovery.
+
 ## Migration Roadmap
 
 1. Keep future migrations append-only and checksum verified.
-2. Add pre-migration backup, free-space, integrity, and supported-source checks.
-3. Add post-migration `foreign_key_check` and domain invariant checks.
+2. Add free-space estimation and automatic pre-migration backup orchestration;
+   explicit verified backup and supported-source checks are now available.
+3. Extend the implemented post-copy integrity and `foreign_key_check` audit
+   with broader domain invariants.
 4. Rebuild analytical child tables in small groups to add missing foreign keys;
    do not rewrite the full schema in one release.
 5. Define explicit `RESTRICT`, `CASCADE`, or immutable-history behavior before
@@ -84,11 +102,12 @@ explicit audit record.
 6. Split the large SQLite module by market data, research, validation, portfolio,
    and notification ownership while retaining one transaction manager.
 7. Add downgrade policy. Until then, migrations are forward-only and require a
-   backup for production-like datasets.
+   verified backup plus isolated restore drill for production-like datasets.
 
 ## Current Limitation
 
 Most pre-existing analytical tables still lack database-enforced foreign keys.
 Adding them safely in SQLite requires table reconstruction, data cleanup, and
-orphan audits. This stabilization phase intentionally avoids an unsafe global
-schema rewrite.
+orphan audits. Backup encryption, automated scheduling/retention, free-space
+prediction, and downgrade migrations also remain outside the current local
+recovery tooling.

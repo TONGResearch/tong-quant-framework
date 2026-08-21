@@ -25,6 +25,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Scheduled provider contract monitoring
 - Immutable longitudinal provider baselines with separate success, field
   coverage, and schedule-continuity metrics
+- Read-only SQLite integrity audits, verified online backups, and isolated
+  no-overwrite restore drills
 - Discovery, Screening, Research, Validation, Historical Replay, Portfolio/Risk
   research artifacts, and disabled Notification infrastructure
 
@@ -37,11 +39,10 @@ met and Tong explicitly approves a new architecture proposal.
 
 ## Next Ready Work
 
-1. `WP-DB-001`: database backup, restore, and integrity drills
+1. `WP-DATA-002`: direct CNInfo artifact capture
 
-`WP-DATA-002` and `WP-DATA-003` remain planned until their work state is
-explicitly promoted; completion of a dependency does not authorize work by
-itself.
+`WP-DATA-003` remains planned until its work state is explicitly promoted;
+completion of a dependency does not authorize work by itself.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

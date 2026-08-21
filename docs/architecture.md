@@ -439,6 +439,27 @@ Baseline manifests are immutable and content-addressed. Missing scheduled
 periods and failed probes remain distinct, and observed trust is reported
 without producing a new trust assessment or changing PIT readiness.
 
+## Database Engineering Boundary
+
+Database recovery is isolated from domain repositories:
+
+```text
+SQLite source (read-only audit)
+            |
+     SQLite online backup
+            |
+ same-directory temporary snapshot
+            |
+ integrity + FK + migration + fingerprint + row-count audit
+            |
+  no-overwrite destination publication
+```
+
+`SQLiteIntegrityService` never initializes or migrates its audited source.
+`SQLiteBackupService` may run forward migrations only inside an isolated
+restore-drill copy. No active source or existing destination is overwritten.
+See `docs/database-backup-restore.md`.
+
 Provider Calibration Phase II adds Tushare behind a canonical calibration
 adapter. Consistency reports, individual conflict observations, and dataset
 confidence are persisted separately. Credentials remain environment-only, and

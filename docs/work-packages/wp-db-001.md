@@ -1,6 +1,6 @@
 # Work Package: WP-DB-001
 
-Status: `ready`
+Status: `completed`
 
 ## Objective
 
@@ -38,3 +38,19 @@ and integrity-checked without silent schema or audit-history loss.
 ## Required Verification
 
 Run all commands in `PROJECT_STATUS.md` plus restore and corruption tests.
+
+## Completion Record
+
+- Added typed read-only integrity reports, verified backup manifests, and
+  isolated restore reports.
+- Added SQLite online-backup copying through temporary files with atomic
+  no-overwrite publication and mode `0600`.
+- Audits verify integrity, foreign keys, migration order/checksums, schema
+  metadata/fingerprints, table counts, and credential-like schema columns.
+- Added `scripts/manage_database.py` with explicit `audit`, `backup`, and
+  `restore-dry-run` commands.
+- Added interruption, corruption, migration-tampering, no-overwrite, read-only,
+  backup, supported forward-migration restore, and command-level tests.
+- Added the retention and operator recovery runbook. Encryption, cloud upload,
+  automated deletion, and production incident orchestration remain out of
+  scope.

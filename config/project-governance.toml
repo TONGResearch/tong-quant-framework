@@ -62,14 +62,14 @@ depends_on = []
 [[work_packages]]
 id = "WP-DB-001"
 title = "Database backup restore and integrity drills"
-status = "ready"
+status = "completed"
 document = "docs/work-packages/wp-db-001.md"
 depends_on = []
 
 [[work_packages]]
 id = "WP-DATA-002"
 title = "Direct CNInfo artifact capture"
-status = "planned"
+status = "ready"
 document = "docs/work-packages/wp-data-002.md"
 depends_on = ["WP-DATA-001"]
 

@@ -20,3 +20,7 @@ class ExecutionDisabledError(TongQuantError):
 
 class DataProviderError(TongQuantError):
     """Raised when an external data provider remains unavailable after retries."""
+
+
+class DatabaseIntegrityError(TongQuantError):
+    """Raised when database audit, backup, or restore cannot complete safely."""

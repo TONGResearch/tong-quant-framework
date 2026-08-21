@@ -1,0 +1,332 @@
+import hashlib
+import json
+import sqlite3
+import subprocess
+import sys
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from tong_quant.core.exceptions import DatabaseIntegrityError
+from tong_quant.data.storage.engineering import (
+    DatabaseAuditStatus,
+    SQLiteBackupService,
+    SQLiteIntegrityService,
+    database_integrity_json,
+)
+from tong_quant.data.storage.migrations import (
+    MIGRATION_HEAD,
+    PROVIDER_EVIDENCE_FOUNDATION,
+    SCHEMA_DEFINITION_HASHES,
+)
+from tong_quant.data.storage.sqlite import SQLiteStore
+from tong_quant.domain.enums import AssetType, Market
+from tong_quant.domain.models import Instrument
+
+NOW = datetime(2026, 8, 21, 12, tzinfo=UTC)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _database(path: Path) -> SQLiteStore:
+    store = SQLiteStore(path)
+    store.initialize()
+    store.upsert_instruments(
+        (
+            Instrument(
+                symbol="600000",
+                market=Market.CHINA_A,
+                name="Synthetic Equity",
+                asset_type=AssetType.EQUITY,
+                available_at=NOW,
+                source="test",
+            ),
+        )
+    )
+    return store
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_read_only_audit_validates_schema_migrations_and_rows(tmp_path: Path) -> None:
+    path = tmp_path / "source.sqlite3"
+    _database(path)
+    before = _sha256(path)
+    service = SQLiteIntegrityService(clock=lambda: NOW)
+
+    first = service.audit(path)
+    service.clock = lambda: NOW + timedelta(days=1)
+    second = service.audit(path)
+
+    assert first.status is DatabaseAuditStatus.PASSED
+    assert first.migration_head == MIGRATION_HEAD
+    assert first.schema_fingerprint_valid is True
+    assert first.schema_definition_valid is True
+    assert first.migration_checksums_valid is True
+    assert first.foreign_key_violations == ()
+    assert dict((item.table, item.rows) for item in first.table_counts)[
+        "instruments"
+    ] == 1
+    assert first.audit_hash == second.audit_hash
+    assert first.checked_at != second.checked_at
+    assert _sha256(path) == before
+
+
+def test_backup_and_dry_run_restore_preserve_database_state(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    backup = tmp_path / "backups" / "source-20260821.sqlite3"
+    restored = tmp_path / "restore-drill" / "source.sqlite3"
+    _database(source)
+    integrity = SQLiteIntegrityService(clock=lambda: NOW)
+    service = SQLiteBackupService(
+        integrity_service=integrity,
+        clock=lambda: NOW,
+        pages_per_step=1,
+    )
+
+    manifest = service.create_backup(
+        source_path=source,
+        destination_path=backup,
+    )
+    restore = service.dry_run_restore(
+        backup_path=backup,
+        destination_path=restored,
+    )
+
+    assert manifest.table_counts_match is True
+    assert manifest.source_audit_hash == manifest.backup_audit_hash
+    assert manifest.migration_head == MIGRATION_HEAD
+    assert manifest.backup_sha256 == _sha256(backup)
+    assert backup.stat().st_mode & 0o777 == 0o600
+    assert restore.common_table_counts_match is True
+    assert restore.source_migration_head == MIGRATION_HEAD
+    assert restore.restored_migration_head == MIGRATION_HEAD
+    assert restore.migration_applied is False
+    assert restore.restored_sha256 == _sha256(restored)
+    assert restored.stat().st_mode & 0o777 == 0o600
+
+
+def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    restored = tmp_path / "restored.sqlite3"
+    _database(source)
+    previous_head = PROVIDER_EVIDENCE_FOUNDATION.migration_id
+    with sqlite3.connect(source) as connection:
+        fingerprint = str(
+            connection.execute(
+                "SELECT value FROM schema_metadata WHERE key = 'schema_fingerprint'"
+            ).fetchone()[0]
+        )
+        connection.execute(
+            "DELETE FROM schema_migrations WHERE migration_id = ?",
+            (MIGRATION_HEAD,),
+        )
+        connection.execute("DELETE FROM schema_fingerprints")
+        connection.execute(
+            """
+            INSERT INTO schema_fingerprints (
+                migration_head, schema_fingerprint,
+                schema_definition_hash, recorded_at
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                previous_head,
+                fingerprint,
+                SCHEMA_DEFINITION_HASHES[previous_head],
+                NOW.isoformat(),
+            ),
+        )
+        connection.execute(
+            "UPDATE schema_metadata SET value = ? WHERE key = 'migration_head'",
+            (previous_head,),
+        )
+    integrity = SQLiteIntegrityService(clock=lambda: NOW)
+    before = integrity.audit(source)
+
+    report = SQLiteBackupService(
+        integrity_service=integrity,
+        clock=lambda: NOW,
+    ).dry_run_restore(backup_path=source, destination_path=restored)
+
+    assert before.passed is False
+    assert before.requires_migration is True
+    assert before.schema_fingerprint_valid is True
+    assert before.schema_definition_valid is True
+    assert report.source_migration_head == previous_head
+    assert report.restored_migration_head == MIGRATION_HEAD
+    assert report.migration_applied is True
+    assert report.common_table_counts_match is True
+    assert integrity.audit(restored).passed is True
+
+
+def test_backup_never_overwrites_existing_destination(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    destination = tmp_path / "existing.sqlite3"
+    _database(source)
+    destination.write_bytes(b"keep-me")
+    before = destination.read_bytes()
+    service = SQLiteBackupService(SQLiteIntegrityService(clock=lambda: NOW))
+
+    with pytest.raises(DatabaseIntegrityError, match="overwrite is disabled"):
+        service.create_backup(source_path=source, destination_path=destination)
+
+    assert destination.read_bytes() == before
+
+
+def test_backup_rejects_source_as_destination(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    _database(source)
+    service = SQLiteBackupService(SQLiteIntegrityService(clock=lambda: NOW))
+
+    with pytest.raises(DatabaseIntegrityError, match="must be different"):
+        service.create_backup(source_path=source, destination_path=source)
+
+
+def test_backup_rejects_symbolic_link_destination(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    destination = tmp_path / "backup-link.sqlite3"
+    _database(source)
+    destination.symlink_to(tmp_path / "unpublished-target.sqlite3")
+    service = SQLiteBackupService(SQLiteIntegrityService(clock=lambda: NOW))
+
+    with pytest.raises(DatabaseIntegrityError, match="symbolic link"):
+        service.create_backup(source_path=source, destination_path=destination)
+
+    assert not (tmp_path / "unpublished-target.sqlite3").exists()
+
+
+def test_interrupted_backup_removes_partial_snapshot(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    destination = tmp_path / "interrupted.sqlite3"
+    _database(source)
+
+    def interrupt(_status: int, _remaining: int, _total: int) -> None:
+        raise RuntimeError("simulated interruption")
+
+    service = SQLiteBackupService(
+        SQLiteIntegrityService(clock=lambda: NOW),
+        progress=interrupt,
+        pages_per_step=1,
+    )
+
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        service.create_backup(source_path=source, destination_path=destination)
+
+    assert not destination.exists()
+    assert tuple(tmp_path.glob(".interrupted.sqlite3.*.tmp")) == ()
+
+
+def test_corrupted_database_and_backup_fail_closed(tmp_path: Path) -> None:
+    corrupted = tmp_path / "corrupted.sqlite3"
+    corrupted.write_bytes(b"not a sqlite database")
+    destination = tmp_path / "should-not-exist.sqlite3"
+    integrity = SQLiteIntegrityService(clock=lambda: NOW)
+    service = SQLiteBackupService(integrity)
+
+    report = integrity.audit(corrupted)
+
+    assert report.passed is False
+    assert report.error_code == "DatabaseError"
+    with pytest.raises(DatabaseIntegrityError, match="failed pre-backup audit"):
+        service.create_backup(
+            source_path=corrupted,
+            destination_path=destination,
+        )
+    assert not destination.exists()
+
+
+def test_migration_checksum_mismatch_blocks_backup(tmp_path: Path) -> None:
+    source = tmp_path / "tampered.sqlite3"
+    destination = tmp_path / "backup.sqlite3"
+    _database(source)
+    with sqlite3.connect(source) as connection:
+        connection.execute(
+            "UPDATE schema_migrations SET checksum = 'tampered' WHERE migration_id = ?",
+            (MIGRATION_HEAD,),
+        )
+    integrity = SQLiteIntegrityService(clock=lambda: NOW)
+    service = SQLiteBackupService(integrity)
+
+    report = integrity.audit(source)
+
+    assert report.passed is False
+    assert report.migration_checksums_valid is False
+    with pytest.raises(DatabaseIntegrityError, match="failed pre-backup audit"):
+        service.create_backup(source_path=source, destination_path=destination)
+    assert not destination.exists()
+
+
+def test_corrupted_backup_blocks_restore_and_leaves_no_destination(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source.sqlite3"
+    backup = tmp_path / "backup.sqlite3"
+    restored = tmp_path / "restored.sqlite3"
+    _database(source)
+    service = SQLiteBackupService(SQLiteIntegrityService(clock=lambda: NOW))
+    service.create_backup(source_path=source, destination_path=backup)
+    payload = bytearray(backup.read_bytes())
+    payload[:16] = b"corrupted backup"
+    backup.write_bytes(payload)
+
+    with pytest.raises(DatabaseIntegrityError, match="failed pre-restore audit"):
+        service.dry_run_restore(backup_path=backup, destination_path=restored)
+
+    assert not restored.exists()
+
+
+def test_read_only_audit_command_outputs_structured_report(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    _database(source)
+
+    result = subprocess.run(
+        (
+            sys.executable,
+            "scripts/manage_database.py",
+            "audit",
+            "--database",
+            str(source),
+        ),
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["status"] == "passed"
+    assert report["migration_head"] == MIGRATION_HEAD
+    assert report == database_integrity_json(
+        SQLiteIntegrityService().audit(source)
+    ) | {"checked_at": report["checked_at"]}
+
+
+def test_backup_command_rejects_report_at_database_destination(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    destination = tmp_path / "backup.sqlite3"
+    _database(source)
+
+    result = subprocess.run(
+        (
+            sys.executable,
+            "scripts/manage_database.py",
+            "backup",
+            "--database",
+            str(source),
+            "--destination",
+            str(destination),
+            "--output",
+            str(destination),
+        ),
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "must differ" in result.stderr
+    assert not destination.exists()

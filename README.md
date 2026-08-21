@@ -120,6 +120,8 @@ python scripts/ingest_data.py daily-bars 600000 20240101 20241231
 python scripts/ingest_data.py daily-bars 000001 20240101 20241231 --index
 python scripts/run_data_readiness.py
 python scripts/run_provider_contract_monitor.py
+python scripts/build_provider_contract_baseline.py
+python scripts/manage_database.py audit --database data/tong_quant.sqlite3
 ```
 
 Tushare cross-provider calibration is opt-in and requires an environment
@@ -134,6 +136,7 @@ python scripts/run_data_readiness.py --require-secondary
 
 See `docs/architecture.md`, `docs/data-foundation.md`,
 `docs/provider-evidence-foundation.md`,
+`docs/database-backup-restore.md`,
 `docs/engineering-continuity.md`,
 `docs/provider-calibration-phase-iii.md`,
 `docs/market-regime-engine.md`, `docs/screening-engine.md`,

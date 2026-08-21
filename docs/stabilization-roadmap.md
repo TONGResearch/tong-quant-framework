@@ -7,7 +7,8 @@ Allocation, or automatic orders.
 ## Gate 1: Operate The Hardened Foundation
 
 - Exercise lease recovery and dead-letter review in deterministic worker tests.
-- Define backup, restore, migration dry-run, and database integrity procedures.
+- Run the implemented verified backup/restore procedure on representative
+  research databases and establish encrypted retention cadence.
 - Audit existing databases for orphaned analytical rows.
 
 ## Gate 2: Improve PIT Evidence
@@ -40,5 +41,6 @@ user explicitly approves a separate architecture proposal.
 ## Current Work-Package Control
 
 This roadmap is now implemented through machine-readable work state in
-`config/project-governance.toml`. `WP-DATA-001` and `WP-DB-001` are the only
-ready packages. All trading-related development remains frozen.
+`config/project-governance.toml`. `WP-DATA-001` and `WP-DB-001` are completed;
+`WP-DATA-002` is the only ready package. All trading-related development remains
+frozen.

@@ -20,9 +20,12 @@ def test_canonical_project_governance_is_consistent() -> None:
     assert governance.readiness.pit == "unsuitable"
     assert tuple(
         item.package_id for item in governance.work_packages if item.status == "ready"
-    ) == ("WP-DB-001",)
+    ) == ("WP-DATA-002",)
     assert next(
         item for item in governance.work_packages if item.package_id == "WP-DATA-001"
+    ).status == "completed"
+    assert next(
+        item for item in governance.work_packages if item.package_id == "WP-DB-001"
     ).status == "completed"
 
 
