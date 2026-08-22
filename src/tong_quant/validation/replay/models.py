@@ -24,6 +24,8 @@ class ReplayConfidence:
     provider_limitation_score: float
     confidence: float
     reasons: tuple[str, ...]
+    validation_eligible: bool
+    blocking_reasons: tuple[str, ...]
     model_version: str = REPLAY_CONFIDENCE_VERSION
 
     def __post_init__(self) -> None:
@@ -37,6 +39,10 @@ class ReplayConfidence:
             _require_percentage(name, value)
         if not self.reasons:
             raise ValueError("ReplayConfidence must explain its score")
+        if self.validation_eligible and self.blocking_reasons:
+            raise ValueError("eligible replay confidence cannot have blocking reasons")
+        if not self.validation_eligible and not self.blocking_reasons:
+            raise ValueError("ineligible replay confidence must explain what blocked it")
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +53,7 @@ class ReplayQuery:
     decision_as_of: datetime
     outcome_as_of: datetime
     required_inputs: tuple[str, ...]
+    readiness_datasets: tuple[str, ...]
     outcome_definitions: tuple[OutcomeDefinition, ...]
     symbols: tuple[str, ...] = ()
     minimum_trust_level: DataTrustLevel = DataTrustLevel.MEDIUM
@@ -69,8 +76,19 @@ class ReplayQuery:
             raise ValueError("universe replay requires a universe")
         if not self.required_inputs:
             raise ValueError("ReplayQuery requires required_inputs")
+        if not self.readiness_datasets:
+            raise ValueError("ReplayQuery requires readiness_datasets")
+        if len(set(self.readiness_datasets)) != len(self.readiness_datasets):
+            raise ValueError("ReplayQuery readiness_datasets must be unique")
+        if self.minimum_trust_level in {
+            DataTrustLevel.LOW,
+            DataTrustLevel.UNKNOWN,
+        }:
+            raise ValueError("Historical Replay requires at least medium data trust")
         if not self.outcome_definitions:
             raise ValueError("ReplayQuery requires outcome_definitions")
+        if not self.include_incomplete_samples:
+            raise ValueError("Historical Replay must preserve incomplete samples")
 
 
 @dataclass(frozen=True, slots=True)

@@ -2280,18 +2280,23 @@ class SQLiteStore:
     def latest_pit_readiness(
         self,
         dataset: str,
+        *,
+        as_of: datetime | None = None,
     ) -> PITReadinessAssessment | None:
+        if as_of is not None:
+            self._require_aware(as_of)
+        query = """
+            SELECT *
+            FROM pit_readiness_assessments
+            WHERE dataset = ?
+        """
+        parameters: tuple[object, ...] = (dataset,)
+        if as_of is not None:
+            query += " AND assessed_at <= ?"
+            parameters = (dataset, _datetime_text(as_of))
+        query += " ORDER BY assessed_at DESC, ingested_at DESC LIMIT 1"
         with self._connect() as connection:
-            row = connection.execute(
-                """
-                SELECT *
-                FROM pit_readiness_assessments
-                WHERE dataset = ?
-                ORDER BY assessed_at DESC, ingested_at DESC
-                LIMIT 1
-                """,
-                (dataset,),
-            ).fetchone()
+            row = connection.execute(query, parameters).fetchone()
         return None if row is None else _pit_readiness_from_row(row)
 
     def latest_provider_consistency(

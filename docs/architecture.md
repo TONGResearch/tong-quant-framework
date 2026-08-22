@@ -552,3 +552,25 @@ state is an execution decision. See `docs/technical-research-extension.md`.
 
 The remaining evidence, research, validation, portfolio, operational, broker,
 and rollout gates are documented in `docs/execution-readiness-storyboard.md`.
+
+## Historical Replay Data-Quality Gate
+
+Historical Replay keeps reconstruction and research correctness separate, but
+only an explicitly eligible reconstruction may become a `ValidationRequest`:
+
+```text
+ReplayQuery(required inputs + readiness datasets + minimum trust)
+                              |
+          PIT reconstruction preserving every subject
+                              |
+ ReplayConfidence(validation_eligible + blocking reasons)
+                              |
+      fail-closed ValidationRequestFactory
+```
+
+The gate requires visible `USABLE` PIT assessments for every declared dataset,
+at least `MEDIUM` trust, no critical missing input, and no silently excluded
+sample. ST, suspended, delisting, and delisted subjects remain visible and do
+not count as missing merely because their lifecycle state is adverse. Consumed
+readiness evidence is selected as of replay generation time and frozen by hash.
+See `docs/backtesting-data-assurance.md`.

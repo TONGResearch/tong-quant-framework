@@ -41,6 +41,11 @@ def test_canonical_project_governance_is_consistent() -> None:
         for item in governance.work_packages
         if item.package_id == "WP-READINESS-001"
     ).status == "completed"
+    assert next(
+        item
+        for item in governance.work_packages
+        if item.package_id == "WP-VALIDATION-001"
+    ).status == "completed"
 
 
 def test_governance_rejects_disabled_trading_freeze(tmp_path: Path) -> None:

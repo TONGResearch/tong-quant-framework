@@ -42,6 +42,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
   no-overwrite restore drills
 - Discovery, Screening, Research, Validation, Historical Replay, Portfolio/Risk
   research artifacts, and disabled Notification infrastructure
+- Fail-closed Historical Replay data-quality eligibility: explicit readiness
+  datasets, minimum trust enforcement, incomplete-sample preservation, and
+  readiness evidence hashes before ValidationRequest creation
 
 ## Frozen Work
 

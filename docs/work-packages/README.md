@@ -18,3 +18,7 @@ Use `template.md` when a new package is approved.
 by evidence family, treats size as point-in-time cross-sectional context, and
 keeps startup and stop concepts inside Research. Indicator formulas alone
 cannot make this package ready.
+
+`WP-VALIDATION-001` closes a prior Historical Replay eligibility gap. Replay
+results now preserve all samples and fail closed before Validation when trust,
+PIT readiness, or required data is insufficient.

@@ -27,6 +27,7 @@ class ValidationRequestFactory:
         requested_at: datetime | None = None,
         minimum_observations: int = 1,
     ) -> ValidationRequest:
+        _require_validation_eligible(result)
         samples = result.complete_validation_samples
         if not samples:
             raise ValueError("cannot build ValidationRequest without complete replay samples")
@@ -54,6 +55,25 @@ class ValidationRequestFactory:
             walk_forward_policy=walk_forward_policy,
             out_of_sample_policy=out_of_sample_policy,
             minimum_observations=minimum_observations,
+        )
+
+
+def _require_validation_eligible(result: HistoricalReplayResult) -> None:
+    blockers = list(result.manifest.replay_confidence.blocking_reasons)
+    ineligible_samples = tuple(
+        sample
+        for sample in result.samples
+        if not sample.is_complete or not sample.replay_confidence.validation_eligible
+    )
+    if ineligible_samples:
+        blockers.append(
+            "incomplete or data-quality-ineligible replay samples: "
+            + ", ".join(sample.sample_id for sample in ineligible_samples[:5])
+        )
+    if blockers:
+        raise ValueError(
+            "Historical Replay is not eligible for Validation: "
+            + "; ".join(dict.fromkeys(blockers))
         )
 
 

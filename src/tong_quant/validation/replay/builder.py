@@ -36,11 +36,20 @@ class HistoricalReplayBuilder:
         generated_at: datetime | None = None,
     ) -> HistoricalReplayResult:
         generated = generated_at or datetime.now(UTC)
+        if generated < query.outcome_as_of:
+            raise ValueError("replay cannot be generated before outcome_as_of")
         query_hash = stable_hash(query)
         provider_limitations = tuple(
-            self.repository.provider_limitations(query.provider_limitation_datasets)
+            limitation
+            for limitation in self.repository.provider_limitations(
+                query.provider_limitation_datasets
+            )
+            if limitation.documented_at <= generated
         )
-        readiness = self.repository.readiness_assessments(query.required_inputs)
+        readiness = self.repository.readiness_assessments(
+            query.readiness_datasets,
+            as_of=generated,
+        )
         instruments = self._subjects(query)
         samples = tuple(
             sample
@@ -52,7 +61,6 @@ class HistoricalReplayBuilder:
                 provider_limitations=provider_limitations,
                 readiness=readiness,
             )
-            if query.include_incomplete_samples or sample.validation_sample is not None
         )
         trust_summary = _merge_trust_summaries(sample.data_trust_summary for sample in samples)
         missing_warnings = tuple(
@@ -68,7 +76,12 @@ class HistoricalReplayBuilder:
             ReplayConfidenceInput(
                 trust_levels=_trust_levels_from_summary(trust_summary),
                 readiness_assessments=readiness,
-                missing_data_count=sum(len(sample.missing_data_flags) for sample in samples),
+                required_datasets=query.readiness_datasets,
+                minimum_trust_level=query.minimum_trust_level,
+                missing_data_count=sum(
+                    _blocking_missing_data_count(sample.missing_data_flags)
+                    for sample in samples
+                ),
                 expected_input_count=max(1, len(samples) * len(query.required_inputs)),
                 provider_limitations=provider_limitations,
             )
@@ -80,6 +93,10 @@ class HistoricalReplayBuilder:
             dataset_versions={
                 "schema": self.repository.store.schema_version(),
                 **{item.dataset: item.model_version for item in readiness},
+                **{
+                    f"readiness_hash:{item.dataset}": stable_hash(item)
+                    for item in readiness
+                },
             },
             schema_version=self.repository.store.schema_version(),
             framework_version=query.framework_version,
@@ -185,7 +202,9 @@ class HistoricalReplayBuilder:
             ReplayConfidenceInput(
                 trust_levels=_trust_levels_from_summary(trust_summary),
                 readiness_assessments=readiness,
-                missing_data_count=len(missing_flags),
+                required_datasets=query.readiness_datasets,
+                minimum_trust_level=query.minimum_trust_level,
+                missing_data_count=_blocking_missing_data_count(missing_flags),
                 expected_input_count=len(query.required_inputs),
                 provider_limitations=provider_limitations,
             )
@@ -328,6 +347,10 @@ def _trust_summary(decision_context: dict[str, object]) -> dict[str, int]:
             if isinstance(level, str):
                 summary[level] += 1
     return {key: value for key, value in summary.items() if value}
+
+
+def _blocking_missing_data_count(flags: tuple[str, ...]) -> int:
+    return sum(flag.endswith("_missing") for flag in flags)
 
 
 def _merge_trust_summaries(

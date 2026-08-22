@@ -83,3 +83,16 @@ A dataset may move to a stronger class only after tests demonstrate historical
 coverage, publication-time provenance, revision handling, delisted-security
 retention, stable identifiers, and reproducible raw payload hashes. Provider
 documentation alone is not sufficient evidence.
+
+## Historical Validation Consumption Gate
+
+A source classification does not by itself authorize historical validation.
+Each `ReplayQuery` must declare the datasets it depends on. Validation request
+creation requires an as-of-visible `USABLE` PIT readiness assessment for every
+declared dataset, trust of at least `MEDIUM`, no critical missing fields, and no
+incomplete or silently omitted replay sample. The manifest stores hashes of the
+exact readiness assessments consumed.
+
+This gate cannot prove that external data is correct. It prevents known weak,
+missing, stale, or undeclared evidence from being treated as a credible
+backtest. See `backtesting-data-assurance.md`.

@@ -48,6 +48,13 @@ validation, risk management, and controlled execution.
 - `ReplayConfidence` measures historical reconstruction quality separately
   from research correctness. Weak replay confidence must not be interpreted as
   proof that the research thesis was wrong.
+- Every ReplayQuery must declare all underlying `readiness_datasets`, require
+  at least `MEDIUM` trust, and preserve incomplete samples. Validation request
+  creation must fail closed if the manifest or any sample is not explicitly
+  validation-eligible.
+- Lifecycle-preservation warnings for ST, suspension, delisting, or relisting
+  are not missing data. Never remove or penalize a sample merely because the
+  security later became untradable.
 - Missing data must not silently become a favorable result.
 - Hard-screen failures cannot be offset by favorable scores.
 - Research Score prioritizes research only; it is not an investment decision.

@@ -1,6 +1,9 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+
+import pytest
 
 from tong_quant.data.models import PITReadinessAssessment, ProviderLimitation
 from tong_quant.data.storage.sqlite import SQLiteStore
@@ -26,9 +29,14 @@ from tong_quant.domain.models import (
 from tong_quant.validation.models import (
     OutcomeDefinition,
     OutOfSamplePolicy,
+    ValidationRequest,
     WalkForwardPolicy,
 )
-from tong_quant.validation.replay import HistoricalReplayBuilder, ReplayQuery
+from tong_quant.validation.replay import (
+    HistoricalReplayBuilder,
+    HistoricalReplayResult,
+    ReplayQuery,
+)
 from tong_quant.validation.replay.repository import SQLiteHistoricalReplayRepository
 from tong_quant.validation.replay.request_factory import ValidationRequestFactory
 from tong_quant.version import DATABASE_SCHEMA_VERSION
@@ -48,7 +56,10 @@ def test_replay_builds_deterministic_hash_and_request(tmp_path: Path) -> None:
     assert first.samples[0].replay_hash == second.samples[0].replay_hash
     assert first.samples[0].validation_sample is not None
     assert first.samples[0].replay_confidence.confidence < 100
+    assert first.samples[0].replay_confidence.validation_eligible is True
     assert first.manifest.replay_confidence.confidence < 100
+    assert first.manifest.replay_confidence.validation_eligible is True
+    assert "readiness_hash:fundamentals" in first.manifest.dataset_versions
     assert first.manifest.provider_limitations
     assert store.table_count("historical_replay_manifests") == 1
     assert store.table_count("historical_replay_samples") == 1
@@ -92,6 +103,10 @@ def test_replay_rejects_future_research_and_keeps_incomplete_visible(
     sample = result.samples[0]
     assert sample.validation_sample is None
     assert "research_report_missing" in sample.missing_data_flags
+    assert sample.replay_confidence.validation_eligible is False
+
+    with pytest.raises(ValueError, match="not eligible for Validation"):
+        _validation_request(result)
 
 
 def test_replay_preserves_special_status_and_missing_warnings(tmp_path: Path) -> None:
@@ -106,6 +121,8 @@ def test_replay_preserves_special_status_and_missing_warnings(tmp_path: Path) ->
     assert "security_status_preserved:special_treatment" in sample.missing_data_flags
     assert sample.validation_sample is not None
     assert sample.is_complete is True
+    assert sample.replay_confidence.missing_data_score == 100
+    assert sample.replay_confidence.validation_eligible is True
 
 
 def test_replay_includes_delisted_universe_members(tmp_path: Path) -> None:
@@ -132,6 +149,101 @@ def test_replay_includes_delisted_universe_members(tmp_path: Path) -> None:
 
     assert [sample.instrument.symbol for sample in result.samples] == ["600000"]
     assert "security_status_preserved:delisted" in result.samples[0].missing_data_flags
+
+
+def test_replay_minimum_trust_level_is_enforced(tmp_path: Path) -> None:
+    store, instrument = _prepared_store(tmp_path)
+    query = replace(
+        _query(symbols=(instrument.symbol,)),
+        minimum_trust_level=DataTrustLevel.VERIFIED,
+    )
+
+    result = HistoricalReplayBuilder(
+        SQLiteHistoricalReplayRepository(store),
+        persist=False,
+    ).build(query)
+
+    assert result.manifest.replay_confidence.validation_eligible is False
+    assert "below required verified" in " ".join(
+        result.manifest.replay_confidence.blocking_reasons
+    )
+    with pytest.raises(ValueError, match="below required verified"):
+        _validation_request(result)
+
+
+def test_replay_unsuitable_dataset_blocks_validation(tmp_path: Path) -> None:
+    store, instrument = _prepared_store(tmp_path)
+    store.save_pit_readiness_assessment(
+        _readiness_assessment(
+            "daily_bars",
+            assessed_at=datetime(2024, 1, 2, tzinfo=UTC),
+            classification=PITReadinessClassification.UNSUITABLE,
+        )
+    )
+
+    result = HistoricalReplayBuilder(
+        SQLiteHistoricalReplayRepository(store),
+        persist=False,
+    ).build(_query(symbols=(instrument.symbol,)))
+
+    assert result.manifest.replay_confidence.validation_eligible is False
+    assert "PIT readiness for daily_bars is unsuitable" in (
+        result.manifest.replay_confidence.blocking_reasons
+    )
+    with pytest.raises(ValueError, match="daily_bars is unsuitable"):
+        _validation_request(result)
+
+
+def test_replay_requires_readiness_for_every_declared_dataset(tmp_path: Path) -> None:
+    store, instrument = _prepared_store(tmp_path)
+    query = replace(
+        _query(symbols=(instrument.symbol,)),
+        readiness_datasets=("fundamentals", "universe_membership"),
+    )
+
+    result = HistoricalReplayBuilder(
+        SQLiteHistoricalReplayRepository(store),
+        persist=False,
+    ).build(query)
+
+    assert result.manifest.replay_confidence.validation_eligible is False
+    assert "missing PIT readiness assessment for universe_membership" in (
+        result.manifest.replay_confidence.blocking_reasons
+    )
+
+
+def test_replay_uses_readiness_visible_at_generation_time(tmp_path: Path) -> None:
+    store, instrument = _prepared_store(tmp_path)
+    store.save_pit_readiness_assessment(
+        _readiness_assessment(
+            "daily_bars",
+            assessed_at=datetime(2026, 1, 1, tzinfo=UTC),
+            classification=PITReadinessClassification.UNSUITABLE,
+        )
+    )
+
+    result = HistoricalReplayBuilder(
+        SQLiteHistoricalReplayRepository(store),
+        persist=False,
+    ).build(
+        _query(symbols=(instrument.symbol,)),
+        generated_at=datetime(2025, 2, 1, tzinfo=UTC),
+    )
+
+    assert result.manifest.replay_confidence.validation_eligible is True
+    assert result.manifest.dataset_versions["daily_bars"] == (
+        _readiness_assessment("daily_bars").model_version
+    )
+
+
+def test_replay_rejects_hidden_incomplete_sample_filter() -> None:
+    with pytest.raises(ValueError, match="must preserve incomplete samples"):
+        replace(_query(), include_incomplete_samples=False)
+
+
+def test_replay_rejects_weak_minimum_trust_policy() -> None:
+    with pytest.raises(ValueError, match="at least medium data trust"):
+        replace(_query(), minimum_trust_level=DataTrustLevel.LOW)
 
 
 def _prepared_store(
@@ -210,22 +322,55 @@ def _prepared_store(
             documented_at=datetime(2024, 1, 1, tzinfo=UTC),
         )
     )
-    store.save_pit_readiness_assessment(
-        PITReadinessAssessment(
-            dataset="fundamentals",
-            assessed_at=datetime(2024, 1, 1, tzinfo=UTC),
-            coverage_ratio=0.90,
-            trust_level=DataTrustLevel.HIGH,
-            missing_critical_fields=(),
-            warnings=("partial coverage",),
-            ready_for_historical_replay=True,
-            readiness_score=85,
-            classification=PITReadinessClassification.USABLE,
-            score_components={"coverage": 90, "trust": 75},
-            assumptions=("test fixture",),
-        )
-    )
+    for dataset in ("instrument_status", "fundamentals", "daily_bars"):
+        store.save_pit_readiness_assessment(_readiness_assessment(dataset))
     return store, instrument
+
+
+def _readiness_assessment(
+    dataset: str,
+    *,
+    assessed_at: datetime = datetime(2024, 1, 1, tzinfo=UTC),
+    classification: PITReadinessClassification = PITReadinessClassification.USABLE,
+) -> PITReadinessAssessment:
+    usable = classification is PITReadinessClassification.USABLE
+    return PITReadinessAssessment(
+        dataset=dataset,
+        assessed_at=assessed_at,
+        coverage_ratio=0.90 if usable else 0.50,
+        trust_level=DataTrustLevel.HIGH if usable else DataTrustLevel.LOW,
+        missing_critical_fields=() if usable else ("historical_continuity",),
+        warnings=("test fixture",),
+        ready_for_historical_replay=usable,
+        readiness_score=85 if usable else 35,
+        classification=classification,
+        score_components={
+            "coverage": 90 if usable else 50,
+            "trust": 75 if usable else 25,
+        },
+        assumptions=("test fixture",),
+    )
+
+
+def _validation_request(result: HistoricalReplayResult) -> ValidationRequest:
+    return ValidationRequestFactory().build(
+        result,
+        validation_id="validation-from-replay",
+        modules=(ValidationModuleName.HISTORICAL,),
+        walk_forward_policy=WalkForwardPolicy(
+            training_days=30,
+            validation_days=10,
+            step_days=10,
+            embargo_days=1,
+        ),
+        out_of_sample_policy=OutOfSamplePolicy(
+            development_end=date(2024, 1, 14),
+            out_of_sample_start=date(2024, 1, 15),
+            out_of_sample_end=date(2024, 1, 15),
+            frozen_configuration_hash="c" * 64,
+        ),
+        requested_at=datetime(2025, 2, 2, tzinfo=UTC),
+    )
 
 
 def _save_research_report(
@@ -341,6 +486,7 @@ def _query(
             "research_report",
             "outcome",
         ),
+        readiness_datasets=("instrument_status", "fundamentals", "daily_bars"),
         outcome_definitions=(
             OutcomeDefinition(
                 outcome_id="return-30d",

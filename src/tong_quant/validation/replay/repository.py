@@ -105,11 +105,16 @@ class SQLiteHistoricalReplayRepository:
     def readiness_assessments(
         self,
         datasets: tuple[str, ...],
+        *,
+        as_of: datetime,
     ) -> tuple[PITReadinessAssessment, ...]:
         assessments = [
             assessment
             for dataset in datasets
-            if (assessment := self.store.latest_pit_readiness(dataset)) is not None
+            if (
+                assessment := self.store.latest_pit_readiness(dataset, as_of=as_of)
+            )
+            is not None
         ]
         return tuple(assessments)
 

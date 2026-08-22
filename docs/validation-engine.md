@@ -99,6 +99,24 @@ Replay persists:
 - `historical_replay_manifests`
 - `historical_replay_samples`
 
+### Replay Data-Quality Eligibility
+
+V0.6.3.1 closes the boundary between mechanically complete replay samples and
+data that is eligible for Validation. A `ReplayQuery` declares the underlying
+`readiness_datasets` and cannot set trust below `MEDIUM` or hide incomplete
+samples. `ReplayConfidence` records `validation_eligible` and explicit blocking
+reasons.
+
+`ValidationRequestFactory` rejects the entire replay result when a required
+dataset has no visible PIT assessment, is not `USABLE`, is below minimum trust,
+has critical gaps, or when any sample is incomplete or ineligible. It does not
+drop weak samples and continue with survivors. ST, suspension, and delisting
+preservation remain visible warnings rather than missing-data failures.
+
+Every consumed readiness assessment is selected as of replay generation time
+and its deterministic hash is included in the manifest. See
+`backtesting-data-assurance.md`.
+
 Manifests include query hashes, input hashes, dataset versions, schema version,
 framework version, configuration hash, Git commit, provider limitations,
 missing-data warnings, data trust summary, and ReplayConfidence.
