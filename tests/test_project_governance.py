@@ -110,3 +110,6 @@ def test_provider_monitor_workflow_exposes_health_and_retention_controls() -> No
     assert "provider-contract-ops-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
     assert "provider-health-*.md" in workflow
     assert "--fail-on-defect" in workflow
+    assert "scripts/export_provider_evidence.py" in workflow
+    assert "datetime.now(UTC).isoformat()" in workflow
+    assert "date -u +%Y-%m-%dT%H:%M:%S+00:00" not in workflow

@@ -59,7 +59,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          as_of="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
+          as_of="$(python -c 'from datetime import UTC, datetime; print(datetime.now(UTC).isoformat())')"
           python scripts/export_provider_evidence.py \
             --database data/provider-contract-monitor.sqlite3 \
             --as-of "$as_of" \
