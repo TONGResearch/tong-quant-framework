@@ -236,3 +236,19 @@ implementation is approved.
 - Funds, ETFs, REITs, bond funds, money-market funds, and asset allocation
 - Live QMT/PTrade/IBKR/Moomoo integration
 - Fully automatic execution
+
+## Reserved: Technical Confluence And Style Research
+
+`WP-RESEARCH-001` is planned but not ready. It may begin only after the
+representative provider-evidence horizon is complete and critical inputs pass a
+separate reviewed readiness gate.
+
+The reservation covers pure MACD/KDJ calculations, parameterized bullish and
+bearish triple-average candle events, Granville event families, PIT-safe setup
+state transitions, dynamic invalidation references, and cross-sectional
+size/style context. It reuses existing Fundamental, Value, Trend, ATR,
+Industry, Policy, and Market Regime research. It does not create buy/sell
+decisions, Portfolio weights, Orders, Paper Trading, or Execution.
+
+See `technical-research-extension.md` and
+`execution-readiness-storyboard.md`.

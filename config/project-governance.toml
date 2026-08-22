@@ -46,6 +46,8 @@ required_documents = [
   "docs/engineering-continuity.md",
   "docs/provider-monitor-operations.md",
   "docs/provider-evidence-bundles.md",
+  "docs/technical-research-extension.md",
+  "docs/execution-readiness-storyboard.md",
   "docs/risk-register.md",
   "docs/technical-debt-register.md",
   "docs/yahoo-daily-bar-calibration.md",
@@ -114,3 +116,10 @@ depends_on = [
   "WP-DATA-002",
   "WP-DATA-003",
 ]
+
+[[work_packages]]
+id = "WP-RESEARCH-001"
+title = "Family-aware technical confluence and size style research"
+status = "planned"
+document = "docs/work-packages/wp-research-001.md"
+depends_on = ["WP-EVIDENCE-001"]

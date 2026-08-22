@@ -13,3 +13,8 @@ Rules:
 - Update tests, state documents, risk, and debt records with the implementation.
 
 Use `template.md` when a new package is approved.
+
+`WP-RESEARCH-001` is planned only. It groups correlated technical indicators
+by evidence family, treats size as point-in-time cross-sectional context, and
+keeps startup and stop concepts inside Research. Indicator formulas alone
+cannot make this package ready.

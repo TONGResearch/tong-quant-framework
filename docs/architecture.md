@@ -524,3 +524,31 @@ calibration is disabled by default. See `docs/provider-calibration-phase-ii.md`.
 Execution remains disabled. No Paper Trading, Broker integration, Order, Fill,
 automatic rebalancing, or asset-allocation implementation is part of this
 stabilization phase.
+
+## Reserved Technical And Style Research Extension
+
+`WP-RESEARCH-001` reserves a future extension after the longitudinal evidence
+and readiness gates. It adds technical and style evidence without creating an
+independent indicator-trading stack:
+
+```text
+Visible PIT bars + PIT fundamentals + historical eligible universe
+                              |
+      Technical families + Style context + Fundamental quality
+                              |
+             conflict-preserving confluence assessment
+                              |
+                       ResearchReport
+                              |
+                         Validation
+```
+
+MACD and KDJ belong to one momentum family. Moving-average alignment,
+Granville events, and triple-average candle events belong to trend structure.
+Volume, breadth, and industry heat remain participation evidence. Size is
+cross-sectional Style Research and requires PIT market cap plus historical
+universe membership. Each family contributes at most once, and no confluence
+state is an execution decision. See `docs/technical-research-extension.md`.
+
+The remaining evidence, research, validation, portfolio, operational, broker,
+and rollout gates are documented in `docs/execution-readiness-storyboard.md`.

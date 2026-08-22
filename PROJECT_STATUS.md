@@ -61,6 +61,14 @@ another reassessment. It cannot promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 
+Future planned work after the evidence and readiness gates:
+
+- `WP-RESEARCH-001`: family-aware technical confluence and size/style research
+
+This reservation covers MACD, KDJ, parameterized triple-average candle events,
+Granville events, startup-state tracking, and dynamic invalidation references.
+It is not ready and does not relax the trading-development freeze.
+
 ## Provider Policy
 
 No provider is trusted by default. Tong Quant evaluates dataset evidence for

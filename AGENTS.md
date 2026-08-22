@@ -179,6 +179,19 @@ in the same commit.
 - Regime weights and thresholds belong in configuration, not strategy code.
 - Trend ATR, trailing, and pyramid outputs are research scenarios only until
   they pass the future Validation Engine.
+- MACD, KDJ, moving-average events, Granville events, and candlestick patterns
+  are correlated technical evidence, not independent votes or direct trade
+  actions. Future confluence must cap contribution by evidence family and keep
+  contradictions visible.
+- Size is cross-sectional Style Research. It requires PIT market capitalization
+  and the historical eligible universe; never classify or rank size from a
+  current-universe snapshot copied backward.
+- A triple-average candle setup must use explicit versioned predicates and
+  configurable periods. Follow-through observed on later bars must never enter
+  the original decision context.
+- Dynamic stops remain invalidation references until a future approved layer
+  has real position state, market rules, and fill evidence. A stop price is not
+  a guaranteed execution price.
 - A-share Pattern Research must return insufficient data when required
   breadth or intraday evidence is unavailable.
 - Validation must distinguish data `as_of` from the actual `requested_at` run
