@@ -1,3 +1,6 @@
+import json
+import subprocess
+import sys
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -50,6 +53,41 @@ def _scope(market: Market, subject: str) -> ProviderBaselineScope:
         market=market,
         subject=subject,
     )
+
+
+def test_default_baseline_scopes_include_both_cninfo_evidence_paths(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "baseline"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/build_provider_contract_baseline.py",
+            "--database",
+            str(tmp_path / "baseline.sqlite3"),
+            "--output-dir",
+            str(output),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    document = json.loads(next(output.glob("*.json")).read_text(encoding="utf-8"))
+    scopes = {
+        (
+            item["scope"]["provider"],
+            item["scope"]["dataset"],
+            item["scope"]["market"],
+            item["scope"]["subject"],
+        )
+        for item in document["entries"]
+    }
+    assert scopes >= {
+        ("cninfo_direct", "china_disclosures", "china_a", "600000"),
+        ("cninfo_via_akshare", "china_disclosures", "china_a", "600000"),
+    }
 
 
 def _query() -> ProviderBaselineQuery:

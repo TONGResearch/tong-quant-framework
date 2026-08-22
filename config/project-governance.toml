@@ -45,6 +45,7 @@ required_documents = [
   "docs/database-migrations.md",
   "docs/engineering-continuity.md",
   "docs/provider-monitor-operations.md",
+  "docs/provider-evidence-bundles.md",
   "docs/risk-register.md",
   "docs/technical-debt-register.md",
   "docs/yahoo-daily-bar-calibration.md",

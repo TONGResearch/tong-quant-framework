@@ -31,6 +31,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
   artifact retention
 - Immutable longitudinal provider baselines with separate success, field
   coverage, and schedule-continuity metrics
+- Credential-free, content-addressed provider evidence bundles with explicit
+  `as_of`, per-scope continuity, deterministic reconstruction, and tamper checks
 - Deterministic evidence-backed PIT readiness reassessment with immutable input
   hashes, explicit missing/stale evidence, cause classification, and no
   automatic promotion

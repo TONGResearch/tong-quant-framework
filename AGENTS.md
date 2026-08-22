@@ -153,6 +153,11 @@ in the same commit.
   field coverage, and scheduled-run continuity as separate metrics. Missing
   periods, failed probes, and empty responses remain visible; baseline history
   cannot promote provider trust or PIT readiness.
+- Provider evidence bundles must be read-only, content-addressed,
+  credential-free, and bounded by an explicit timezone-aware `as_of`.
+  Continuity gates must be reviewed per provider, dataset, market, and subject;
+  dataset-level aggregates cannot hide a missing scope. Never export local
+  artifact paths or include incomplete/future-completed ingestion batches.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
 - Validate Tushare credentials locally before live access and persist only

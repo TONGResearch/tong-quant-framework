@@ -51,6 +51,19 @@ without depending on paid Tushare access or introducing trading functionality.
 - Missing-period, provider-limitation, and conflict review.
 - Refreshed evidence-backed PIT readiness report.
 
+## Current Progress
+
+- The twice-weekly private GitHub Actions monitor is active; the first manual
+  run completed successfully on 2026-08-22 and preserved its run artifact.
+- Credential-free, content-addressed JSON and Markdown bundle export is
+  implemented and wired into scheduled monitoring.
+- Deterministic reconstruction, future-boundary rejection, tamper detection,
+  secret rejection, local-path rejection, and missing-table visibility are
+  covered by automated tests.
+- The minimum 84-day observation horizon remains incomplete. This work package
+  stays `ready` and PIT readiness must not be promoted from implementation
+  completion alone.
+
 ## Non-Goals
 
 - No Paper Trading, Execution, Broker, Order, Trade, Fill, Asset Allocation,

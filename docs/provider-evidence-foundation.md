@@ -137,6 +137,13 @@ to the private Actions Job Summary. If a probe identifies an implementation
 defect, baseline generation and artifact upload still run before the job fails
 closed.
 
+Every scheduled run also exports a credential-free, content-addressed
+operational evidence bundle. The bundle is read-only with respect to SQLite,
+freezes an explicit `as_of` boundary, excludes local artifact storage paths and
+bytes, and can reconstruct its dataset summaries from its table snapshots.
+Credential-like values, local paths, hash mismatches, and summary tampering fail
+verification. See `docs/provider-evidence-bundles.md`.
+
 ### Initial Live Contract Baseline
 
 The read-only probe on 2026-08-21 observed:
@@ -166,6 +173,9 @@ artifact, and baseline tables are:
 - `provider_baseline_entries`
 - `provider_baseline_inputs`
 - `provider_calibration_attempts`
+
+Evidence bundle export introduces no table or migration. It reads the existing
+operational, historical-coverage, and PIT-readiness ledgers.
 
 The public schema version remains `0.8.0`. This is engineering hardening, not a
 new framework feature milestone.

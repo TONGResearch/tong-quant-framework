@@ -10,6 +10,7 @@ from tong_quant.data.baselines import (
     serialize_provider_baseline,
 )
 from tong_quant.data.providers.cninfo import CNINFO_DISCLOSURES_DATASET
+from tong_quant.data.providers.cninfo_direct import CNINFO_DIRECT_PROVIDER_ID
 from tong_quant.data.providers.yahoo import YAHOO_DAILY_BARS_DATASET
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import Market
@@ -82,6 +83,12 @@ def _default_scopes(
     malaysia_symbol: str,
 ) -> tuple[ProviderBaselineScope, ...]:
     return (
+        ProviderBaselineScope(
+            provider=CNINFO_DIRECT_PROVIDER_ID,
+            dataset=CNINFO_DISCLOSURES_DATASET,
+            market=Market.CHINA_A,
+            subject=china_symbol,
+        ),
         ProviderBaselineScope(
             provider="cninfo_via_akshare",
             dataset=CNINFO_DISCLOSURES_DATASET,

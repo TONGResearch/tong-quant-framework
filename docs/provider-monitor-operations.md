@@ -48,12 +48,21 @@ Each run writes immutable, collision-checked files:
 - `provider-health-<report_hash>.md`
 - `provider-contract-baseline-<baseline_hash>.json`
 - `provider-contract-baseline-<baseline_hash>.md`
+- `provider-evidence-bundle-<bundle_hash>.json`
+- `provider-evidence-bundle-<bundle_hash>.md`
 
 The GitHub artifact is named
 `provider-contract-ops-<github_run_id>-<github_run_attempt>`. Health reports
 include framework, contract-monitor, and policy versions; run, check, alert,
 stable condition fingerprint, and report identities; owner; retention;
 acknowledgement requirement; and recovery steps.
+
+The evidence bundle is a credential-free, content-addressed snapshot of the
+operational database as of an explicit timestamp. It preserves contract,
+baseline, provider-neutral evidence, artifact observation, calibration,
+conflict, confidence, historical-coverage, and PIT-readiness records. Provider
+artifact bytes and local `storage_key` values are excluded. Export fails closed
+if credential-like assignments or local filesystem paths are detected.
 
 ## Acknowledgement
 
@@ -114,6 +123,19 @@ Build the longitudinal baseline after the probe:
 python scripts/build_provider_contract_baseline.py \
   --database data/provider-contract-monitor.sqlite3 \
   --output-dir provider-contract-artifacts
+```
+
+Export and independently verify the content-addressed evidence snapshot:
+
+```bash
+as_of="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
+python scripts/export_provider_evidence.py \
+  --database data/provider-contract-monitor.sqlite3 \
+  --as-of "$as_of" \
+  --output-dir provider-contract-artifacts
+
+python scripts/export_provider_evidence.py \
+  --verify provider-contract-artifacts/provider-evidence-bundle-<hash>.json
 ```
 
 The local SQLite file and generated artifacts are operational data and must not

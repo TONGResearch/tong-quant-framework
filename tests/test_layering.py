@@ -131,6 +131,31 @@ def test_evidence_readiness_does_not_depend_on_downstream_or_trading_layers() ->
     assert offenders == []
 
 
+def test_evidence_bundle_does_not_depend_on_downstream_or_trading_layers() -> None:
+    forbidden_roots = {
+        "notifications",
+        "execution",
+        "brokers",
+        "orders",
+        "trades",
+        "fills",
+        "paper",
+        "portfolio",
+        "research",
+        "screening",
+        "validation",
+    }
+    offenders = sorted(
+        module
+        for module in _imported_modules(
+            Path("src/tong_quant/data/evidence_bundle.py")
+        )
+        if len(module.split(".")) > 1 and module.split(".")[1] in forbidden_roots
+    )
+
+    assert offenders == []
+
+
 def test_notification_service_is_research_artifact_oriented() -> None:
     text = Path("src/tong_quant/notifications/service.py").read_text(encoding="utf-8")
 
