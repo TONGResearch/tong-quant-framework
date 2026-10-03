@@ -19,6 +19,9 @@ data/processed/
 data/cache/
 data/*.sqlite
 data/*.sqlite3
+provider-contract-artifacts/
+docs/generated/provider-evidence/
+docs/generated/provider-evidence-horizon/
 logs/
 config/local.toml
 *.log

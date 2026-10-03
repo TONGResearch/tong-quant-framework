@@ -22,6 +22,7 @@ PROVIDER_HEALTH_POLICY_VERSION = "provider-health-policy-v0.8-hardening"
 DAILY_BAR_CALIBRATION_VERSION = "daily-bar-calibration-v0.8-hardening"
 EVIDENCE_READINESS_VERSION = "evidence-readiness-v0.8-hardening"
 PROVIDER_EVIDENCE_BUNDLE_VERSION = "provider-evidence-bundle-v0.8-hardening"
+PROVIDER_EVIDENCE_HORIZON_VERSION = "provider-evidence-horizon-v0.8-hardening"
 
 
 __all__ = [
@@ -44,6 +45,7 @@ __all__ = [
     "PROVIDER_HEALTH_POLICY_VERSION",
     "PROVIDER_EVIDENCE_VERSION",
     "PROVIDER_EVIDENCE_BUNDLE_VERSION",
+    "PROVIDER_EVIDENCE_HORIZON_VERSION",
     "PROVIDER_CALIBRATION_VERSION",
     "PROVIDER_CONFLICT_VERSION",
     "REPLAY_CONFIDENCE_VERSION",

@@ -53,16 +53,25 @@ without depending on paid Tushare access or introducing trading functionality.
 
 ## Current Progress
 
-- The twice-weekly private GitHub Actions monitor is active; the first manual
-  run completed successfully on 2026-08-22 and preserved its run artifact.
+- The twice-weekly private GitHub Actions monitor is configured; the first
+  manual run completed successfully on 2026-08-22 and preserved its run
+  artifact.
 - Credential-free, content-addressed JSON and Markdown bundle export is
   implemented and wired into scheduled monitoring.
+- A content-addressed horizon audit now enforces the 84-day/eight-check gate
+  separately for direct CNInfo, AKShare-transported CNInfo, and Yahoo US/Hong
+  Kong/Malaysia scopes. It reports exact deficits and requires complete
+  baseline measurements without promoting trust or PIT readiness.
+- The scheduled workflow now retains and publishes the horizon audit beside
+  each evidence bundle.
 - Deterministic reconstruction, future-boundary rejection, tamper detection,
   secret rejection, local-path rejection, and missing-table visibility are
   covered by automated tests.
-- The minimum 84-day observation horizon remains incomplete. This work package
-  stays `ready` and PIT readiness must not be promoted from implementation
-  completion alone.
+- The repository does not contain the mutable private monitor database or its
+  latest retained Actions artifact. Therefore the minimum horizon cannot be
+  claimed complete from source code or elapsed calendar time. This work package
+  stays `ready` until a downloaded bundle passes the horizon audit and receives
+  independent durable-copy review.
 
 ## Non-Goals
 

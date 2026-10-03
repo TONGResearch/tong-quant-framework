@@ -65,6 +65,20 @@ jobs:
             --as-of "$as_of" \
             --output-dir provider-contract-artifacts
 
+      - name: Audit representative evidence horizon
+        if: always()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          bundles=(provider-contract-artifacts/provider-evidence-bundle-*.json)
+          if (( ${#bundles[@]} != 1 )); then
+            echo "Expected exactly one provider evidence bundle, found ${#bundles[@]}."
+            exit 1
+          fi
+          python scripts/audit_provider_evidence_horizon.py \
+            --bundle "${bundles[0]}" \
+            --output-dir provider-contract-artifacts
+
       - name: Save provider contract history
         if: always()
         uses: actions/cache/save@v4
@@ -91,6 +105,18 @@ jobs:
           reports=(provider-contract-artifacts/provider-health-*.md)
           if (( ${#reports[@]} == 0 )); then
             echo "Provider health report was not generated." >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat "${reports[@]}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Publish evidence horizon summary
+        if: always()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          reports=(provider-contract-artifacts/provider-evidence-horizon-*.md)
+          if (( ${#reports[@]} == 0 )); then
+            echo "Provider evidence horizon report was not generated." >> "$GITHUB_STEP_SUMMARY"
           else
             cat "${reports[@]}" >> "$GITHUB_STEP_SUMMARY"
           fi

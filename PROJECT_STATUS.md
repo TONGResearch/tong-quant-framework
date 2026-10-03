@@ -33,6 +33,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
   coverage, and schedule-continuity metrics
 - Credential-free, content-addressed provider evidence bundles with explicit
   `as_of`, per-scope continuity, deterministic reconstruction, and tamper checks
+- Fail-closed per-scope evidence-horizon audits for the five scheduled
+  CNInfo/Yahoo scopes, with exact 84-day/eight-check deficits and no automatic
+  readiness promotion
 - Deterministic evidence-backed PIT readiness reassessment with immutable input
   hashes, explicit missing/stale evidence, cause classification, and no
   automatic promotion
@@ -60,7 +63,10 @@ met and Tong explicitly approves a new architecture proposal.
 `WP-READINESS-001` completed with 12 reviewed datasets, zero promotion-review
 eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next
 package must retain and freeze at least 12 weeks of operational evidence before
-another reassessment. It cannot promote trust or PIT readiness automatically.
+another reassessment. Its machine-checkable horizon gate is implemented, but a
+current retained private Actions bundle must still be downloaded, verified, and
+audited. Elapsed calendar time alone is not evidence. The package cannot
+promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

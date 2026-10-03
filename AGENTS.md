@@ -165,6 +165,10 @@ in the same commit.
   Continuity gates must be reviewed per provider, dataset, market, and subject;
   dataset-level aggregates cannot hide a missing scope. Never export local
   artifact paths or include incomplete/future-completed ingestion batches.
+- `WP-EVIDENCE-001` horizon completion requires a verified bundle whose five
+  scheduled CNInfo/Yahoo scopes each pass the fixed 84-day/eight-check audit
+  with complete baseline measurements. Calendar age, a dataset aggregate, or a
+  successful endpoint response cannot substitute for this evidence.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
 - Validate Tushare credentials locally before live access and persist only
