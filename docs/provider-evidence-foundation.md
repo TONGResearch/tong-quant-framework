@@ -92,9 +92,10 @@ python scripts/run_provider_contract_monitor.py --fail-on-defect
 ```
 
 The GitHub Actions workflow runs twice weekly and can also be started manually.
-External downtime produces `unavailable`; missing records or known provider
-limitations produce `degraded`; parser or implementation exceptions produce
-`defect`. Only `defect` fails the scheduled job.
+External downtime produces `unavailable`; empty results, null required values,
+or known provider limitations produce `degraded`; structurally absent required
+keys, parser exceptions, or implementation errors produce `defect`. Only
+`defect` fails the scheduled job.
 
 `ProviderHealthAssessor` evaluates each run against 84 days of stored history.
 It distinguishes one-off unavailability/degradation, repeated conditions,

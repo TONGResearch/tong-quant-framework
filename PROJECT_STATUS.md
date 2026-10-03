@@ -63,10 +63,11 @@ met and Tong explicitly approves a new architecture proposal.
 `WP-READINESS-001` completed with 12 reviewed datasets, zero promotion-review
 eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next
 package must retain and freeze at least 12 weeks of operational evidence before
-another reassessment. Its machine-checkable horizon gate is implemented, but a
-current retained private Actions bundle must still be downloaded, verified, and
-audited. Elapsed calendar time alone is not evidence. The package cannot
-promote trust or PIT readiness automatically.
+another reassessment. The verified October 1 artifact contains 15 checks per
+required scope across 40.2 days, with 6/12 baseline periods and 50% continuity.
+The horizon audit remains ineligible with 43.8 days outstanding. Elapsed
+calendar time alone is not evidence, and the package cannot promote trust or
+PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

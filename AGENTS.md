@@ -153,6 +153,10 @@ in the same commit.
 - Only implementation/contract defects fail the scheduled monitor. External
   unavailability and repeated degradation remain visible, acknowledged audit
   conditions and must preserve their historical gaps.
+- Provider contract checks distinguish structural schema absence from value
+  completeness. A missing required payload key is a defect; a present key with
+  a null value or an empty normalized response is degraded and must remain
+  visible in missing-field coverage.
 - Provider monitor outputs use run IDs or content hashes. Keep CI artifacts for
   90 days and retain the contract-history database until an archive and restore
   have been verified.

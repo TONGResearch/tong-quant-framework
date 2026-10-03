@@ -110,24 +110,48 @@ class ProviderContractMonitor:
                 for record in batch.records
             ):
                 raise ValueError("provider contract promoted trust above capability")
+            absent_fields = tuple(
+                field
+                for field in probe.required_payload_fields
+                if batch.records
+                and any(field not in record.payload for record in batch.records)
+            )
+            null_value_fields = tuple(
+                field
+                for field in probe.required_payload_fields
+                if batch.records
+                and any(
+                    field in record.payload and record.payload[field] is None
+                    for record in batch.records
+                )
+            )
             missing_fields = tuple(
                 field
                 for field in probe.required_payload_fields
-                if not batch.records
-                or any(record.payload.get(field) is None for record in batch.records)
+                if field in absent_fields or field in null_value_fields
             )
+            if not batch.records:
+                missing_fields = probe.required_payload_fields
             limitations = tuple(item.description for item in batch.limitations)
             if not batch.records:
                 limitations = (*limitations, "Provider returned no normalized evidence")
+            elif null_value_fields:
+                limitations = (
+                    *limitations,
+                    "Some normalized records contain null required values",
+                )
             status = ProviderContractStatus.HEALTHY
             error_code = ""
-            if missing_fields:
+            if absent_fields:
                 status = ProviderContractStatus.DEFECT
                 error_code = "required_fields_missing"
-            elif (
-                capability.status is ProviderCapabilityStatus.DEGRADED
-                or not batch.records
-            ):
+            elif not batch.records:
+                status = ProviderContractStatus.DEGRADED
+                error_code = "no_normalized_evidence"
+            elif null_value_fields:
+                status = ProviderContractStatus.DEGRADED
+                error_code = "required_values_missing"
+            elif capability.status is ProviderCapabilityStatus.DEGRADED:
                 status = ProviderContractStatus.DEGRADED
             trust_level = _weakest_trust(
                 (capability.trust_level, *(record.trust_level for record in batch.records))

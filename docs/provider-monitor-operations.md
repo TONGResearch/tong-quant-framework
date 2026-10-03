@@ -34,9 +34,12 @@ defect.
 | Implementation or contract defect | Critical | Required | Fail closed |
 
 Unavailable provider access, rate limits, and network downtime are external
-availability conditions. Missing required fields, malformed normalized data,
-identity mismatches, future decision evidence, and parser exceptions are
-implementation defects. Raw exception messages are never written to reports.
+availability conditions. A required payload key that is structurally absent,
+malformed normalized data, identity mismatches, future decision evidence, and
+parser exceptions are implementation defects. Empty normalized responses and
+records whose required keys exist but contain null values are degraded data
+quality, not parser defects. Their missing-field coverage remains explicit in
+the check and baseline. Raw exception messages are never written to reports.
 
 ## Artifact Identity
 

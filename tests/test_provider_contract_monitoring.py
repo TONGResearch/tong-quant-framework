@@ -36,9 +36,13 @@ class _ContractAdapter:
         failure: Exception | None = None,
         *,
         omit_volume: bool = False,
+        null_volume: bool = False,
+        empty_records: bool = False,
     ) -> None:
         self.failure = failure
         self.omit_volume = omit_volume
+        self.null_volume = null_volume
+        self.empty_records = empty_records
 
     def capabilities(self) -> tuple[ProviderDatasetCapability, ...]:
         return (
@@ -61,6 +65,8 @@ class _ContractAdapter:
         payload: dict[str, object] = {"close": 100.0, "volume": 10_000}
         if self.omit_volume:
             del payload["volume"]
+        if self.null_volume:
+            payload["volume"] = None
         record = ProviderEvidenceRecord(
             evidence_id=provider_evidence_id(
                 provider=self.provider_id,
@@ -94,7 +100,7 @@ class _ContractAdapter:
             parameters={},
             raw_data_hash=RAW_HASH,
             raw_record_count=1,
-            records=(record,),
+            records=() if self.empty_records else (record,),
             limitations=(),
         )
 
@@ -171,3 +177,29 @@ def test_contract_monitor_treats_missing_required_field_as_defect() -> None:
     assert run.status is ProviderContractStatus.DEFECT
     assert run.checks[0].missing_fields == ("volume",)
     assert run.checks[0].error_code == "required_fields_missing"
+
+
+def test_contract_monitor_treats_null_required_value_as_degraded() -> None:
+    timer_values = iter((1.0, 1.01))
+    run = ProviderContractMonitor(
+        clock=lambda: NOW,
+        timer=lambda: next(timer_values),
+    ).run((_probe(_ContractAdapter(null_volume=True)),))
+
+    assert run.status is ProviderContractStatus.DEGRADED
+    assert run.checks[0].missing_fields == ("volume",)
+    assert run.checks[0].error_code == "required_values_missing"
+    assert "null required values" in run.checks[0].limitations[-1]
+
+
+def test_contract_monitor_treats_empty_response_as_degraded() -> None:
+    timer_values = iter((1.0, 1.01))
+    run = ProviderContractMonitor(
+        clock=lambda: NOW,
+        timer=lambda: next(timer_values),
+    ).run((_probe(_ContractAdapter(empty_records=True)),))
+
+    assert run.status is ProviderContractStatus.DEGRADED
+    assert run.checks[0].missing_fields == ("close", "volume")
+    assert run.checks[0].error_code == "no_normalized_evidence"
+    assert "no normalized evidence" in run.checks[0].limitations[-1]

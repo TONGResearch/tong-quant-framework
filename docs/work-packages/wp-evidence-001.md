@@ -67,11 +67,20 @@ without depending on paid Tushare access or introducing trading functionality.
 - Deterministic reconstruction, future-boundary rejection, tamper detection,
   secret rejection, local-path rejection, and missing-table visibility are
   covered by automated tests.
-- The repository does not contain the mutable private monitor database or its
-  latest retained Actions artifact. Therefore the minimum horizon cannot be
-  claimed complete from source code or elapsed calendar time. This work package
-  stays `ready` until a downloaded bundle passes the horizon audit and receives
-  independent durable-copy review.
+- The October 1 Actions artifact was downloaded and independently verified on
+  October 3. Artifact digest `bd8f441e...d832`, evidence bundle
+  `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity
+  verification.
+- Every required scope has 15 checks across 40.2 days. The 84-day baseline has
+  6/12 observed periods and 50% continuity, leaving 43.8 days before the raw
+  observation-horizon gate can pass. The audit is not eligible for PIT
+  readiness reassessment.
+- Historical Malaysia Yahoo checks exposed null OHLCV placeholder rows. Future
+  checks classify present-but-null required values as degraded data quality;
+  structurally absent payload keys remain fail-closed defects. Historical
+  defects are preserved and are not rewritten.
+- This work package stays `ready` until a later verified bundle passes every
+  per-scope horizon gate and receives independent durable-copy review.
 
 ## Non-Goals
 
