@@ -75,10 +75,24 @@ without depending on paid Tushare access or introducing trading functionality.
   October 8 job summary reports 17 checks per required scope across 47.2 days,
   7/12 observed baseline periods, 58.3% continuity, and 36.8 days remaining.
   Report `f06623cb...db63` remains ineligible for PIT readiness reassessment.
+- The October 8 artifact was downloaded and independently verified on October
+  9. Artifact digest `4155c322...0fbc`, evidence bundle `5052012a...82c4`, and
+  horizon report `f06623cb...db63` matched the Actions summary. SQLite integrity
+  returned `ok`, bundle verification passed, and an independent horizon rebuild
+  reproduced the same report ID.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do
   not promote trust or readiness.
+- Every check in the latest run returned records with no missing required
+  fields and no error code. CNInfo remains degraded because complete historical
+  disclosure and correction continuity are unproven. Yahoo remains degraded
+  because it is unofficial, `LOW` trust, and `RETRIEVAL_TIME` precision. No new
+  implementation defect was found.
+- Operator acknowledgement remains required for the five stable warning
+  fingerprints: `5a1b7e3c...de8a`, `2582d3b1...d68a`, `252493b4...e8c7b`,
+  `28f7bcbc...1160`, and `ce3df88b...a492`. Acknowledgement records acceptance
+  of the visible limitation only; it cannot promote trust or readiness.
 - Historical Malaysia Yahoo checks exposed null OHLCV placeholder rows. Future
   checks classify present-but-null required values as degraded data quality;
   structurally absent payload keys remain fail-closed defects. Historical

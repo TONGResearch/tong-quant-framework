@@ -65,9 +65,12 @@ eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next
 package must retain and freeze at least 12 weeks of operational evidence before
 another reassessment. The October 8 scheduled run completed successfully and
 contains 17 checks per required scope across 47.2 days, with 7/12 baseline
-periods and 58.3% continuity. The horizon audit remains ineligible with 36.8
-days outstanding. All five required scopes still carry repeated-degradation
-warnings. Elapsed calendar time alone is not evidence, and the package cannot
+periods and 58.3% continuity. Its downloaded artifact, SQLite integrity,
+content-addressed bundle, and deterministic horizon reconstruction were
+independently verified on October 9. The horizon audit remains ineligible with
+36.8 days outstanding. All five required scopes still carry expected
+provider/data-limitation degradation, with no new implementation defect in the
+latest run. Elapsed calendar time alone is not evidence, and the package cannot
 promote trust or PIT readiness automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
