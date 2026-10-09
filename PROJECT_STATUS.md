@@ -33,6 +33,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
   coverage, and schedule-continuity metrics
 - Credential-free, content-addressed provider evidence bundles with explicit
   `as_of`, per-scope continuity, deterministic reconstruction, and tamper checks
+- Content-addressed, no-overwrite durable evidence archiving with ZIP safety,
+  credential screening, copied-byte verification, and independent manifest
+  revalidation
 - Fail-closed per-scope evidence-horizon audits for the five scheduled
   CNInfo/Yahoo scopes, with exact 84-day/eight-check deficits and no automatic
   readiness promotion

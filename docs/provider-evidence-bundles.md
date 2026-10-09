@@ -78,6 +78,39 @@ aggregate cannot compensate for a missing country or provider scope. The schedul
 provider-monitor workflow writes this report into the same retained artifact
 and publishes its Markdown summary to the GitHub Actions run summary.
 
+## Durable Archive
+
+Archive a downloaded GitHub Actions ZIP into a private destination only after
+checking the digest shown by GitHub or an independently recorded audit:
+
+```bash
+python scripts/archive_provider_evidence.py archive \
+  --artifact ~/Downloads/provider-contract-ops-<run>-<attempt>.zip \
+  --destination ~/Documents/TongQuantEvidenceArchive \
+  --verified-at 2026-10-09T20:40:00+08:00 \
+  --expected-sha256 <github-artifact-sha256>
+```
+
+Verify a retained copy from its content-addressed manifest:
+
+```bash
+python scripts/archive_provider_evidence.py verify \
+  --manifest ~/Documents/TongQuantEvidenceArchive/provider-evidence-archive-<hash>.json
+```
+
+The archive command rejects symbolic links, path traversal, duplicate ZIP
+entries, credential-like JSON or text, digest mismatches, modified bundles, and
+horizon reports that cannot be reconstructed. It copies without silent
+overwrite, rechecks the copied bytes, and stores the ZIP and manifest with mode
+`0600`. The manifest contains filenames and content identities only, never the
+source or destination's absolute path.
+
+The command does not encrypt storage. Run it once for a private local archive
+and again for a separately encrypted off-device destination. Matching artifact,
+bundle, and horizon identities prove that both copies contain the same reviewed
+evidence. Archive IDs may differ when copies are independently verified at
+different times.
+
 Generated operational bundles and local SQLite files remain untracked. A
 durable private archive must retain at least two independently verified copies
 before the 90-day GitHub Actions artifact expires.

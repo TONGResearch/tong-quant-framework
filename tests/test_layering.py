@@ -131,7 +131,7 @@ def test_evidence_readiness_does_not_depend_on_downstream_or_trading_layers() ->
     assert offenders == []
 
 
-def test_evidence_bundle_does_not_depend_on_downstream_or_trading_layers() -> None:
+def test_evidence_archives_do_not_depend_on_downstream_or_trading_layers() -> None:
     forbidden_roots = {
         "notifications",
         "execution",
@@ -147,9 +147,11 @@ def test_evidence_bundle_does_not_depend_on_downstream_or_trading_layers() -> No
     }
     offenders = sorted(
         module
-        for module in _imported_modules(
-            Path("src/tong_quant/data/evidence_bundle.py")
+        for path in (
+            Path("src/tong_quant/data/evidence_archive.py"),
+            Path("src/tong_quant/data/evidence_bundle.py"),
         )
+        for module in _imported_modules(path)
         if len(module.split(".")) > 1 and module.split(".")[1] in forbidden_roots
     )
 

@@ -69,6 +69,15 @@ without depending on paid Tushare access or introducing trading functionality.
   covered by automated tests.
 - CI type-checking covers the provider evidence, calibration, and capture
   command-line entry points in `scripts` as well as the reusable packages.
+- A content-addressed archive command now validates the downloaded Actions ZIP,
+  reconstructs its evidence bundle and horizon report, prevents silent
+  overwrite, and independently verifies each retained copy. Storage encryption
+  and the second off-device destination remain operator-owned.
+- The October 8 artifact now has one independently reverified private local
+  archive copy. Archive manifest `b6dbd469...8e8e` binds artifact
+  `4155c322...0fbc`, bundle `5052012a...82c4`, and horizon
+  `f06623cb...db63`; both retained files use mode `0600`. A separately
+  encrypted off-device copy is still required.
 - The October 1 Actions artifact was downloaded and independently verified on
   October 3. Artifact digest `bd8f441e...d832`, evidence bundle
   `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity
