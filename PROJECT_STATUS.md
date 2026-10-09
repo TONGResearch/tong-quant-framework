@@ -70,8 +70,11 @@ content-addressed bundle, and deterministic horizon reconstruction were
 independently verified on October 9. The horizon audit remains ineligible with
 36.8 days outstanding. All five required scopes still carry expected
 provider/data-limitation degradation, with no new implementation defect in the
-latest run. Elapsed calendar time alone is not evidence, and the package cannot
-promote trust or PIT readiness automatically.
+latest run. The five stable warnings are acknowledged in
+[GitHub issue #1](https://github.com/TONGResearch/tong-quant-framework/issues/1)
+without promoting provider trust or PIT readiness. Elapsed calendar time alone
+is not evidence, and the package cannot promote trust or PIT readiness
+automatically.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

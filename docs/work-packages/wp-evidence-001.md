@@ -89,10 +89,13 @@ without depending on paid Tushare access or introducing trading functionality.
   disclosure and correction continuity are unproven. Yahoo remains degraded
   because it is unofficial, `LOW` trust, and `RETRIEVAL_TIME` precision. No new
   implementation defect was found.
-- Operator acknowledgement remains required for the five stable warning
-  fingerprints: `5a1b7e3c...de8a`, `2582d3b1...d68a`, `252493b4...e8c7b`,
-  `28f7bcbc...1160`, and `ce3df88b...a492`. Acknowledgement records acceptance
-  of the visible limitation only; it cannot promote trust or readiness.
+- The five stable warning fingerprints were acknowledged on October 9 in
+  [GitHub issue #1](https://github.com/TONGResearch/tong-quant-framework/issues/1):
+  `5a1b7e3c...de8a`, `2582d3b1...d68a`, `252493b4...e8c7b`,
+  `28f7bcbc...1160`, and `ce3df88b...a492`. The acknowledgement records
+  acceptance of the visible limitation only; it does not promote trust or
+  readiness. The issue remains open until a recovery report or an explicitly
+  accepted permanent limitation is recorded.
 - Historical Malaysia Yahoo checks exposed null OHLCV placeholder rows. Future
   checks classify present-but-null required values as degraded data quality;
   structurally absent payload keys remain fail-closed defects. Historical
