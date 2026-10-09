@@ -160,6 +160,9 @@ in the same commit.
 - Provider monitor outputs use run IDs or content hashes. Keep CI artifacts for
   90 days and retain the contract-history database until an archive and restore
   have been verified.
+- GitHub-hosted workflows pin an explicit supported runner image and use
+  Node 24-compatible official Actions. Do not return to a moving `*-latest`
+  runner label or an end-of-life Action runtime without a reviewed migration.
 - Longitudinal provider baselines must keep successful observations, required
   field coverage, and scheduled-run continuity as separate metrics. Missing
   periods, failed probes, and empty responses remain visible; baseline history

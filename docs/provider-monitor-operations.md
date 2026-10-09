@@ -21,6 +21,11 @@ The workflow runs every Monday and Thursday and can be dispatched manually.
 Repository operations reports are generated even when the probe identifies a
 defect.
 
+The workflow uses the explicit `ubuntu-24.04` GitHub-hosted image and official
+Node 24-compatible Actions. Changes to the runner image or Action major
+versions require a successful CI run and one successful scheduled monitor
+before the migration is treated as operationally verified.
+
 ## Conditions
 
 | Condition | Severity | Acknowledgement | CI effect |

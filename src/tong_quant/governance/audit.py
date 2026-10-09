@@ -149,6 +149,31 @@ def audit_project_governance(
             ),
         )
     )
+    checks.extend(
+        _workflow_runtime_check(
+            project_root,
+            ".github/workflows/ci.yml",
+            (
+                "runs-on: ubuntu-24.04",
+                "actions/checkout@v5",
+                "actions/setup-python@v6",
+            ),
+        )
+    )
+    checks.extend(
+        _workflow_runtime_check(
+            project_root,
+            ".github/workflows/provider-contract-monitor.yml",
+            (
+                "runs-on: ubuntu-24.04",
+                "actions/checkout@v5",
+                "actions/setup-python@v6",
+                "actions/cache/restore@v5",
+                "actions/cache/save@v5",
+                "actions/upload-artifact@v6",
+            ),
+        )
+    )
     return GovernanceReport(checks=tuple(checks))
 
 
@@ -171,6 +196,39 @@ def _exists_check(
         passed=exists,
         detail=f"{relative_path} {'exists' if exists else 'is missing'}",
     )
+
+
+def _workflow_runtime_check(
+    project_root: Path,
+    relative_path: str,
+    required_markers: tuple[str, ...],
+) -> tuple[GovernanceCheck, ...]:
+    path = project_root / relative_path
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    checks = [
+        GovernanceCheck(
+            name=f"workflow_runtime:{relative_path}:{marker}",
+            passed=marker in text,
+            detail=(
+                f"workflow contains {marker}"
+                if marker in text
+                else f"workflow is missing {marker}"
+            ),
+        )
+        for marker in required_markers
+    ]
+    checks.append(
+        GovernanceCheck(
+            name=f"workflow_runtime:{relative_path}:no_moving_runner",
+            passed="ubuntu-latest" not in text,
+            detail=(
+                "workflow runner is explicitly pinned"
+                if "ubuntu-latest" not in text
+                else "workflow uses the moving ubuntu-latest runner"
+            ),
+        )
+    )
+    return tuple(checks)
 
 
 __all__ = [

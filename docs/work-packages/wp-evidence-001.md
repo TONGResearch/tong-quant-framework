@@ -71,10 +71,14 @@ without depending on paid Tushare access or introducing trading functionality.
   October 3. Artifact digest `bd8f441e...d832`, evidence bundle
   `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity
   verification.
-- Every required scope has 15 checks across 40.2 days. The 84-day baseline has
-  6/12 observed periods and 50% continuity, leaving 43.8 days before the raw
-  observation-horizon gate can pass. The audit is not eligible for PIT
-  readiness reassessment.
+- The October 5 and October 8 scheduled runs completed successfully. The
+  October 8 job summary reports 17 checks per required scope across 47.2 days,
+  7/12 observed baseline periods, 58.3% continuity, and 36.8 days remaining.
+  Report `f06623cb...db63` remains ineligible for PIT readiness reassessment.
+- All five required scopes remain under repeated-degradation warnings. Field
+  coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
+  Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do
+  not promote trust or readiness.
 - Historical Malaysia Yahoo checks exposed null OHLCV placeholder rows. Future
   checks classify present-but-null required values as degraded data quality;
   structurally absent payload keys remain fail-closed defects. Historical

@@ -7,6 +7,12 @@ placeholder execution types, but it does not contain an approved live execution
 service. PIT readiness is `UNSUITABLE`, Portfolio is a research artifact, and no
 Paper Trading, broker certification, or live-order approval exists.
 
+Operator account availability is recorded only for future planning: a Moomoo
+Malaysia account and a Guojin Securities China account are open. No account
+identifier, credential, API permission, sandbox capability, market entitlement,
+or broker behavior has been captured or certified. Account availability does
+not satisfy any readiness gate and does not authorize integration work.
+
 ## Remaining Gates
 
 The following gates are sequential. Passing a later engineering test cannot
@@ -43,8 +49,9 @@ waive an earlier evidence gate.
      exposure limits, rate limits, clock health, stale-data rejection, audit
      logs, metrics, incident runbooks, backup, and disaster recovery.
 7. **Broker certification gate**
-   - Certify QMT/PTrade separately for China A and IBKR/Moomoo separately for
-     overseas markets.
+   - Select and certify each future China A adapter independently, including
+     any approved Guojin Securities access path, and certify IBKR/Moomoo
+     separately for overseas markets.
    - Test sandbox or broker-provided simulation, rejected orders, disconnects,
      duplicate callbacks, partial fills, and recovery.
 8. **Controlled rollout gate**

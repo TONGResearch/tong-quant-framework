@@ -118,3 +118,24 @@ def test_provider_monitor_workflow_exposes_health_and_retention_controls() -> No
     assert "scripts/export_provider_evidence.py" in workflow
     assert "datetime.now(UTC).isoformat()" in workflow
     assert "date -u +%Y-%m-%dT%H:%M:%S+00:00" not in workflow
+
+
+def test_governance_enforces_supported_workflow_runtimes() -> None:
+    report = audit_project_governance(PROJECT_ROOT)
+    runtime_checks = tuple(
+        check for check in report.checks if check.name.startswith("workflow_runtime:")
+    )
+
+    assert runtime_checks
+    assert all(check.passed for check in runtime_checks)
+
+    ci_workflow = (PROJECT_ROOT / ".github/workflows/ci.yml").read_text(
+        encoding="utf-8"
+    )
+    monitor_workflow = (
+        PROJECT_ROOT / ".github/workflows/provider-contract-monitor.yml"
+    ).read_text(encoding="utf-8")
+    assert "ubuntu-latest" not in ci_workflow
+    assert "ubuntu-latest" not in monitor_workflow
+    assert "actions/cache/restore@v4" not in monitor_workflow
+    assert "actions/upload-artifact@v4" not in monitor_workflow

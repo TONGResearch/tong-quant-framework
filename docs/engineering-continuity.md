@@ -38,6 +38,10 @@ Missing credentials, paid endpoints, or provider downtime are external states.
 They must produce explicit unavailable evidence, not invented fixtures presented
 as real data and not weakened acceptance criteria.
 
+Workflow continuity is also versioned evidence. Pin supported GitHub-hosted
+runner images, use official Actions on supported runtimes, and verify runtime
+migrations in CI before relying on the next scheduled operational artifact.
+
 ## Decision Discipline
 
 - Record architecture decisions in `docs/decisions/`.
