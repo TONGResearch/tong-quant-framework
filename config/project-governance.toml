@@ -32,7 +32,7 @@ pit = "unsuitable"
 required_commands = [
   ".venv/bin/pytest",
   ".venv/bin/ruff check .",
-  ".venv/bin/mypy src",
+  ".venv/bin/mypy src scripts",
   "git diff --check",
   ".venv/bin/python scripts/check_project_governance.py",
 ]

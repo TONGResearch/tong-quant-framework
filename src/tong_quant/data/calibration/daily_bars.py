@@ -99,10 +99,17 @@ class DailyBarCalibrationSnapshot:
 
 
 class DailyBarCalibrationSource(Protocol):
-    provider_id: str
-    price_basis: DailyBarPriceBasis
-    trust_level: DataTrustLevel
-    availability_precision: AvailabilityPrecision
+    @property
+    def provider_id(self) -> str: ...
+
+    @property
+    def price_basis(self) -> DailyBarPriceBasis: ...
+
+    @property
+    def trust_level(self) -> DataTrustLevel: ...
+
+    @property
+    def availability_precision(self) -> AvailabilityPrecision: ...
 
     def load(self, query: DailyBarCalibrationQuery) -> DailyBarCalibrationSnapshot: ...
 

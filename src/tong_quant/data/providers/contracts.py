@@ -312,7 +312,8 @@ class ProviderContractRun:
 
 
 class ProviderEvidenceAdapter(Protocol):
-    provider_id: str
+    @property
+    def provider_id(self) -> str: ...
 
     def capabilities(self) -> tuple[ProviderDatasetCapability, ...]: ...
 

@@ -67,6 +67,8 @@ without depending on paid Tushare access or introducing trading functionality.
 - Deterministic reconstruction, future-boundary rejection, tamper detection,
   secret rejection, local-path rejection, and missing-table visibility are
   covered by automated tests.
+- CI type-checking covers the provider evidence, calibration, and capture
+  command-line entry points in `scripts` as well as the reusable packages.
 - The October 1 Actions artifact was downloaded and independently verified on
   October 3. Artifact digest `bd8f441e...d832`, evidence bundle
   `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity

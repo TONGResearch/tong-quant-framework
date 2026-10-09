@@ -48,6 +48,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Fail-closed Historical Replay data-quality eligibility: explicit readiness
   datasets, minimum trust enforcement, incomplete-sample preservation, and
   readiness evidence hashes before ValidationRequest creation
+- CI type-checking covers both the reusable `src` packages and operational
+  `scripts` entry points
 
 ## Frozen Work
 
@@ -106,7 +108,7 @@ cross-provider consistency. Provider health does not imply PIT readiness.
 ```bash
 .venv/bin/pytest
 .venv/bin/ruff check .
-.venv/bin/mypy src
+.venv/bin/mypy src scripts
 git diff --check
 .venv/bin/python scripts/check_project_governance.py
 ```

@@ -136,6 +136,7 @@ def test_governance_enforces_supported_workflow_runtimes() -> None:
         PROJECT_ROOT / ".github/workflows/provider-contract-monitor.yml"
     ).read_text(encoding="utf-8")
     assert "ubuntu-latest" not in ci_workflow
+    assert "run: mypy src scripts" in ci_workflow
     assert "ubuntu-latest" not in monitor_workflow
     assert "actions/cache/restore@v4" not in monitor_workflow
     assert "actions/upload-artifact@v4" not in monitor_workflow
