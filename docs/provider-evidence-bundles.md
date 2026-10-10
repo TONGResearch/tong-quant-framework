@@ -21,6 +21,12 @@ The export snapshots existing ledgers for:
 - calibration attempts, consistency reports, and provider conflicts;
 - dataset confidence, historical coverage, and PIT readiness assessments.
 
+The scheduled contract-monitor database may contain no rows in some of these
+ledgers. A present but empty calibration, conflict, artifact, or readiness
+table proves only that the export included that table; it does not prove
+provider agreement, historical coverage, or readiness. Review row counts and
+the source database's operational scope before interpreting an export.
+
 Rows later than the explicit export `as_of` are excluded using each ledger's
 operational timestamp. Baseline child rows are included only when their parent
 manifest is visible. Incomplete ingestion batches and batches completed after
@@ -148,4 +154,7 @@ visible. Reaching the time horizon does not by itself make a dataset `USABLE`;
 the separate PIT readiness reassessment must consume the accumulated evidence.
 The horizon report's eligibility flag means only that the evidence may enter
 that separate human review. It is not a trust, research, validation, portfolio,
-or trading-readiness promotion.
+or trading-readiness promotion. The current contract-run schema does not record
+whether a run was scheduled or manual, so the numeric check count cannot by
+itself prove the scheduled-observation requirement. The reviewer must verify
+run provenance separately until an auditable run-origin contract is available.

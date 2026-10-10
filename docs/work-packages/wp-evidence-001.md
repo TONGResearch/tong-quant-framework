@@ -36,6 +36,8 @@ without depending on paid Tushare access or introducing trading functionality.
 
 - Observation horizon is at least 84 days with at least 8 scheduled checks per
   required provider/dataset/market scope.
+- Scheduled-run provenance is independently verified; the current contract-run
+  schema and horizon count do not distinguish scheduled from manual triggers.
 - CI artifacts and caches are not the sole durable copy of evidence.
 - Export contains no credentials, raw environment diagnostics, or local paths.
 - Missing periods remain visible and cannot be backfilled with synthetic
@@ -122,6 +124,11 @@ without depending on paid Tushare access or introducing trading functionality.
   horizon report `f06623cb...db63` matched the Actions summary. SQLite integrity
   returned `ok`, bundle verification passed, and an independent horizon rebuild
   reproduced the same report ID.
+- A [scope-level interim review](../provider-evidence-interim-review-2026-10-08.md)
+  records the five pre-monitor missing weekly bins, historical failures, source
+  limitations, and the absence of calibration and conflict rows in this
+  operational snapshot. Empty ledgers are not evidence of provider agreement.
+  It also identifies missing scheduled-run provenance as a separate review gate.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do

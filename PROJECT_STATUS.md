@@ -81,6 +81,12 @@ without promoting provider trust or PIT readiness. Elapsed calendar time alone
 is not evidence, and the package cannot promote trust or PIT readiness
 automatically.
 
+The October 8 interim scope review also found that the monitor's numeric check
+count does not encode scheduled versus manual run origin. Scheduled provenance
+must therefore be verified separately before accepting any later horizon pass.
+The monitor database's empty calibration and conflict ledgers are not evidence
+of cross-provider agreement.
+
 On October 10, the October 8 artifact was retained in two independently
 verified durable copies: a private local content-addressed archive and a
 separate AES-256 encrypted sparse-bundle in private iCloud Drive. The encrypted
