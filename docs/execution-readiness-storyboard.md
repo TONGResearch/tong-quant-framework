@@ -1,5 +1,8 @@
 # Execution Readiness And Storyboard
 
+For the owner-facing Chinese storyboard, see
+[Tong Quant trading storyboard](owner-trading-storyboard.zh-CN.md).
+
 ## Current State
 
 Execution is fail-closed. The repository contains disabled guard contracts and

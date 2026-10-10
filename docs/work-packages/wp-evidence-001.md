@@ -85,6 +85,14 @@ without depending on paid Tushare access or introducing trading functionality.
 - The hardened verifier also passed against the retained October 8 archive;
   future archives fail closed when the contract-history database is absent or
   fails SQLite integrity checking.
+- On October 10, the retained local ZIP was extracted into an isolated temporary
+  directory. The provider-history database passed a read-only source audit and
+  `restore-dry-run`; an independent audit of the restored copy matched the
+  source audit hash `2b2173cf...329eeba8`, schema fingerprint
+  `ad61c67c...1a58`, migration head `0008_provider_calibration_attempts`,
+  17 contract runs, 85 checks, 17 baseline manifests, 84 entries, and 764
+  inputs. No live database or retained archive file was modified. This is a
+  local-copy recovery exercise, not an off-device encrypted-copy restore.
 - The October 1 Actions artifact was downloaded and independently verified on
   October 3. Artifact digest `bd8f441e...d832`, evidence bundle
   `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity

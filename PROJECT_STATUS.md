@@ -89,6 +89,12 @@ CloudDocs reported a caught-up state. This closes the current two-copy storage
 gap, but it does not satisfy the outstanding 84-day evidence horizon or promote
 PIT readiness.
 
+An isolated restore drill from the private local October 8 archive also passed
+on October 10: the restored provider-history database matched the source audit
+hash, schema fingerprint, migration head, and table counts. This proves local
+archive recoverability only; an independent restore from the encrypted
+off-device copy is still outstanding.
+
 Planned work must respect dependencies in `config/project-governance.toml`.
 
 Future planned work after the evidence and readiness gates:
