@@ -99,11 +99,14 @@ python scripts/archive_provider_evidence.py verify \
 ```
 
 The archive command rejects symbolic links, path traversal, duplicate ZIP
-entries, credential-like JSON or text, digest mismatches, modified bundles, and
-horizon reports that cannot be reconstructed. It copies without silent
+entries, credential-like JSON or text, digest mismatches, modified bundles,
+horizon reports that cannot be reconstructed, and a missing or corrupt provider
+contract history SQLite database. The database is checked with SQLite's full
+`integrity_check` before a copy is retained. The command copies without silent
 overwrite, rechecks the copied bytes, and stores the ZIP and manifest with mode
 `0600`. The manifest contains filenames and content identities only, never the
-source or destination's absolute path.
+source or destination's absolute path. Existing manifests remain verifiable
+after the validator version changes.
 
 The command does not encrypt storage. Run it once for a private local archive
 and again for a separately encrypted off-device destination. Matching artifact,

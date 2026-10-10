@@ -1,9 +1,11 @@
 import json
 import os
 import shutil
+import sqlite3
 import stat
 import tempfile
 import zipfile
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
@@ -23,6 +25,8 @@ from tong_quant.version import PROVIDER_EVIDENCE_ARCHIVE_VERSION
 
 _MAX_ARCHIVE_ENTRIES = 10_000
 _MAX_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
+_HISTORY_DATABASE_ENTRY = "data/provider-contract-monitor.sqlite3"
+_HISTORY_TABLES = frozenset({"provider_contract_runs", "provider_contract_checks"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,6 +184,8 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
             names = tuple(item.filename for item in infos)
             if len(names) != len(set(names)):
                 raise ValueError("provider evidence artifact contains duplicate entries")
+            if names.count(_HISTORY_DATABASE_ENTRY) != 1:
+                raise ValueError("provider evidence artifact requires contract history database")
             total_size = 0
             for info in infos:
                 _require_safe_member(info.filename)
@@ -191,6 +197,8 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
                 total_size += info.file_size
             if total_size > _MAX_UNCOMPRESSED_BYTES:
                 raise ValueError("provider evidence artifact is too large to verify")
+
+            _verify_history_database(archive)
 
             json_documents: dict[str, dict[str, object]] = {}
             for name in names:
@@ -253,6 +261,32 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
             )
     except zipfile.BadZipFile as error:
         raise ValueError("provider evidence artifact ZIP is invalid") from error
+
+
+def _verify_history_database(archive: zipfile.ZipFile) -> None:
+    with tempfile.NamedTemporaryFile(prefix="provider-history-", suffix=".sqlite3") as temporary:
+        with archive.open(_HISTORY_DATABASE_ENTRY) as source:
+            shutil.copyfileobj(source, temporary)
+        temporary.flush()
+        temporary.seek(0)
+        if temporary.read(16) != b"SQLite format 3\x00":
+            raise ValueError("provider evidence contract history database is invalid")
+        try:
+            uri = f"{Path(temporary.name).as_uri()}?mode=ro&immutable=1"
+            with closing(sqlite3.connect(uri, uri=True)) as connection:
+                result = tuple(row[0] for row in connection.execute("PRAGMA integrity_check"))
+                tables = {
+                    row[0]
+                    for row in connection.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table'"
+                    )
+                }
+        except sqlite3.DatabaseError as error:
+            raise ValueError("provider evidence contract history database is invalid") from error
+        if result != ("ok",):
+            raise ValueError("provider evidence contract history database failed integrity check")
+        if not tables >= _HISTORY_TABLES:
+            raise ValueError("provider evidence contract history tables are missing")
 
 
 def _prepare_destination(destination: Path) -> None:

@@ -23,7 +23,7 @@ DAILY_BAR_CALIBRATION_VERSION = "daily-bar-calibration-v0.8-hardening"
 EVIDENCE_READINESS_VERSION = "evidence-readiness-v0.8-hardening"
 PROVIDER_EVIDENCE_BUNDLE_VERSION = "provider-evidence-bundle-v0.8-hardening"
 PROVIDER_EVIDENCE_HORIZON_VERSION = "provider-evidence-horizon-v0.8-hardening"
-PROVIDER_EVIDENCE_ARCHIVE_VERSION = "provider-evidence-archive-v0.8-hardening"
+PROVIDER_EVIDENCE_ARCHIVE_VERSION = "provider-evidence-archive-v0.8-sqlite-integrity"
 
 
 __all__ = [

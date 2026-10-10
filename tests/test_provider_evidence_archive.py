@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import stat
 import subprocess
 import sys
@@ -108,6 +109,51 @@ def test_archive_rejects_tampered_bundle_and_credential_json(tmp_path: Path) -> 
         )
 
 
+def test_archive_rejects_missing_or_corrupt_history_database(tmp_path: Path) -> None:
+    missing = _artifact(tmp_path, name="missing-history.zip", include_database=False)
+    with pytest.raises(ValueError, match="requires contract history database"):
+        archive_provider_evidence_artifact(
+            missing,
+            tmp_path / "missing-history-copy",
+            verified_at=VERIFIED_AT,
+        )
+
+    corrupt = _artifact(
+        tmp_path,
+        name="corrupt-history.zip",
+        database_override=b"not a SQLite database",
+    )
+    with pytest.raises(ValueError, match="contract history database is invalid"):
+        archive_provider_evidence_artifact(
+            corrupt,
+            tmp_path / "corrupt-history-copy",
+            verified_at=VERIFIED_AT,
+        )
+
+    empty = _artifact(tmp_path, name="empty-history.zip", database_override=b"")
+    with pytest.raises(ValueError, match="contract history database is invalid"):
+        archive_provider_evidence_artifact(
+            empty,
+            tmp_path / "empty-history-copy",
+            verified_at=VERIFIED_AT,
+        )
+
+    unrelated_path = tmp_path / "unrelated.sqlite3"
+    with sqlite3.connect(unrelated_path) as connection:
+        connection.execute("CREATE TABLE unrelated (value TEXT)")
+    unrelated = _artifact(
+        tmp_path,
+        name="unrelated-history.zip",
+        database_override=unrelated_path.read_bytes(),
+    )
+    with pytest.raises(ValueError, match="contract history tables are missing"):
+        archive_provider_evidence_artifact(
+            unrelated,
+            tmp_path / "unrelated-history-copy",
+            verified_at=VERIFIED_AT,
+        )
+
+
 def test_archive_cli_creates_and_verifies_manifest(tmp_path: Path) -> None:
     artifact = _artifact(tmp_path)
     destination = tmp_path / "cli-copy"
@@ -154,6 +200,8 @@ def _artifact(
     *,
     name: str = "provider-artifact.zip",
     tamper_bundle: bool = False,
+    include_database: bool = True,
+    database_override: bytes | None = None,
 ) -> Path:
     database = tmp_path / f"{name}.sqlite3"
     SQLiteStore(database).initialize()
@@ -180,4 +228,9 @@ def _artifact(
             "provider-contract-artifacts/provider-health.json",
             json.dumps({"status": "degraded"}),
         )
+        if include_database:
+            archive.writestr(
+                "data/provider-contract-monitor.sqlite3",
+                database.read_bytes() if database_override is None else database_override,
+            )
     return artifact
