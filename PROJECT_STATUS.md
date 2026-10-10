@@ -93,7 +93,11 @@ An isolated restore drill from the private local October 8 archive also passed
 on October 10: the restored provider-history database matched the source audit
 hash, schema fingerprint, migration head, and table counts. This proves local
 archive recoverability only; an independent restore from the encrypted
-off-device copy is still outstanding.
+off-device copy is still outstanding. The drill is now a repeatable
+`archive_provider_evidence.py restore-drill` command with fail-closed tests and
+credential-free, path-free summary output. Archive verification also rejects
+bundled contract-run, check, or baseline identities absent from its embedded
+SQLite history.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

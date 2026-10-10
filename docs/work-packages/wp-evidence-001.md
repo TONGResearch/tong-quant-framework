@@ -93,6 +93,16 @@ without depending on paid Tushare access or introducing trading functionality.
   17 contract runs, 85 checks, 17 baseline manifests, 84 entries, and 764
   inputs. No live database or retained archive file was modified. This is a
   local-copy recovery exercise, not an off-device encrypted-copy restore.
+- The same procedure is now implemented as the `restore-drill` subcommand of
+  `archive_provider_evidence.py`, with tests for nonempty history preservation,
+  deterministic path-free output, tamper rejection, and automatic
+  temporary-directory cleanup. It passed against the retained October 8 local
+  archive with the same audit hash and counts; encrypted off-device recovery
+  remains a separate exercise.
+- Archive verification now cross-checks bundled contract-run, check, and
+  baseline-manifest identities against the embedded SQLite history. A
+  syntactically valid but stale database snapshot is rejected rather than
+  silently treated as complete evidence.
 - The October 1 Actions artifact was downloaded and independently verified on
   October 3. Artifact digest `bd8f441e...d832`, evidence bundle
   `53ed8e12...aeb2`, and horizon report `dc1e0469...f6b8` all passed integrity

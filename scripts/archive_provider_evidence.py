@@ -1,9 +1,13 @@
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 
+from tong_quant.core.exceptions import DatabaseIntegrityError
 from tong_quant.data.evidence_archive import (
     archive_provider_evidence_artifact,
+    drill_provider_evidence_archive,
+    provider_evidence_restore_drill_json,
     verify_provider_evidence_archive,
 )
 
@@ -22,6 +26,9 @@ def parse_args() -> argparse.Namespace:
 
     verify = subcommands.add_parser("verify")
     verify.add_argument("--manifest", type=Path, required=True)
+
+    restore = subcommands.add_parser("restore-drill")
+    restore.add_argument("--manifest", type=Path, required=True)
     return parser.parse_args()
 
 
@@ -30,6 +37,15 @@ def main() -> None:
     if args.command == "verify":
         manifest = verify_provider_evidence_archive(args.manifest)
         print(manifest.archive_id)
+        return
+    if args.command == "restore-drill":
+        try:
+            report = drill_provider_evidence_archive(args.manifest)
+        except (DatabaseIntegrityError, ValueError) as error:
+            raise SystemExit(
+                f"Provider evidence restore drill failed: {type(error).__name__}"
+            ) from error
+        print(json.dumps(provider_evidence_restore_drill_json(report), sort_keys=True))
         return
     result = archive_provider_evidence_artifact(
         args.artifact,

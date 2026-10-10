@@ -172,6 +172,9 @@ in the same commit.
   Continuity gates must be reviewed per provider, dataset, market, and subject;
   dataset-level aggregates cannot hide a missing scope. Never export local
   artifact paths or include incomplete/future-completed ingestion batches.
+- Archived provider history must contain the contract-run, check, and baseline
+  identities claimed by its evidence bundle. ZIP integrity alone does not prove
+  recoverability; use the isolated `restore-drill` on each retained copy.
 - `WP-EVIDENCE-001` horizon completion requires a verified bundle whose five
   scheduled CNInfo/Yahoo scopes each pass the fixed 84-day/eight-check audit
   with complete baseline measurements. Calendar age, a dataset aggregate, or a

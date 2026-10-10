@@ -20,6 +20,7 @@ from tong_quant.data.evidence_horizon import (
     evaluate_provider_evidence_horizon,
     provider_evidence_horizon_json,
 )
+from tong_quant.data.storage.engineering import SQLiteBackupService, SQLiteIntegrityService
 from tong_quant.domain.models import require_timezone
 from tong_quant.version import PROVIDER_EVIDENCE_ARCHIVE_VERSION
 
@@ -67,6 +68,22 @@ class ProviderEvidenceArchiveResult:
     manifest: ProviderEvidenceArchiveManifest
     artifact_path: Path
     manifest_path: Path
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderEvidenceRestoreDrill:
+    archive_id: str
+    artifact_sha256: str
+    source_audit_hash: str
+    restored_audit_hash: str
+    source_migration_head: str
+    restored_migration_head: str
+    restored_schema_fingerprint: str
+    migration_applied: bool
+    table_counts_match: bool
+    contract_runs: int
+    contract_checks: int
+    baseline_manifests: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +174,75 @@ def verify_provider_evidence_archive(
     return manifest
 
 
+def drill_provider_evidence_archive(manifest_path: Path) -> ProviderEvidenceRestoreDrill:
+    manifest = verify_provider_evidence_archive(manifest_path)
+    artifact_path = manifest_path.parent / manifest.artifact_file
+    with tempfile.TemporaryDirectory(prefix="provider-evidence-restore-") as directory:
+        backup_path = Path(directory) / "provider-history.sqlite3"
+        restored_path = Path(directory) / "restored.sqlite3"
+        try:
+            with (
+                zipfile.ZipFile(artifact_path) as archive,
+                archive.open(_HISTORY_DATABASE_ENTRY) as source,
+                backup_path.open("xb") as backup,
+            ):
+                shutil.copyfileobj(source, backup)
+        except (KeyError, zipfile.BadZipFile) as error:
+            raise ValueError("provider evidence artifact changed during restore drill") from error
+        backup_path.chmod(0o600)
+        if _file_sha256(artifact_path) != manifest.artifact_sha256:
+            raise ValueError("provider evidence artifact changed during restore drill")
+
+        integrity = SQLiteIntegrityService()
+        source_report = integrity.audit(backup_path)
+        restored = SQLiteBackupService(integrity_service=integrity).dry_run_restore(
+            backup_path=backup_path,
+            destination_path=restored_path,
+        )
+        independent_report = integrity.audit(restored_path)
+        if (
+            not independent_report.passed
+            or independent_report.audit_hash != restored.restored_audit_hash
+        ):
+            raise ValueError("provider evidence restored database failed independent audit")
+        if _file_sha256(artifact_path) != manifest.artifact_sha256:
+            raise ValueError("provider evidence artifact changed during restore drill")
+        counts = {item.table: item.rows for item in independent_report.table_counts}
+        return ProviderEvidenceRestoreDrill(
+            archive_id=manifest.archive_id,
+            artifact_sha256=manifest.artifact_sha256,
+            source_audit_hash=source_report.audit_hash,
+            restored_audit_hash=independent_report.audit_hash,
+            source_migration_head=source_report.migration_head,
+            restored_migration_head=independent_report.migration_head,
+            restored_schema_fingerprint=independent_report.schema_fingerprint,
+            migration_applied=restored.migration_applied,
+            table_counts_match=restored.common_table_counts_match,
+            contract_runs=counts["provider_contract_runs"],
+            contract_checks=counts["provider_contract_checks"],
+            baseline_manifests=counts["provider_baseline_manifests"],
+        )
+
+
+def provider_evidence_restore_drill_json(
+    report: ProviderEvidenceRestoreDrill,
+) -> dict[str, object]:
+    return {
+        "archive_id": report.archive_id,
+        "artifact_sha256": report.artifact_sha256,
+        "source_audit_hash": report.source_audit_hash,
+        "restored_audit_hash": report.restored_audit_hash,
+        "source_migration_head": report.source_migration_head,
+        "restored_migration_head": report.restored_migration_head,
+        "restored_schema_fingerprint": report.restored_schema_fingerprint,
+        "migration_applied": report.migration_applied,
+        "table_counts_match": report.table_counts_match,
+        "contract_runs": report.contract_runs,
+        "contract_checks": report.contract_checks,
+        "baseline_manifests": report.baseline_manifests,
+    }
+
+
 def provider_evidence_archive_manifest_json(
     manifest: ProviderEvidenceArchiveManifest,
 ) -> dict[str, object]:
@@ -198,8 +284,6 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
             if total_size > _MAX_UNCOMPRESSED_BYTES:
                 raise ValueError("provider evidence artifact is too large to verify")
 
-            _verify_history_database(archive)
-
             json_documents: dict[str, dict[str, object]] = {}
             for name in names:
                 if not name.endswith(".json"):
@@ -238,6 +322,7 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
             bundle_document = json_documents[bundle_entry]
             horizon_document = json_documents[horizon_entry]
             verify_provider_evidence_document(bundle_document)
+            _verify_history_database(archive, bundle_document)
             expected_horizon = provider_evidence_horizon_json(
                 evaluate_provider_evidence_horizon(bundle_document)
             )
@@ -263,7 +348,10 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
         raise ValueError("provider evidence artifact ZIP is invalid") from error
 
 
-def _verify_history_database(archive: zipfile.ZipFile) -> None:
+def _verify_history_database(
+    archive: zipfile.ZipFile,
+    bundle_document: dict[str, object],
+) -> None:
     with tempfile.NamedTemporaryFile(prefix="provider-history-", suffix=".sqlite3") as temporary:
         with archive.open(_HISTORY_DATABASE_ENTRY) as source:
             shutil.copyfileobj(source, temporary)
@@ -281,12 +369,55 @@ def _verify_history_database(archive: zipfile.ZipFile) -> None:
                         "SELECT name FROM sqlite_master WHERE type = 'table'"
                     )
                 }
+                missing_history = any(
+                    connection.execute(
+                        f"SELECT 1 FROM {table} WHERE {column} = ?",
+                        (identity,),
+                    ).fetchone()
+                    is None
+                    for table, column, identities in _bundle_history_ids(bundle_document)
+                    for identity in identities
+                )
         except sqlite3.DatabaseError as error:
             raise ValueError("provider evidence contract history database is invalid") from error
         if result != ("ok",):
             raise ValueError("provider evidence contract history database failed integrity check")
         if not tables >= _HISTORY_TABLES:
             raise ValueError("provider evidence contract history tables are missing")
+        if missing_history:
+            raise ValueError("provider evidence history database omits bundled records")
+
+
+def _bundle_history_ids(
+    document: dict[str, object],
+) -> tuple[tuple[str, str, frozenset[str]], ...]:
+    tables = document.get("tables")
+    if not isinstance(tables, list):
+        raise ValueError("provider evidence bundle tables are invalid")
+    identities: list[tuple[str, str, frozenset[str]]] = []
+    for table, column in (
+        ("provider_contract_runs", "run_id"),
+        ("provider_contract_checks", "check_id"),
+        ("provider_baseline_manifests", "manifest_id"),
+    ):
+        matches = [item for item in tables if isinstance(item, dict) and item.get("table") == table]
+        if len(matches) > 1:
+            raise ValueError("provider evidence bundle has duplicate history tables")
+        if not matches:
+            continue
+        snapshot = matches[0]
+        columns = snapshot.get("columns")
+        rows = snapshot.get("rows")
+        if not isinstance(columns, list) or column not in columns or not isinstance(rows, list):
+            raise ValueError("provider evidence bundle history table is invalid")
+        index = columns.index(column)
+        values: set[str] = set()
+        for row in rows:
+            if not isinstance(row, list) or not isinstance(row[index], str):
+                raise ValueError("provider evidence bundle history identity is invalid")
+            values.add(row[index])
+        identities.append((table, column, frozenset(values)))
+    return tuple(identities)
 
 
 def _prepare_destination(destination: Path) -> None:
@@ -504,8 +635,11 @@ def _stable_hash(document: dict[str, object]) -> str:
 __all__ = [
     "ProviderEvidenceArchiveManifest",
     "ProviderEvidenceArchiveResult",
+    "ProviderEvidenceRestoreDrill",
     "archive_provider_evidence_artifact",
+    "drill_provider_evidence_archive",
     "provider_evidence_archive_manifest_json",
+    "provider_evidence_restore_drill_json",
     "serialize_provider_evidence_archive_manifest",
     "verify_provider_evidence_archive",
 ]

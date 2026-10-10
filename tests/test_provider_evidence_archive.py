@@ -12,7 +12,9 @@ import pytest
 
 from tong_quant.data.evidence_archive import (
     archive_provider_evidence_artifact,
+    drill_provider_evidence_archive,
     provider_evidence_archive_manifest_json,
+    provider_evidence_restore_drill_json,
     verify_provider_evidence_archive,
 )
 from tong_quant.data.evidence_bundle import (
@@ -23,6 +25,7 @@ from tong_quant.data.evidence_horizon import (
     evaluate_provider_evidence_horizon,
     provider_evidence_horizon_json,
 )
+from tong_quant.data.storage.engineering import SQLiteBackupService, SQLiteIntegrityService
 from tong_quant.data.storage.sqlite import SQLiteStore
 
 VERIFIED_AT = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
@@ -154,6 +157,29 @@ def test_archive_rejects_missing_or_corrupt_history_database(tmp_path: Path) -> 
         )
 
 
+def test_archive_rejects_history_snapshot_missing_bundled_run(tmp_path: Path) -> None:
+    empty_history = tmp_path / "empty-history.sqlite3"
+    SQLiteStore(empty_history).initialize()
+    empty_snapshot = tmp_path / "empty-history-snapshot.sqlite3"
+    SQLiteBackupService(SQLiteIntegrityService()).create_backup(
+        source_path=empty_history,
+        destination_path=empty_snapshot,
+    )
+    artifact = _artifact(
+        tmp_path,
+        name="missing-bundled-run.zip",
+        history_run=True,
+        database_override=empty_snapshot.read_bytes(),
+    )
+
+    with pytest.raises(ValueError, match="omits bundled records"):
+        archive_provider_evidence_artifact(
+            artifact,
+            tmp_path / "missing-bundled-run-copy",
+            verified_at=VERIFIED_AT,
+        )
+
+
 def test_archive_cli_creates_and_verifies_manifest(tmp_path: Path) -> None:
     artifact = _artifact(tmp_path)
     destination = tmp_path / "cli-copy"
@@ -195,6 +221,79 @@ def test_archive_cli_creates_and_verifies_manifest(tmp_path: Path) -> None:
     ).archive_id
 
 
+def test_restore_drill_preserves_history_and_emits_no_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    artifact = _artifact(tmp_path, history_run=True)
+    archived = archive_provider_evidence_artifact(
+        artifact,
+        tmp_path / "restore-copy",
+        verified_at=VERIFIED_AT,
+    )
+    original_hash = sha256(archived.artifact_path.read_bytes()).hexdigest()
+    monkeypatch.setattr("tong_quant.data.evidence_archive.tempfile.tempdir", str(tmp_path))
+
+    first = drill_provider_evidence_archive(archived.manifest_path)
+    second = drill_provider_evidence_archive(archived.manifest_path)
+    safe_report = provider_evidence_restore_drill_json(first)
+
+    assert first == second
+    assert first.archive_id == archived.manifest.archive_id
+    assert first.source_audit_hash == first.restored_audit_hash
+    assert first.table_counts_match is True
+    assert first.migration_applied is False
+    assert first.contract_runs == 1
+    assert first.contract_checks == 0
+    assert first.baseline_manifests == 0
+    assert str(tmp_path) not in json.dumps(safe_report)
+    assert sha256(archived.artifact_path.read_bytes()).hexdigest() == original_hash
+    assert list(tmp_path.glob("provider-evidence-restore-*")) == []
+
+    cli = subprocess.run(
+        [
+            sys.executable,
+            "scripts/archive_provider_evidence.py",
+            "restore-drill",
+            "--manifest",
+            str(archived.manifest_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert cli.returncode == 0, cli.stderr
+    assert json.loads(cli.stdout) == safe_report
+
+
+def test_restore_drill_rejects_tampered_archive(tmp_path: Path) -> None:
+    archived = archive_provider_evidence_artifact(
+        _artifact(tmp_path),
+        tmp_path / "tampered-restore-copy",
+        verified_at=VERIFIED_AT,
+    )
+    archived.artifact_path.write_bytes(b"tampered")
+
+    with pytest.raises(ValueError, match="artifact size does not match"):
+        drill_provider_evidence_archive(archived.manifest_path)
+
+    cli = subprocess.run(
+        [
+            sys.executable,
+            "scripts/archive_provider_evidence.py",
+            "restore-drill",
+            "--manifest",
+            str(archived.manifest_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert cli.returncode != 0
+    assert "Provider evidence restore drill failed: ValueError" in cli.stderr
+    assert str(tmp_path) not in cli.stderr
+
+
 def _artifact(
     tmp_path: Path,
     *,
@@ -202,10 +301,34 @@ def _artifact(
     tamper_bundle: bool = False,
     include_database: bool = True,
     database_override: bytes | None = None,
+    history_run: bool = False,
 ) -> Path:
     database = tmp_path / f"{name}.sqlite3"
     SQLiteStore(database).initialize()
-    bundle = ProviderEvidenceBundleExporter().export(database, as_of=VERIFIED_AT)
+    if history_run:
+        with sqlite3.connect(database) as connection:
+            connection.execute(
+                """
+                INSERT INTO provider_contract_runs (
+                    run_id, started_at, completed_at, status,
+                    implementation_version, generated_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "fixture-run",
+                    VERIFIED_AT.isoformat(),
+                    VERIFIED_AT.isoformat(),
+                    "healthy",
+                    "fixture-v1",
+                    VERIFIED_AT.isoformat(),
+                ),
+            )
+    snapshot = tmp_path / f"{name}.snapshot.sqlite3"
+    SQLiteBackupService(SQLiteIntegrityService()).create_backup(
+        source_path=database,
+        destination_path=snapshot,
+    )
+    bundle = ProviderEvidenceBundleExporter().export(snapshot, as_of=VERIFIED_AT)
     bundle_document = provider_evidence_bundle_json(bundle)
     horizon_document = provider_evidence_horizon_json(
         evaluate_provider_evidence_horizon(bundle_document)
@@ -231,6 +354,6 @@ def _artifact(
         if include_database:
             archive.writestr(
                 "data/provider-contract-monitor.sqlite3",
-                database.read_bytes() if database_override is None else database_override,
+                snapshot.read_bytes() if database_override is None else database_override,
             )
     return artifact

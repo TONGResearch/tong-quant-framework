@@ -98,14 +98,35 @@ python scripts/archive_provider_evidence.py verify \
   --manifest ~/Documents/TongQuantEvidenceArchive/provider-evidence-archive-<hash>.json
 ```
 
+Run a repeatable isolated recovery exercise against the retained copy:
+
+```bash
+python scripts/archive_provider_evidence.py restore-drill \
+  --manifest ~/Documents/TongQuantEvidenceArchive/provider-evidence-archive-<hash>.json
+```
+
+`restore-drill` verifies the manifest, artifact hash, evidence bundle, horizon
+report, and embedded SQLite history before extracting only the history database
+into a private temporary directory. It uses the existing SQLite restore service
+and an independent post-restore audit, checks migration and table-count
+preservation, and removes the temporary copy automatically. Its JSON output
+contains identities and counts only, not credentials or local paths. A successful
+local drill does not prove that a separately encrypted off-device copy can be
+opened and restored; repeat the command against that copy after mounting it
+without passing its password to Tong Quant.
+
 The archive command rejects symbolic links, path traversal, duplicate ZIP
 entries, credential-like JSON or text, digest mismatches, modified bundles,
 horizon reports that cannot be reconstructed, and a missing or corrupt provider
 contract history SQLite database. The database is checked with SQLite's full
-`integrity_check` before a copy is retained. The command copies without silent
-overwrite, rechecks the copied bytes, and stores the ZIP and manifest with mode
-`0600`. The manifest contains filenames and content identities only, never the
-source or destination's absolute path. Existing manifests remain verifiable
+`integrity_check`, and the bundled contract-run, check, and baseline-manifest
+identities must exist in the embedded database. This catches an archive whose
+main SQLite file omitted still-uncheckpointed WAL records even if both the
+database and the evidence bundle are individually valid. The command copies
+without silent overwrite, rechecks the copied bytes, and stores the ZIP and
+manifest with mode `0600`. The manifest contains filenames and content
+identities only, never the source or destination's absolute path. Existing
+manifests remain verifiable
 after the validator version changes.
 
 The command does not encrypt storage. Run it once for a private local archive
