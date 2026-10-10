@@ -91,14 +91,20 @@ without depending on paid Tushare access or introducing trading functionality.
   source audit hash `2b2173cf...329eeba8`, schema fingerprint
   `ad61c67c...1a58`, migration head `0008_provider_calibration_attempts`,
   17 contract runs, 85 checks, 17 baseline manifests, 84 entries, and 764
-  inputs. No live database or retained archive file was modified. This is a
-  local-copy recovery exercise, not an off-device encrypted-copy restore.
+  inputs. No live database or retained archive file was modified.
 - The same procedure is now implemented as the `restore-drill` subcommand of
   `archive_provider_evidence.py`, with tests for nonempty history preservation,
   deterministic path-free output, tamper rejection, and automatic
   temporary-directory cleanup. It passed against the retained October 8 local
   archive with the same audit hash and counts; encrypted off-device recovery
-  remains a separate exercise.
+  was then verified separately.
+- On October 10, the encrypted iCloud sparse-bundle was mounted from its final
+  destination and its retained archive (`884748f2...e875`) passed the same
+  isolated `restore-drill`. Source and restored audit hashes matched
+  (`2b2173cf...329eeba8`), as did migration head, schema fingerprint, and table
+  counts; 17 contract runs, 85 checks, and 17 baseline manifests were recovered.
+  The volume was detached afterward. This closes the two-copy restore exercise,
+  not the evidence-horizon or PIT-readiness gates.
 - Archive verification now cross-checks bundled contract-run, check, and
   baseline-manifest identities against the embedded SQLite history. A
   syntactically valid but stale database snapshot is rejected rather than

@@ -91,13 +91,16 @@ PIT readiness.
 
 An isolated restore drill from the private local October 8 archive also passed
 on October 10: the restored provider-history database matched the source audit
-hash, schema fingerprint, migration head, and table counts. This proves local
-archive recoverability only; an independent restore from the encrypted
-off-device copy is still outstanding. The drill is now a repeatable
+hash, schema fingerprint, migration head, and table counts. An independent
+restore drill from the mounted encrypted iCloud copy also passed on October 10:
+the restored audit hash matched the source (`2b2173cf...329eeba8`), with 17
+contract runs, 85 checks, 17 baseline manifests, and matching table counts.
+The encrypted volume was detached after the drill. The drill is now a repeatable
 `archive_provider_evidence.py restore-drill` command with fail-closed tests and
 credential-free, path-free summary output. Archive verification also rejects
 bundled contract-run, check, or baseline identities absent from its embedded
-SQLite history.
+SQLite history. Both retained copies are recoverable, but this does not close
+the 84-day evidence-horizon deficit or change PIT readiness.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 
