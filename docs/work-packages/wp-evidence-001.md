@@ -136,6 +136,16 @@ without depending on paid Tushare access or introducing trading functionality.
   its original policy, while reassessment under the new policy counts its 17
   pre-migration runs as `unknown`. A GitHub run reference still requires
   independent event verification; the current package remains `ready`.
+- A post-migration [manual Actions run #18](https://github.com/TONGResearch/tong-quant-framework/actions/runs/38065714984)
+  completed successfully on commit `539b676` on October 10. The artifact digest
+  `55db042c...3f508` matched the downloaded ZIP; archive verification and an
+  isolated restore drill passed. SQLite integrity was `ok`, the source and
+  restored audit hashes matched, and the database reported schema `0.8.1`,
+  migration head `0009`, 18 runs, 90 checks, and 18 baselines. The new run's
+  JSON and database row both say `manual` and refer to GitHub run
+  `38065714984` attempt 1. All five horizon scopes correctly show 18 total
+  checks, zero scheduled checks, and no readiness-reassessment eligibility.
+  This smoke test earns no scheduled-observation credit.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do

@@ -122,6 +122,15 @@ the `0009` migration in the isolated copy, so its post-migration audit hash is
 expected to differ from the untouched source. Table counts and historical
 records remain intact.
 
+The October 10 post-migration manual Actions smoke test
+([run #18](https://github.com/TONGResearch/tong-quant-framework/actions/runs/38065714984))
+passed on commit `539b676`. Its downloaded artifact matched the GitHub SHA-256
+digest and passed archive verification and an isolated restore drill. The
+database is at `0.8.1`/`0009`, with 18 runs, 90 checks, and 18 baselines.
+The new run is recorded as `manual` with its GitHub run reference; all five
+scopes have zero provenance-qualified scheduled checks. This verifies deployment
+and recovery, not the evidence horizon or PIT readiness.
+
 Planned work must respect dependencies in `config/project-governance.toml`.
 
 Future planned work after the evidence and readiness gates:
