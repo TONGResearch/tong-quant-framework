@@ -81,6 +81,14 @@ without promoting provider trust or PIT readiness. Elapsed calendar time alone
 is not evidence, and the package cannot promote trust or PIT readiness
 automatically.
 
+On October 10, the October 8 artifact was retained in two independently
+verified durable copies: a private local content-addressed archive and a
+separate AES-256 encrypted sparse-bundle in private iCloud Drive. The encrypted
+copy was detached, remounted from its final destination, and reverified before
+CloudDocs reported a caught-up state. This closes the current two-copy storage
+gap, but it does not satisfy the outstanding 84-day evidence horizon or promote
+PIT readiness.
+
 Planned work must respect dependencies in `config/project-governance.toml`.
 
 Future planned work after the evidence and readiness gates:
