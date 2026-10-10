@@ -24,6 +24,7 @@ from tong_quant.data.providers.cninfo import CNINFO_DISCLOSURES_DATASET
 from tong_quant.data.providers.contracts import (
     ProviderContractCheck,
     ProviderContractRun,
+    ProviderContractRunOrigin,
     ProviderContractStatus,
 )
 from tong_quant.data.providers.yahoo import YAHOO_DAILY_BARS_DATASET
@@ -81,6 +82,7 @@ def test_complete_required_scopes_are_eligible_for_separate_readiness_review(
     )
     assert all(item.observation_days == 84 for item in report.assessments)
     assert all(item.contract_check_count == 8 for item in report.assessments)
+    assert all(item.scheduled_contract_check_count == 8 for item in report.assessments)
     assert all(item.baseline_observation_days == 84 for item in report.assessments)
     assert all(item.observed_periods == 8 for item in report.assessments)
     markdown = render_provider_evidence_horizon_markdown(report)
@@ -99,6 +101,69 @@ def test_missing_scope_cannot_be_hidden_by_dataset_aggregate(tmp_path: Path) -> 
     assert missing.status is EvidenceHorizonStatus.MISSING
     assert missing.remaining_observation_days == 84
     assert missing.remaining_contract_checks == 8
+
+
+def test_manual_checks_cannot_satisfy_scheduled_horizon(tmp_path: Path) -> None:
+    database = tmp_path / "manual.sqlite3"
+    store = SQLiteStore(database)
+    store.initialize()
+    dates = tuple(START + timedelta(days=12 * index) for index in range(8))
+    _save_contract_history(
+        store, SCOPES, dates, origin=ProviderContractRunOrigin.MANUAL
+    )
+    ProviderBaselineBuilder(repository=store, clock=lambda: END).build(
+        ProviderBaselineQuery(
+            period_start=START,
+            period_end=END,
+            expected_interval_days=11,
+            scopes=SCOPES,
+        )
+    )
+    document = provider_evidence_bundle_json(
+        ProviderEvidenceBundleExporter().export(database, as_of=END)
+    )
+
+    report = evaluate_provider_evidence_horizon(document)
+
+    assert not report.eligible_for_readiness_reassessment
+    assert all(item.contract_check_count == 8 for item in report.assessments)
+    assert all(item.scheduled_contract_check_count == 0 for item in report.assessments)
+    assert all(item.remaining_contract_checks == 8 for item in report.assessments)
+    assert all(item.observation_days == 0 for item in report.assessments)
+
+
+def test_manual_checks_do_not_extend_scheduled_observation_span(tmp_path: Path) -> None:
+    database = tmp_path / "mixed.sqlite3"
+    store = SQLiteStore(database)
+    store.initialize()
+    dates = tuple(START + timedelta(days=12 * index) for index in range(8))
+    _save_contract_history(store, SCOPES, dates[:2])
+    _save_contract_history(
+        store,
+        SCOPES,
+        dates[2:],
+        origin=ProviderContractRunOrigin.MANUAL,
+        run_id_prefix="manual",
+    )
+    ProviderBaselineBuilder(repository=store, clock=lambda: END).build(
+        ProviderBaselineQuery(
+            period_start=START,
+            period_end=END,
+            expected_interval_days=11,
+            scopes=SCOPES,
+        )
+    )
+    document = provider_evidence_bundle_json(
+        ProviderEvidenceBundleExporter().export(database, as_of=END)
+    )
+
+    report = evaluate_provider_evidence_horizon(document)
+
+    assert not report.eligible_for_readiness_reassessment
+    assert all(item.contract_check_count == 8 for item in report.assessments)
+    assert all(item.scheduled_contract_check_count == 2 for item in report.assessments)
+    assert all(item.observation_days == 12 for item in report.assessments)
+    assert all(item.remaining_contract_checks == 6 for item in report.assessments)
 
 
 def test_short_scope_reports_exact_remaining_horizon(tmp_path: Path) -> None:
@@ -243,9 +308,12 @@ def _save_contract_history(
     store: SQLiteStore,
     scopes: tuple[ProviderBaselineScope, ...],
     dates: tuple[datetime, ...],
+    *,
+    origin: ProviderContractRunOrigin = ProviderContractRunOrigin.SCHEDULED,
+    run_id_prefix: str = "run",
 ) -> None:
     for run_index, checked_at in enumerate(dates):
-        run_id = f"run-{run_index}"
+        run_id = f"{run_id_prefix}-{run_index}"
         checks = tuple(
             _contract_check(run_id, run_index, scope_index, scope, checked_at)
             for scope_index, scope in enumerate(scopes)
@@ -258,6 +326,12 @@ def _save_contract_history(
                 status=ProviderContractStatus.HEALTHY,
                 checks=checks,
                 implementation_version="provider-contract-monitor-test",
+                origin=origin,
+                origin_reference=(
+                    f"github_actions:TONGResearch/tong-quant-framework:{run_index + 1}:1"
+                    if origin is ProviderContractRunOrigin.SCHEDULED
+                    else None
+                ),
             )
         )
 
@@ -271,7 +345,7 @@ def _contract_check(
 ) -> ProviderContractCheck:
     is_cninfo = scope.dataset == CNINFO_DISCLOSURES_DATASET
     return ProviderContractCheck(
-        check_id=f"check-{run_index}-{scope_index}",
+        check_id=f"check-{run_id}-{run_index}-{scope_index}",
         run_id=run_id,
         provider=scope.provider,
         dataset=scope.dataset,

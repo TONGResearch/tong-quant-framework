@@ -154,7 +154,9 @@ visible. Reaching the time horizon does not by itself make a dataset `USABLE`;
 the separate PIT readiness reassessment must consume the accumulated evidence.
 The horizon report's eligibility flag means only that the evidence may enter
 that separate human review. It is not a trust, research, validation, portfolio,
-or trading-readiness promotion. The current contract-run schema does not record
-whether a run was scheduled or manual, so the numeric check count cannot by
-itself prove the scheduled-observation requirement. The reviewer must verify
-run provenance separately until an auditable run-origin contract is available.
+or trading-readiness promotion. Starting with schema `0.8.1`, the horizon
+auditor uses only runs recorded as `scheduled` with a syntactically valid GitHub
+run reference for its check-count and observed-day gates. Legacy runs remain
+`unknown` and do not receive retroactive schedule credit. A human reviewer
+must still match each claimed GitHub run ID and attempt to the actual Actions
+event and artifact; the stored reference is not an independent attestation.

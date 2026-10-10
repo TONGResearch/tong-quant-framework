@@ -36,8 +36,9 @@ without depending on paid Tushare access or introducing trading functionality.
 
 - Observation horizon is at least 84 days with at least 8 scheduled checks per
   required provider/dataset/market scope.
-- Scheduled-run provenance is independently verified; the current contract-run
-  schema and horizon count do not distinguish scheduled from manual triggers.
+- New scheduled-run provenance is recorded and independently checked against
+  the GitHub Actions event; pre-migration runs stay `unknown` and earn no
+  scheduled credit.
 - CI artifacts and caches are not the sole durable copy of evidence.
 - Export contains no credentials, raw environment diagnostics, or local paths.
 - Missing periods remain visible and cannot be backfilled with synthetic
@@ -129,6 +130,12 @@ without depending on paid Tushare access or introducing trading functionality.
   limitations, and the absence of calibration and conflict rows in this
   operational snapshot. Empty ledgers are not evidence of provider agreement.
   It also identifies missing scheduled-run provenance as a separate review gate.
+- Schema `0.8.1` adds run-origin metadata, and the versioned horizon auditor
+  now counts only provenance-qualified scheduled runs toward the 84-day and
+  eight-check gates. The retained October 8 report remains verifiable under
+  its original policy, while reassessment under the new policy counts its 17
+  pre-migration runs as `unknown`. A GitHub run reference still requires
+  independent event verification; the current package remains `ready`.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do

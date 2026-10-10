@@ -1,3 +1,4 @@
+import sqlite3
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -8,10 +9,12 @@ from tong_quant.core.exceptions import DataProviderError
 from tong_quant.data.monitoring import (
     ProviderContractMonitor,
     ProviderContractProbe,
+    provider_contract_run_origin_from_environment,
     serialize_provider_contract,
 )
 from tong_quant.data.providers.contracts import (
     ProviderCapabilityStatus,
+    ProviderContractRunOrigin,
     ProviderContractStatus,
     ProviderDatasetCapability,
     ProviderDatasetRequest,
@@ -133,6 +136,70 @@ def test_contract_monitor_persists_healthy_check_atomically(tmp_path: Path) -> N
     assert run.checks[0].latency_ms == pytest.approx(25)
     assert store.table_count("provider_contract_runs") == 1
     assert store.table_count("provider_contract_checks") == 1
+
+
+def test_scheduled_run_origin_is_persisted_with_github_reference(tmp_path: Path) -> None:
+    database = tmp_path / "monitor.sqlite3"
+    store = SQLiteStore(database)
+    store.initialize()
+    timer_values = iter((1.0, 1.025))
+    reference = "github_actions:TONGResearch/tong-quant-framework:123:1"
+    run = ProviderContractMonitor(
+        repository=store,
+        clock=lambda: NOW,
+        timer=lambda: next(timer_values),
+    ).run(
+        (_probe(_ContractAdapter()),),
+        origin=ProviderContractRunOrigin.SCHEDULED,
+        origin_reference=reference,
+    )
+
+    with sqlite3.connect(database) as connection:
+        stored = connection.execute(
+            "SELECT run_origin, origin_reference FROM provider_contract_runs WHERE run_id = ?",
+            (run.run_id,),
+        ).fetchone()
+    assert stored == ("scheduled", reference)
+    assert '"origin": "scheduled"' in serialize_provider_contract(run)
+
+
+def test_scheduled_origin_requires_valid_reference() -> None:
+    timer_values = iter((1.0, 1.025))
+    monitor = ProviderContractMonitor(
+        clock=lambda: NOW,
+        timer=lambda: next(timer_values),
+    )
+
+    with pytest.raises(ValueError, match="requires an origin reference"):
+        monitor.run(
+            (_probe(_ContractAdapter()),),
+            origin=ProviderContractRunOrigin.SCHEDULED,
+        )
+
+
+def test_github_run_origin_detection_fails_closed() -> None:
+    base = {
+        "GITHUB_ACTIONS": "true",
+        "GITHUB_REPOSITORY": "TONGResearch/tong-quant-framework",
+        "GITHUB_RUN_ID": "123",
+        "GITHUB_RUN_ATTEMPT": "1",
+    }
+    assert provider_contract_run_origin_from_environment(
+        {**base, "GITHUB_EVENT_NAME": "schedule"}
+    ) == (
+        ProviderContractRunOrigin.SCHEDULED,
+        "github_actions:TONGResearch/tong-quant-framework:123:1",
+    )
+    assert provider_contract_run_origin_from_environment(
+        {**base, "GITHUB_EVENT_NAME": "workflow_dispatch"}
+    )[0] is ProviderContractRunOrigin.MANUAL
+    assert provider_contract_run_origin_from_environment(
+        {**base, "GITHUB_EVENT_NAME": "schedule", "GITHUB_RUN_ID": ""}
+    ) == (ProviderContractRunOrigin.UNKNOWN, None)
+    assert provider_contract_run_origin_from_environment({}) == (
+        ProviderContractRunOrigin.MANUAL,
+        None,
+    )
 
 
 def test_contract_monitor_classifies_provider_failure_without_secret_leak() -> None:

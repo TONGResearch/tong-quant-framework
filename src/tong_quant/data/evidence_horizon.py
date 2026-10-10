@@ -9,6 +9,10 @@ from tong_quant.data.evidence_bundle import (
     ProviderScopeEvidenceSummary,
     verify_provider_evidence_document,
 )
+from tong_quant.data.providers.contracts import (
+    ProviderContractRunOrigin,
+    valid_provider_run_origin_reference,
+)
 from tong_quant.data.providers.yahoo import YAHOO_DAILY_BARS_DATASET
 from tong_quant.domain.enums import Market
 from tong_quant.domain.models import require_timezone
@@ -49,6 +53,7 @@ class EvidenceHorizonPolicy:
     required_scopes: tuple[RequiredEvidenceScope, ...]
     minimum_observation_days: int = 84
     minimum_contract_checks: int = 8
+    require_scheduled_provenance: bool = True
     version: str = PROVIDER_EVIDENCE_HORIZON_VERSION
 
     def __post_init__(self) -> None:
@@ -80,6 +85,7 @@ class EvidenceScopeHorizonAssessment:
     field_coverage_ratio: float | None
     continuity_ratio: float | None
     blockers: tuple[str, ...]
+    scheduled_contract_check_count: int | None = None
 
     def __post_init__(self) -> None:
         counts = (
@@ -90,6 +96,11 @@ class EvidenceScopeHorizonAssessment:
         )
         if min(counts) < 0:
             raise ValueError("evidence horizon counts cannot be negative")
+        if (
+            self.scheduled_contract_check_count is not None
+            and self.scheduled_contract_check_count < 0
+        ):
+            raise ValueError("scheduled provider check count cannot be negative")
         if self.status is EvidenceHorizonStatus.COMPLETE and self.blockers:
             raise ValueError("complete evidence scope cannot have blockers")
         if self.status is not EvidenceHorizonStatus.COMPLETE and not self.blockers:
@@ -175,6 +186,7 @@ def evaluate_provider_evidence_horizon(
     document: dict[str, object],
     *,
     policy: EvidenceHorizonPolicy | None = None,
+    report_version: str = PROVIDER_EVIDENCE_HORIZON_VERSION,
 ) -> ProviderEvidenceHorizonReport:
     verify_provider_evidence_document(document)
     selected_policy = policy or EvidenceHorizonPolicy(
@@ -184,6 +196,11 @@ def evaluate_provider_evidence_horizon(
         summary.identity: summary
         for summary in _scope_summaries(document.get("scope_summaries"))
     }
+    scheduled = (
+        _scheduled_scope_observations(document.get("tables"))
+        if selected_policy.require_scheduled_provenance
+        else {}
+    )
     baseline_horizons = _baseline_horizons(document.get("tables"))
     assessments = tuple(
         _assess_scope(
@@ -191,6 +208,7 @@ def evaluate_provider_evidence_horizon(
             summaries.get(scope.identity),
             baseline_horizons,
             selected_policy,
+            scheduled.get(scope.identity),
         )
         for scope in selected_policy.required_scopes
     )
@@ -207,6 +225,7 @@ def evaluate_provider_evidence_horizon(
     )
     bundle_id = _required_string(document, "bundle_id")
     bundle_as_of = _aware_datetime(_required_string(document, "as_of"), "as_of")
+    schema_version = _required_string(document, "database_schema_version")
     eligible = not blockers
     report_without_id = _report_values_content(
         report_id="",
@@ -218,6 +237,8 @@ def evaluate_provider_evidence_horizon(
         eligible_for_readiness_reassessment=eligible,
         blockers=blockers,
         policy=selected_policy,
+        database_schema_version=schema_version,
+        implementation_version=report_version,
     )
     return ProviderEvidenceHorizonReport(
         report_id=_stable_hash(report_without_id),
@@ -228,6 +249,8 @@ def evaluate_provider_evidence_horizon(
         eligible_for_readiness_reassessment=eligible,
         blockers=blockers,
         policy=selected_policy,
+        database_schema_version=schema_version,
+        implementation_version=report_version,
     )
 
 
@@ -255,14 +278,14 @@ def render_provider_evidence_horizon_markdown(
         "- Eligible for separate PIT readiness reassessment: "
         f"`{str(report.eligible_for_readiness_reassessment).lower()}`",
         f"- Required horizon: `{report.policy.minimum_observation_days} days`",
-        f"- Required checks per scope: `{report.policy.minimum_contract_checks}`",
+        f"- Required scheduled checks per scope: `{report.policy.minimum_contract_checks}`",
         "",
         "## Required Scopes",
         "",
-        "| Provider | Dataset | Market | Subject | Status | Days | Checks | "
+        "| Provider | Dataset | Market | Subject | Status | Days | Checks | Scheduled | "
         "Remaining | Baseline days | Observed/expected | Continuity | "
         "Field coverage |",
-        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for item in report.assessments:
         periods = _fraction_text(item.observed_periods, item.expected_periods)
@@ -274,6 +297,7 @@ def render_provider_evidence_horizon_markdown(
             f"| {item.scope.provider} | {item.scope.dataset} | "
             f"{item.scope.market} | {item.scope.subject} | {item.status.value} | "
             f"{item.observation_days:.1f} | {item.contract_check_count} | "
+            f"{item.scheduled_contract_check_count or 0} | "
             f"{remaining} | {_days_text(item.baseline_observation_days)} | "
             f"{periods} | {_ratio_text(item.continuity_ratio)} | "
             f"{_ratio_text(item.field_coverage_ratio)} |"
@@ -298,6 +322,7 @@ def _assess_scope(
     summary: ProviderScopeEvidenceSummary | None,
     baseline_horizons: dict[str, float],
     policy: EvidenceHorizonPolicy,
+    scheduled_observations: tuple[int, float] | None,
 ) -> EvidenceScopeHorizonAssessment:
     if summary is None:
         return EvidenceScopeHorizonAssessment(
@@ -315,16 +340,31 @@ def _assess_scope(
             field_coverage_ratio=None,
             continuity_ratio=None,
             blockers=("required provider scope is absent from the evidence bundle",),
+            scheduled_contract_check_count=(
+                0 if policy.require_scheduled_provenance else None
+            ),
         )
     blockers: list[str] = []
-    if summary.observation_days < policy.minimum_observation_days:
+    scheduled_count, scheduled_days = scheduled_observations or (0, 0.0)
+    observation_days = (
+        scheduled_days
+        if policy.require_scheduled_provenance
+        else summary.observation_days
+    )
+    gate_count = (
+        scheduled_count
+        if policy.require_scheduled_provenance
+        else summary.contract_check_count
+    )
+    if observation_days < policy.minimum_observation_days:
         blockers.append(
-            f"observation horizon is {summary.observation_days:.1f} days; "
+            f"observation horizon is {observation_days:.1f} days; "
             f"requires at least {policy.minimum_observation_days}"
         )
-    if summary.contract_check_count < policy.minimum_contract_checks:
+    if gate_count < policy.minimum_contract_checks:
         blockers.append(
-            f"contract check count is {summary.contract_check_count}; "
+            f"{'scheduled ' if policy.require_scheduled_provenance else ''}"
+            f"contract check count is {gate_count}; "
             f"requires at least {policy.minimum_contract_checks}"
         )
     baseline_observation_days = (
@@ -374,13 +414,13 @@ def _assess_scope(
             if blockers
             else EvidenceHorizonStatus.COMPLETE
         ),
-        observation_days=summary.observation_days,
+        observation_days=observation_days,
         contract_check_count=summary.contract_check_count,
         remaining_observation_days=max(
-            0.0, policy.minimum_observation_days - summary.observation_days
+            0.0, policy.minimum_observation_days - observation_days
         ),
         remaining_contract_checks=max(
-            0, policy.minimum_contract_checks - summary.contract_check_count
+            0, policy.minimum_contract_checks - gate_count
         ),
         baseline_manifest_id=summary.baseline_manifest_id,
         baseline_observation_days=baseline_observation_days,
@@ -390,6 +430,9 @@ def _assess_scope(
         field_coverage_ratio=summary.field_coverage_ratio,
         continuity_ratio=summary.continuity_ratio,
         blockers=tuple(blockers),
+        scheduled_contract_check_count=(
+            scheduled_count if policy.require_scheduled_provenance else None
+        ),
     )
 
 
@@ -425,6 +468,89 @@ def _scope_summary(value: object) -> ProviderScopeEvidenceSummary:
         field_coverage_ratio=_optional_float(value, "field_coverage_ratio"),
         continuity_ratio=_optional_float(value, "continuity_ratio"),
     )
+
+
+def _scheduled_scope_observations(
+    tables: object,
+) -> dict[tuple[str, str, str, str], tuple[int, float]]:
+    runs = _evidence_table_rows(tables, "provider_contract_runs")
+    checks = _evidence_table_rows(tables, "provider_contract_checks")
+    scheduled_run_ids: set[str] = set()
+    seen_references: set[str] = set()
+    for row in runs:
+        if row.get("run_origin") != ProviderContractRunOrigin.SCHEDULED.value:
+            continue
+        run_id = _required_string(row, "run_id")
+        reference = _required_string(row, "origin_reference")
+        if not valid_provider_run_origin_reference(reference):
+            raise ValueError("scheduled provider run origin reference is invalid")
+        if reference in seen_references:
+            raise ValueError("scheduled provider run origin reference is duplicated")
+        seen_references.add(reference)
+        scheduled_run_ids.add(run_id)
+
+    scope_times: dict[tuple[str, str, str, str], dict[str, datetime]] = {}
+    for row in checks:
+        run_id = _required_string(row, "run_id")
+        if run_id not in scheduled_run_ids:
+            continue
+        dataset = _required_string(row, "dataset")
+        scope = (
+            _required_string(row, "provider"),
+            {
+                "china_disclosures": "financial_publication_dates",
+                "daily_bars": "global_daily_bars",
+            }.get(dataset, dataset),
+            _required_string(row, "market"),
+            _required_string(row, "subject"),
+        )
+        checked_at = _aware_datetime(
+            _required_string(row, "checked_at"), "checked_at"
+        )
+        run_times = scope_times.setdefault(scope, {})
+        previous = run_times.get(run_id)
+        if previous is None or checked_at < previous:
+            run_times[run_id] = checked_at
+
+    observations = {}
+    for scope, run_times in scope_times.items():
+        times = sorted(run_times.values())
+        observations[scope] = (
+            len(times),
+            round((times[-1] - times[0]).total_seconds() / 86_400, 6),
+        )
+    return observations
+
+
+def _evidence_table_rows(
+    tables: object, table_name: str
+) -> list[dict[str, object]]:
+    if not isinstance(tables, list):
+        raise ValueError("provider evidence tables must be a list")
+    table = next(
+        (
+            item
+            for item in tables
+            if isinstance(item, dict) and item.get("table") == table_name
+        ),
+        None,
+    )
+    if table is None:
+        return []
+    columns = table.get("columns")
+    rows = table.get("rows")
+    if not isinstance(columns, list) or not all(
+        isinstance(column, str) for column in columns
+    ):
+        raise ValueError("provider evidence table columns are invalid")
+    if not isinstance(rows, list):
+        raise ValueError("provider evidence table rows are invalid")
+    result = []
+    for row in rows:
+        if not isinstance(row, list) or len(row) != len(columns):
+            raise ValueError("provider evidence table row width is invalid")
+        result.append(dict(zip(columns, row, strict=True)))
+    return result
 
 
 def _baseline_horizons(value: object) -> dict[str, float]:
@@ -525,13 +651,17 @@ def _report_values_content(
         "database_schema_version": database_schema_version,
         "implementation_version": implementation_version,
     }
+    if policy.require_scheduled_provenance:
+        policy_document = document["policy"]
+        assert isinstance(policy_document, dict)
+        policy_document["require_scheduled_provenance"] = True
     if include_report_id:
         document["report_id"] = report_id
     return document
 
 
 def _assessment_document(item: EvidenceScopeHorizonAssessment) -> dict[str, object]:
-    return {
+    document: dict[str, object] = {
         "scope": _scope_document(item.scope),
         "status": item.status.value,
         "observation_days": item.observation_days,
@@ -547,6 +677,11 @@ def _assessment_document(item: EvidenceScopeHorizonAssessment) -> dict[str, obje
         "continuity_ratio": item.continuity_ratio,
         "blockers": list(item.blockers),
     }
+    if item.scheduled_contract_check_count is not None:
+        document["scheduled_contract_check_count"] = (
+            item.scheduled_contract_check_count
+        )
+    return document
 
 
 def _scope_document(item: RequiredEvidenceScope) -> dict[str, str]:

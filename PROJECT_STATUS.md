@@ -6,8 +6,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 ## Current Baseline
 
 - Framework version: `0.8.0`
-- Database schema version: `0.8.0`
-- Migration head: `0008_provider_calibration_attempts`
+- Database schema version: `0.8.1`
+- Migration head: `0009_provider_contract_run_origin`
 - Current phase: Engineering continuity and data readiness
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
@@ -39,6 +39,10 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Fail-closed per-scope evidence-horizon audits for the five scheduled
   CNInfo/Yahoo scopes, with exact 84-day/eight-check deficits and no automatic
   readiness promotion
+- Provider monitor run-origin metadata: new GitHub-scheduled runs retain an
+  auditable run/attempt reference, local or dispatched runs are manual, and
+  pre-migration runs remain `unknown`. The current horizon gate counts only
+  recorded scheduled runs toward its 84-day/eight-check requirement.
 - Deterministic evidence-backed PIT readiness reassessment with immutable input
   hashes, explicit missing/stale evidence, cause classification, and no
   automatic promotion
@@ -72,8 +76,9 @@ another reassessment. The October 8 scheduled run completed successfully and
 contains 17 checks per required scope across 47.2 days, with 7/12 baseline
 periods and 58.3% continuity. Its downloaded artifact, SQLite integrity,
 content-addressed bundle, and deterministic horizon reconstruction were
-independently verified on October 9. The horizon audit remains ineligible with
-36.8 days outstanding. All five required scopes still carry expected
+independently verified on October 9. The original horizon audit was ineligible
+with 36.8 days outstanding under its former all-run count. All five required
+scopes still carry expected
 provider/data-limitation degradation, with no new implementation defect in the
 latest run. The five stable warnings are acknowledged in
 [GitHub issue #1](https://github.com/TONGResearch/tong-quant-framework/issues/1)
@@ -81,11 +86,15 @@ without promoting provider trust or PIT readiness. Elapsed calendar time alone
 is not evidence, and the package cannot promote trust or PIT readiness
 automatically.
 
-The October 8 interim scope review also found that the monitor's numeric check
-count does not encode scheduled versus manual run origin. Scheduled provenance
-must therefore be verified separately before accepting any later horizon pass.
-The monitor database's empty calibration and conflict ledgers are not evidence
-of cross-provider agreement.
+The October 8 interim scope review found that its original 17-check count did
+not encode scheduled versus manual run origin. Migration `0009` preserves those
+old runs as `unknown`; a new version of the horizon auditor therefore counts
+zero proven scheduled checks in that immutable snapshot. Future scheduled runs
+record GitHub run and attempt identifiers for independent review. The new
+84-day span starts with the first provenance-qualified scheduled run; the old
+36.8-day deficit is not its remaining time. The monitor
+database's empty calibration and conflict ledgers are not evidence of
+cross-provider agreement.
 
 On October 10, the October 8 artifact was retained in two independently
 verified durable copies: a private local content-addressed archive and a
@@ -107,6 +116,11 @@ credential-free, path-free summary output. Archive verification also rejects
 bundled contract-run, check, or baseline identities absent from its embedded
 SQLite history. Both retained copies are recoverable, but this does not close
 the 84-day evidence-horizon deficit or change PIT readiness.
+
+On the current `0.8.1` code, restoring the retained `0.8.0` snapshot applies
+the `0009` migration in the isolated copy, so its post-migration audit hash is
+expected to differ from the untouched source. Table counts and historical
+records remain intact.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

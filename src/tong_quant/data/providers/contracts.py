@@ -24,6 +24,29 @@ class ProviderContractStatus(StrEnum):
     DEFECT = "defect"
 
 
+class ProviderContractRunOrigin(StrEnum):
+    UNKNOWN = "unknown"
+    SCHEDULED = "scheduled"
+    MANUAL = "manual"
+
+
+def valid_provider_run_origin_reference(value: str) -> bool:
+    parts = value.split(":")
+    repository = parts[1].split("/") if len(parts) == 4 else []
+    return (
+        len(parts) == 4
+        and parts[0] == "github_actions"
+        and len(repository) == 2
+        and all(repository)
+        and parts[2].isascii()
+        and parts[2].isdigit()
+        and int(parts[2]) > 0
+        and parts[3].isascii()
+        and parts[3].isdigit()
+        and int(parts[3]) > 0
+    )
+
+
 class ProviderArtifactStatus(StrEnum):
     CAPTURED = "captured"
     MISSING = "missing"
@@ -299,6 +322,8 @@ class ProviderContractRun:
     status: ProviderContractStatus
     checks: tuple[ProviderContractCheck, ...]
     implementation_version: str
+    origin: ProviderContractRunOrigin = ProviderContractRunOrigin.UNKNOWN
+    origin_reference: str | None = None
 
     def __post_init__(self) -> None:
         require_timezone(self.started_at, "provider contract run started_at")
@@ -309,6 +334,14 @@ class ProviderContractRun:
             raise ValueError("provider contract run identity and version are required")
         if any(check.run_id != self.run_id for check in self.checks):
             raise ValueError("provider contract checks must belong to their run")
+        if self.origin is ProviderContractRunOrigin.UNKNOWN and self.origin_reference:
+            raise ValueError("unknown provider run origin cannot have a reference")
+        if self.origin is ProviderContractRunOrigin.SCHEDULED and not self.origin_reference:
+            raise ValueError("scheduled provider run requires an origin reference")
+        if self.origin_reference is not None and not valid_provider_run_origin_reference(
+            self.origin_reference
+        ):
+            raise ValueError("provider run origin reference is invalid")
 
 
 class ProviderEvidenceAdapter(Protocol):
@@ -416,6 +449,7 @@ __all__ = [
     "ProviderArtifactStatus",
     "ProviderContractCheck",
     "ProviderContractRun",
+    "ProviderContractRunOrigin",
     "ProviderContractStatus",
     "ProviderDatasetCapability",
     "ProviderDatasetRequest",
@@ -425,4 +459,5 @@ __all__ = [
     "provider_artifact_id",
     "provider_artifact_observation_id",
     "provider_evidence_id",
+    "valid_provider_run_origin_reference",
 ]

@@ -17,12 +17,18 @@ from tong_quant.core.security import (
 )
 from tong_quant.data.evidence_bundle import verify_provider_evidence_document
 from tong_quant.data.evidence_horizon import (
+    EvidenceHorizonPolicy,
     evaluate_provider_evidence_horizon,
     provider_evidence_horizon_json,
+    required_provider_evidence_scopes,
 )
 from tong_quant.data.storage.engineering import SQLiteBackupService, SQLiteIntegrityService
 from tong_quant.domain.models import require_timezone
-from tong_quant.version import PROVIDER_EVIDENCE_ARCHIVE_VERSION
+from tong_quant.version import (
+    PROVIDER_EVIDENCE_ARCHIVE_VERSION,
+    PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION,
+    PROVIDER_EVIDENCE_HORIZON_VERSION,
+)
 
 _MAX_ARCHIVE_ENTRIES = 10_000
 _MAX_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
@@ -323,8 +329,23 @@ def _inspect_artifact(path: Path) -> _InspectedArtifact:
             horizon_document = json_documents[horizon_entry]
             verify_provider_evidence_document(bundle_document)
             _verify_history_database(archive, bundle_document)
+            report_version = _required_text(horizon_document, "implementation_version")
+            if report_version == PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION:
+                policy = EvidenceHorizonPolicy(
+                    required_scopes=required_provider_evidence_scopes(),
+                    require_scheduled_provenance=False,
+                    version=PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION,
+                )
+            elif report_version == PROVIDER_EVIDENCE_HORIZON_VERSION:
+                policy = None
+            else:
+                raise ValueError("provider evidence horizon version is unsupported")
             expected_horizon = provider_evidence_horizon_json(
-                evaluate_provider_evidence_horizon(bundle_document)
+                evaluate_provider_evidence_horizon(
+                    bundle_document,
+                    policy=policy,
+                    report_version=report_version,
+                )
             )
             if horizon_document != expected_horizon:
                 raise ValueError(

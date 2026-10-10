@@ -18,6 +18,7 @@ from tong_quant.data.storage.engineering import (
 from tong_quant.data.storage.migrations import (
     CNINFO_ARTIFACT_CAPTURE,
     MIGRATION_HEAD,
+    PROVIDER_CALIBRATION_ATTEMPTS,
     SCHEMA_DEFINITION_HASHES,
     schema_fingerprint,
 )
@@ -109,18 +110,45 @@ def test_backup_and_dry_run_restore_preserve_database_state(tmp_path: Path) -> N
     assert restored.stat().st_mode & 0o777 == 0o600
 
 
-def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "previous_head",
+    (
+        PROVIDER_CALIBRATION_ATTEMPTS.migration_id,
+        CNINFO_ARTIFACT_CAPTURE.migration_id,
+    ),
+)
+def test_restore_migrates_a_supported_fingerprinted_backup(
+    tmp_path: Path, previous_head: str
+) -> None:
     source = tmp_path / "source.sqlite3"
     restored = tmp_path / "restored.sqlite3"
     _database(source)
-    previous_head = CNINFO_ARTIFACT_CAPTURE.migration_id
     with sqlite3.connect(source) as connection:
-        connection.execute("DROP TABLE provider_calibration_attempts")
+        connection.execute(
+            """
+            INSERT INTO provider_contract_runs (
+                run_id, started_at, completed_at, status,
+                implementation_version, generated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("legacy-run", NOW.isoformat(), NOW.isoformat(), "healthy", "v1", NOW.isoformat()),
+        )
+        connection.execute(
+            "ALTER TABLE provider_contract_runs DROP COLUMN origin_reference"
+        )
+        connection.execute("ALTER TABLE provider_contract_runs DROP COLUMN run_origin")
+        if previous_head == CNINFO_ARTIFACT_CAPTURE.migration_id:
+            connection.execute("DROP TABLE provider_calibration_attempts")
         fingerprint = schema_fingerprint(connection)
         connection.execute(
             "DELETE FROM schema_migrations WHERE migration_id = ?",
             (MIGRATION_HEAD,),
         )
+        if previous_head == CNINFO_ARTIFACT_CAPTURE.migration_id:
+            connection.execute(
+                "DELETE FROM schema_migrations WHERE migration_id = ?",
+                (PROVIDER_CALIBRATION_ATTEMPTS.migration_id,),
+            )
         connection.execute("DELETE FROM schema_fingerprints")
         connection.execute(
             """
@@ -141,6 +169,9 @@ def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> No
             (previous_head,),
         )
         connection.execute(
+            "UPDATE schema_metadata SET value = '0.8.0' WHERE key = 'schema_version'"
+        )
+        connection.execute(
             "UPDATE schema_metadata SET value = ? WHERE key = 'schema_fingerprint'",
             (fingerprint,),
         )
@@ -156,11 +187,17 @@ def test_restore_migrates_a_supported_fingerprinted_backup(tmp_path: Path) -> No
     assert before.requires_migration is True
     assert before.schema_fingerprint_valid is True
     assert before.schema_definition_valid is True
+    assert before.schema_version == "0.8.0"
     assert report.source_migration_head == previous_head
     assert report.restored_migration_head == MIGRATION_HEAD
     assert report.migration_applied is True
     assert report.common_table_counts_match is True
     assert integrity.audit(restored).passed is True
+    with sqlite3.connect(restored) as connection:
+        assert connection.execute(
+            "SELECT run_origin, origin_reference FROM provider_contract_runs WHERE run_id = ?",
+            ("legacy-run",),
+        ).fetchone() == ("unknown", None)
 
 
 def test_backup_never_overwrites_existing_destination(tmp_path: Path) -> None:

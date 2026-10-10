@@ -1,10 +1,12 @@
 import argparse
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from tong_quant.data.monitoring import (
     ProviderContractMonitor,
     ProviderContractProbe,
+    provider_contract_run_origin_from_environment,
     render_provider_contract_markdown,
     serialize_provider_contract,
 )
@@ -148,7 +150,14 @@ def main() -> None:
             ),
         ),
     )
-    report = ProviderContractMonitor(repository=store).run(probes)
+    origin, origin_reference = provider_contract_run_origin_from_environment(
+        os.environ
+    )
+    report = ProviderContractMonitor(repository=store).run(
+        probes,
+        origin=origin,
+        origin_reference=origin_reference,
+    )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     monitor_stem = f"provider-contract-run-{report.run_id}"

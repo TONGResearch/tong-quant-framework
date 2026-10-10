@@ -8,9 +8,9 @@ stored in `schema_migrations` with an identifier, checksum, description, and
 application time. A checksum mismatch fails closed.
 
 `schema_metadata` records both the public database schema version and the exact
-migration head. The stabilization work keeps the public schema at `0.8.0`; the
-migration head distinguishes the hardened physical schema without declaring a
-new product milestone.
+migration head. The current schema is `0.8.1` while the framework remains
+`0.8.0`; the patch version records an operational database change without a
+new trading milestone.
 
 Migration `0000_schema_baseline` registers the pre-ledger schema as an explicit
 baseline. It performs no DDL and fails when required legacy tables are absent.
@@ -71,9 +71,18 @@ Migration `0008_provider_calibration_attempts` adds:
 - one atomic write boundary for a completed report, conflicts, confidence, and
   attempt record
 
-The current migration head is `0008_provider_calibration_attempts`. The public
-schema version remains `0.8.0`; this is data-foundation remediation rather than
-a new product milestone.
+Migration `0009_provider_contract_run_origin` adds:
+
+- `provider_contract_runs.run_origin` (`scheduled`, `manual`, or `unknown`)
+- `provider_contract_runs.origin_reference` for a GitHub Actions repository,
+  run ID, and attempt
+- a default of `unknown` for pre-migration runs; historical origin is never
+  inferred from timestamps or check counts
+
+The current migration head is `0009_provider_contract_run_origin`. Restore
+drills accept verified `0.8.0` snapshots at supported prior migration heads,
+including `0007` and `0008`, and apply pending migrations in an isolated copy.
+The old source database and retained artifact are not rewritten.
 
 `SQLiteStore.initialize()` validates the last recorded physical fingerprint
 before baseline creation or pending migrations. It records a new fingerprint

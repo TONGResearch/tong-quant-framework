@@ -68,3 +68,11 @@ Contract-check limitations remain visible even though the separate
 - After every required scope passes the 84-day audit, review its baseline and
   source limitations separately before running PIT readiness reassessment.
   A passed horizon is necessary evidence, not a trading authorization.
+
+## Post-Review Engineering Note
+
+Schema `0.8.1` now records future monitor run origins and treats every earlier
+run as `unknown`. Re-evaluating this immutable bundle under the new horizon
+policy yields 17 total checks but zero provenance-qualified scheduled checks
+per scope. Its original report remains verifiable under the versioned legacy
+policy; neither interpretation promotes PIT readiness.

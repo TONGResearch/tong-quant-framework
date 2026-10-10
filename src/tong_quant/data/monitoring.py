@@ -1,5 +1,5 @@
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from time import monotonic
@@ -11,6 +11,7 @@ from tong_quant.data.providers.contracts import (
     ProviderCapabilityStatus,
     ProviderContractCheck,
     ProviderContractRun,
+    ProviderContractRunOrigin,
     ProviderContractStatus,
     ProviderDatasetCapability,
     ProviderDatasetRequest,
@@ -22,6 +23,35 @@ from tong_quant.version import PROVIDER_CONTRACT_MONITOR_VERSION
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def provider_contract_run_origin_from_environment(
+    environment: Mapping[str, str],
+) -> tuple[ProviderContractRunOrigin, str | None]:
+    if environment.get("GITHUB_ACTIONS") != "true":
+        return ProviderContractRunOrigin.MANUAL, None
+    event = environment.get("GITHUB_EVENT_NAME", "")
+    repository = environment.get("GITHUB_REPOSITORY", "")
+    run_id = environment.get("GITHUB_RUN_ID", "")
+    attempt = environment.get("GITHUB_RUN_ATTEMPT", "")
+    if (
+        event not in {"schedule", "workflow_dispatch"}
+        or len(repository.split("/")) != 2
+        or not all(repository.split("/"))
+        or not run_id.isascii()
+        or not run_id.isdigit()
+        or not attempt.isascii()
+        or not attempt.isdigit()
+        or int(run_id) < 1
+        or int(attempt) < 1
+    ):
+        return ProviderContractRunOrigin.UNKNOWN, None
+    origin = (
+        ProviderContractRunOrigin.SCHEDULED
+        if event == "schedule"
+        else ProviderContractRunOrigin.MANUAL
+    )
+    return origin, f"github_actions:{repository}:{run_id}:{attempt}"
 
 
 class ProviderContractRepository(Protocol):
@@ -41,7 +71,13 @@ class ProviderContractMonitor:
     clock: Callable[[], datetime] = _utc_now
     timer: Callable[[], float] = monotonic
 
-    def run(self, probes: tuple[ProviderContractProbe, ...]) -> ProviderContractRun:
+    def run(
+        self,
+        probes: tuple[ProviderContractProbe, ...],
+        *,
+        origin: ProviderContractRunOrigin = ProviderContractRunOrigin.UNKNOWN,
+        origin_reference: str | None = None,
+    ) -> ProviderContractRun:
         run_id = str(uuid4())
         started_at = self.clock()
         checks = tuple(self._check(run_id, probe) for probe in probes)
@@ -53,6 +89,8 @@ class ProviderContractMonitor:
             status=_overall_status(checks),
             checks=checks,
             implementation_version=PROVIDER_CONTRACT_MONITOR_VERSION,
+            origin=origin,
+            origin_reference=origin_reference,
         )
         if self.repository is not None:
             self.repository.save_provider_contract_run(run)
@@ -261,6 +299,8 @@ def provider_contract_json(run: ProviderContractRun) -> dict[str, object]:
         "completed_at": run.completed_at.isoformat(),
         "status": run.status.value,
         "implementation_version": run.implementation_version,
+        "origin": run.origin.value,
+        "origin_reference": run.origin_reference,
         "checks": [
             {
                 "provider": check.provider,
@@ -292,6 +332,8 @@ def render_provider_contract_markdown(run: ProviderContractRun) -> str:
         f"- Status: `{document['status']}`",
         f"- Started: `{document['started_at']}`",
         f"- Version: `{document['implementation_version']}`",
+        f"- Origin: `{document['origin']}`",
+        f"- Origin reference: `{document['origin_reference'] or 'none'}`",
         "",
         "| Provider | Dataset | Market | Status | Records | Trust | Precision | Error |",
         "|---|---|---|---|---:|---|---|---|",
@@ -371,6 +413,7 @@ __all__ = [
     "ProviderContractProbe",
     "ProviderContractRepository",
     "provider_contract_json",
+    "provider_contract_run_origin_from_environment",
     "render_provider_contract_markdown",
     "serialize_provider_contract",
 ]

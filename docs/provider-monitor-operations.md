@@ -21,6 +21,14 @@ The workflow runs every Monday and Thursday and can be dispatched manually.
 Repository operations reports are generated even when the probe identifies a
 defect.
 
+New contract runs retain `scheduled`, `manual`, or `unknown` origin. A GitHub
+scheduled run stores its repository, run ID, and attempt as an audit reference;
+workflow dispatch is manual, and a malformed or unsupported GitHub event is
+`unknown`. Older runs stay `unknown` after migration. The origin reference is
+not a cryptographic attestation: before accepting a completed horizon, compare
+it with the corresponding GitHub Actions event and artifact. Do not relabel
+older runs by guessing from timestamps.
+
 The workflow uses the explicit `ubuntu-24.04` GitHub-hosted image and official
 Node 24-compatible Actions. Changes to the runner image or Action major
 versions require a successful CI run and one successful scheduled monitor

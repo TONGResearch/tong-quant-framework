@@ -1663,8 +1663,9 @@ class SQLiteStore:
                 """
                 INSERT INTO provider_contract_runs (
                     run_id, started_at, completed_at, status,
-                    implementation_version, generated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    implementation_version, generated_at,
+                    run_origin, origin_reference
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     run.run_id,
@@ -1673,6 +1674,8 @@ class SQLiteStore:
                     run.status.value,
                     run.implementation_version,
                     generated_at,
+                    run.origin.value,
+                    run.origin_reference,
                 ),
             )
             connection.executemany(

@@ -22,11 +22,17 @@ from tong_quant.data.evidence_bundle import (
     provider_evidence_bundle_json,
 )
 from tong_quant.data.evidence_horizon import (
+    EvidenceHorizonPolicy,
     evaluate_provider_evidence_horizon,
     provider_evidence_horizon_json,
+    required_provider_evidence_scopes,
 )
 from tong_quant.data.storage.engineering import SQLiteBackupService, SQLiteIntegrityService
 from tong_quant.data.storage.sqlite import SQLiteStore
+from tong_quant.version import (
+    PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION,
+    PROVIDER_EVIDENCE_HORIZON_VERSION,
+)
 
 VERIFIED_AT = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
 
@@ -60,6 +66,15 @@ def test_archive_is_content_addressed_idempotent_and_independently_verifiable(
     assert provider_evidence_archive_manifest_json(verified)["archive_id"] == (
         verified.archive_id
     )
+
+
+def test_legacy_horizon_artifact_remains_verifiable(tmp_path: Path) -> None:
+    artifact = _artifact(tmp_path, name="legacy.zip", legacy_horizon=True)
+    retained = archive_provider_evidence_artifact(
+        artifact, tmp_path / "legacy-copy", verified_at=VERIFIED_AT
+    )
+
+    assert verify_provider_evidence_archive(retained.manifest_path) == retained.manifest
 
 
 def test_archive_rejects_digest_mismatch_and_unsafe_zip_member(tmp_path: Path) -> None:
@@ -302,6 +317,7 @@ def _artifact(
     include_database: bool = True,
     database_override: bytes | None = None,
     history_run: bool = False,
+    legacy_horizon: bool = False,
 ) -> Path:
     database = tmp_path / f"{name}.sqlite3"
     SQLiteStore(database).initialize()
@@ -330,8 +346,25 @@ def _artifact(
     )
     bundle = ProviderEvidenceBundleExporter().export(snapshot, as_of=VERIFIED_AT)
     bundle_document = provider_evidence_bundle_json(bundle)
+    legacy_policy = (
+        EvidenceHorizonPolicy(
+            required_scopes=required_provider_evidence_scopes(),
+            require_scheduled_provenance=False,
+            version=PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION,
+        )
+        if legacy_horizon
+        else None
+    )
     horizon_document = provider_evidence_horizon_json(
-        evaluate_provider_evidence_horizon(bundle_document)
+        evaluate_provider_evidence_horizon(
+            bundle_document,
+            policy=legacy_policy,
+            report_version=(
+                PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION
+                if legacy_horizon
+                else PROVIDER_EVIDENCE_HORIZON_VERSION
+            ),
+        )
     )
     if tamper_bundle:
         bundle_document["framework_version"] = "tampered"

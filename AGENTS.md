@@ -179,6 +179,10 @@ in the same commit.
   scheduled CNInfo/Yahoo scopes each pass the fixed 84-day/eight-check audit
   with complete baseline measurements. Calendar age, a dataset aggregate, or a
   successful endpoint response cannot substitute for this evidence.
+- Only new runs recorded as `scheduled` with a GitHub run reference can count
+  toward the horizon's scheduled checks and observed days. Pre-migration runs
+  remain `unknown`; verify claimed GitHub event and artifact identity before
+  accepting a horizon pass. Never backfill run origin from timing alone.
 - Tushare credentials must come only from `TUSHARE_TOKEN`. Never persist,
   render, log, or include the token in cache keys or request parameters.
 - Validate Tushare credentials locally before live access and persist only

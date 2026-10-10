@@ -1,6 +1,6 @@
 FRAMEWORK_VERSION = "0.8.0"
 AKSHARE_QUALITY_AUDIT_VERSION = "akshare-quality-audit-v0.8-phase3"
-DATABASE_SCHEMA_VERSION = "0.8.0"
+DATABASE_SCHEMA_VERSION = "0.8.1"
 DATABASE_ENGINEERING_VERSION = "database-engineering-v0.8-hardening"
 RESEARCH_ENGINE_VERSION = "research-engine-v0.5"
 VALIDATION_ENGINE_VERSION = "validation-engine-v0.6"
@@ -16,13 +16,14 @@ DATA_READINESS_VERSION = "data-readiness-v0.8-phase3"
 DATA_READINESS_GAP_VERSION = "data-readiness-gap-v0.8-phase3"
 PROVIDER_CAPABILITY_VERSION = "provider-capability-v0.8-phase3"
 PROVIDER_EVIDENCE_VERSION = "provider-evidence-v0.8-hardening"
-PROVIDER_CONTRACT_MONITOR_VERSION = "provider-contract-monitor-v0.8-hardening.1"
+PROVIDER_CONTRACT_MONITOR_VERSION = "provider-contract-monitor-v0.8-hardening.2"
 PROVIDER_CONTRACT_BASELINE_VERSION = "provider-contract-baseline-v0.8-hardening"
 PROVIDER_HEALTH_POLICY_VERSION = "provider-health-policy-v0.8-hardening"
 DAILY_BAR_CALIBRATION_VERSION = "daily-bar-calibration-v0.8-hardening"
 EVIDENCE_READINESS_VERSION = "evidence-readiness-v0.8-hardening"
 PROVIDER_EVIDENCE_BUNDLE_VERSION = "provider-evidence-bundle-v0.8-hardening"
-PROVIDER_EVIDENCE_HORIZON_VERSION = "provider-evidence-horizon-v0.8-hardening"
+PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION = "provider-evidence-horizon-v0.8-hardening"
+PROVIDER_EVIDENCE_HORIZON_VERSION = "provider-evidence-horizon-v0.8-scheduled-origin"
 PROVIDER_EVIDENCE_ARCHIVE_VERSION = "provider-evidence-archive-v0.8-sqlite-integrity"
 
 
@@ -48,6 +49,7 @@ __all__ = [
     "PROVIDER_EVIDENCE_ARCHIVE_VERSION",
     "PROVIDER_EVIDENCE_BUNDLE_VERSION",
     "PROVIDER_EVIDENCE_HORIZON_VERSION",
+    "PROVIDER_EVIDENCE_HORIZON_LEGACY_VERSION",
     "PROVIDER_CALIBRATION_VERSION",
     "PROVIDER_CONFLICT_VERSION",
     "REPLAY_CONFIDENCE_VERSION",

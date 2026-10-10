@@ -136,6 +136,15 @@ PROVIDER_CALIBRATION_ATTEMPTS = Migration(
     """,
 )
 
+PROVIDER_CONTRACT_RUN_ORIGIN = Migration(
+    migration_id="0009_provider_contract_run_origin",
+    description="record provider monitor schedule provenance without rewriting old runs",
+    definition="""
+    provider_contract_runs.run_origin TEXT NOT NULL DEFAULT 'unknown';
+    provider_contract_runs.origin_reference TEXT;
+    """,
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -146,6 +155,7 @@ MIGRATIONS = (
     PROVIDER_CONTRACT_BASELINE,
     CNINFO_ARTIFACT_CAPTURE,
     PROVIDER_CALIBRATION_ATTEMPTS,
+    PROVIDER_CONTRACT_RUN_ORIGIN,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -163,6 +173,9 @@ SCHEMA_DEFINITION_HASHES = {
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
     PROVIDER_CALIBRATION_ATTEMPTS.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
+    PROVIDER_CONTRACT_RUN_ORIGIN.migration_id: (
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
 }
@@ -236,6 +249,9 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
         return
     if migration is PROVIDER_CALIBRATION_ATTEMPTS:
         _apply_provider_calibration_attempts(connection)
+        return
+    if migration is PROVIDER_CONTRACT_RUN_ORIGIN:
+        _apply_provider_contract_run_origin(connection)
         return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
 
@@ -771,6 +787,19 @@ def _apply_provider_calibration_attempts(connection: sqlite3.Connection) -> None
     )
 
 
+def _apply_provider_contract_run_origin(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        ALTER TABLE provider_contract_runs
+        ADD COLUMN run_origin TEXT NOT NULL DEFAULT 'unknown'
+            CHECK (run_origin IN ('unknown', 'scheduled', 'manual'))
+        """
+    )
+    connection.execute(
+        "ALTER TABLE provider_contract_runs ADD COLUMN origin_reference TEXT"
+    )
+
+
 def schema_fingerprint(connection: sqlite3.Connection) -> str:
     rows = connection.execute(
         """
@@ -918,6 +947,7 @@ __all__ = [
     "MIGRATIONS",
     "Migration",
     "PROVIDER_CALIBRATION_ATTEMPTS",
+    "PROVIDER_CONTRACT_RUN_ORIGIN",
     "SCHEMA_DEFINITION_HASHES",
     "expected_schema_definition_hash",
     "record_or_validate_schema_fingerprint",
