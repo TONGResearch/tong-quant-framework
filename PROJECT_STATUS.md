@@ -8,7 +8,7 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Framework version: `0.8.0`
 - Database schema version: `0.8.1`
 - Migration head: `0009_provider_contract_run_origin`
-- Current phase: Engineering continuity and data readiness
+- Current phase: Parallel evidence and controlled launch
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
 - Execution default: `disabled`
@@ -58,16 +58,29 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - CI type-checking covers both the reusable `src` packages and operational
   `scripts` entry points
 
-## Frozen Work
+## Controlled Launch Boundary
 
-Do not implement Paper Trading, Broker Integration, Order generation, Trade or
-Fill models, Live Trading, Asset Allocation, Auto Rebalancing, or execution-side
-functionality. The freeze remains until the governance promotion requirement is
-met and Tong explicitly approves a new architecture proposal.
+Paper Trading and broker-native simulation development may now proceed through
+the approved work packages below while the 84-day evidence horizon continues in
+parallel. Broker work is initially read-only or sandbox-only. Live broker order
+submission, unattended trading, live Order/Trade/Fill behavior, Asset
+Allocation, Auto Rebalancing, and live execution remain frozen.
+
+The default remains `execution.mode = "disabled"` and
+`allow_live_orders = false`. No Paper Trading result or elapsed calendar time
+may change those values automatically.
 
 ## Next Ready Work
 
 1. `WP-EVIDENCE-001`: representative longitudinal evidence horizon
+2. `WP-LAUNCH-001`: execution lineage and market-rule hardening
+
+These packages run in parallel. `WP-LAUNCH-001` must bind every downstream
+simulation decision to authoritative Validation, Portfolio, and Risk artifacts;
+replace placeholder market-rule assumptions; and preserve the existing
+fail-closed live-execution guard. After it completes, `WP-PAPER-001` may become
+ready. `WP-BROKER-001` remains planned until the deterministic paper ledger is
+complete.
 
 `WP-READINESS-001` completed with 12 reviewed datasets, zero promotion-review
 eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next

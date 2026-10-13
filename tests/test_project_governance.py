@@ -16,11 +16,13 @@ def test_canonical_project_governance_is_consistent() -> None:
     report = audit_project_governance(PROJECT_ROOT)
 
     assert report.is_consistent
-    assert governance.freeze.trading_related_development is True
+    assert governance.freeze.live_trading_frozen is True
+    assert governance.freeze.paper_trading_allowed is True
+    assert governance.freeze.broker_sandbox_allowed is True
     assert governance.readiness.pit == "unsuitable"
     assert tuple(
         item.package_id for item in governance.work_packages if item.status == "ready"
-    ) == ("WP-EVIDENCE-001",)
+    ) == ("WP-EVIDENCE-001", "WP-LAUNCH-001")
     assert next(
         item for item in governance.work_packages if item.package_id == "WP-DATA-001"
     ).status == "completed"
@@ -48,15 +50,15 @@ def test_canonical_project_governance_is_consistent() -> None:
     ).status == "completed"
 
 
-def test_governance_rejects_disabled_trading_freeze(tmp_path: Path) -> None:
+def test_governance_rejects_disabled_live_trading_freeze(tmp_path: Path) -> None:
     text = GOVERNANCE_PATH.read_text(encoding="utf-8").replace(
-        "trading_related_development = true",
-        "trading_related_development = false",
+        "live_trading_frozen = true",
+        "live_trading_frozen = false",
     )
     path = tmp_path / "unsafe-governance.toml"
     path.write_text(text, encoding="utf-8")
 
-    with pytest.raises(ValueError, match="trading development freeze"):
+    with pytest.raises(ValueError, match="live trading freeze"):
         load_project_governance(path)
 
 

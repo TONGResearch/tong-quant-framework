@@ -2,20 +2,22 @@
 framework_version = "0.8.0"
 database_schema_version = "0.8.1"
 migration_head = "0009_provider_contract_run_origin"
-current_phase = "engineering-continuity-and-data-readiness"
+current_phase = "parallel-evidence-and-controlled-launch"
 canonical_status_document = "PROJECT_STATUS.md"
 
 [freeze]
-trading_related_development = true
+live_trading_frozen = true
+paper_trading_allowed = true
+broker_sandbox_allowed = true
 required_execution_mode = "disabled"
 allow_live_orders = false
 required_notification_mode = "disabled"
-reason = "PIT readiness remains unsuitable for trading-related development"
+reason = "Paper and sandbox development may proceed while live trading remains frozen"
 forbidden_capabilities = [
-  "paper_trading",
-  "broker_integration",
-  "order_generation",
-  "trade_and_fill_models",
+  "live_broker_order_submission",
+  "live_order_generation",
+  "unattended_live_trading",
+  "live_trade_and_fill_models",
   "live_trading",
   "asset_allocation",
   "auto_rebalancing",
@@ -52,11 +54,12 @@ required_documents = [
   "docs/risk-register.md",
   "docs/technical-debt-register.md",
   "docs/yahoo-daily-bar-calibration.md",
+  "docs/accelerated-controlled-launch.md",
 ]
 
 [next_phase]
-objective = "Accumulate and freeze representative longitudinal provider evidence without trading functionality"
-promotion_requirement = "Critical replay datasets require reviewed PIT readiness of at least caution with verified consistency evidence"
+objective = "Accumulate evidence while hardening lineage and market rules for controlled paper trading"
+promotion_requirement = "Paper trading requires authoritative lineage, deterministic simulation, reconciliation, and fail-closed risk controls; live trading remains separately gated"
 
 [[work_packages]]
 id = "WP-DATA-001"
@@ -131,3 +134,24 @@ title = "Historical replay data quality eligibility gate"
 status = "completed"
 document = "docs/work-packages/wp-validation-001.md"
 depends_on = ["WP-READINESS-001"]
+
+[[work_packages]]
+id = "WP-LAUNCH-001"
+title = "Execution lineage and market-rule hardening"
+status = "ready"
+document = "docs/work-packages/wp-launch-001.md"
+depends_on = ["WP-VALIDATION-001"]
+
+[[work_packages]]
+id = "WP-PAPER-001"
+title = "Deterministic paper trading ledger"
+status = "planned"
+document = "docs/work-packages/wp-paper-001.md"
+depends_on = ["WP-LAUNCH-001"]
+
+[[work_packages]]
+id = "WP-BROKER-001"
+title = "Read-only and sandbox broker adapters"
+status = "planned"
+document = "docs/work-packages/wp-broker-001.md"
+depends_on = ["WP-PAPER-001"]

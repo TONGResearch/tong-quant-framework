@@ -214,19 +214,20 @@ scheduled contract monitoring. The next implementation order is governed by
 `config/project-governance.toml` and `docs/work-packages/` rather than this
 historical milestone narrative.
 
-## Reserved Review: Paper Trading Architecture
+## Controlled Launch: Paper Trading Architecture
 
 - Review hypothetical-ledger ownership and isolation.
 - Review PortfolioProposal and RiskAssessment consumption.
 - Review approval and Decision Journal linkage.
 - Review market rules, calendars, fees, slippage, suspensions, and partial fills.
-- Define evidence gates without implementing a simulator.
+- Define evidence gates before implementing a simulator.
 
 Entry condition: V0.8 notification boundaries remain isolated and execution
 remains disabled by default.
 
-Status: design review only after stabilization evidence. No Paper Trading
-implementation is approved.
+Status: the architecture is approved for staged implementation through
+`WP-LAUNCH-001`, `WP-PAPER-001`, and `WP-BROKER-001`. Evidence accumulation
+continues in parallel. Live broker submission and live execution remain frozen.
 
 ## Deferred
 
@@ -234,7 +235,7 @@ implementation is approved.
 - AI news scoring
 - Global market providers
 - Funds, ETFs, REITs, bond funds, money-market funds, and asset allocation
-- Live QMT/PTrade/IBKR/Moomoo integration
+- Live QMT/PTrade/IBKR/Moomoo order submission
 - Fully automatic execution
 
 ## Reserved: Technical Confluence And Style Research

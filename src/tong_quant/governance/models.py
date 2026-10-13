@@ -14,7 +14,9 @@ class GovernanceBaseline:
 
 @dataclass(frozen=True, slots=True)
 class FreezePolicy:
-    trading_related_development: bool
+    live_trading_frozen: bool
+    paper_trading_allowed: bool
+    broker_sandbox_allowed: bool
     required_execution_mode: str
     allow_live_orders: bool
     required_notification_mode: str
@@ -22,8 +24,8 @@ class FreezePolicy:
     forbidden_capabilities: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        if not self.trading_related_development:
-            raise ValueError("trading development freeze must remain enabled")
+        if not self.live_trading_frozen:
+            raise ValueError("live trading freeze must remain enabled")
         if self.required_execution_mode != "disabled" or self.allow_live_orders:
             raise ValueError("governance must keep execution disabled and live orders off")
         if self.required_notification_mode != "disabled":
@@ -136,9 +138,9 @@ def project_governance_from_dict(raw: dict[str, Any]) -> ProjectGovernance:
             canonical_status_document=Path(baseline_raw["canonical_status_document"]),
         ),
         freeze=FreezePolicy(
-            trading_related_development=bool(
-                freeze_raw["trading_related_development"]
-            ),
+            live_trading_frozen=bool(freeze_raw["live_trading_frozen"]),
+            paper_trading_allowed=bool(freeze_raw["paper_trading_allowed"]),
+            broker_sandbox_allowed=bool(freeze_raw["broker_sandbox_allowed"]),
             required_execution_mode=str(freeze_raw["required_execution_mode"]),
             allow_live_orders=bool(freeze_raw["allow_live_orders"]),
             required_notification_mode=str(

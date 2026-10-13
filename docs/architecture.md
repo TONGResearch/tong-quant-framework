@@ -521,9 +521,11 @@ adapter. Consistency reports, individual conflict observations, and dataset
 confidence are persisted separately. Credentials remain environment-only, and
 calibration is disabled by default. See `docs/provider-calibration-phase-ii.md`.
 
-Execution remains disabled. No Paper Trading, Broker integration, Order, Fill,
-automatic rebalancing, or asset-allocation implementation is part of this
-stabilization phase.
+Execution remains disabled and live orders remain frozen. Controlled-launch
+engineering now runs beside provider evidence: `WP-LAUNCH-001` hardens
+authority and market rules, followed by a deterministic Paper Trading ledger
+and then read-only or provider-native sandbox connectivity. None of these
+packages may submit a live order or promote itself to live execution.
 
 ## Reserved Technical And Style Research Extension
 

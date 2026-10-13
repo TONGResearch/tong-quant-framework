@@ -78,6 +78,18 @@ validation, risk management, and controlled execution.
 - Backtest, paper, and live modes should share decision logic.
 - AI may assist discovery and research but never authorize a trade.
 - Do not add live trading or credentials without explicit user approval.
+- Paper Trading development is allowed only under `WP-LAUNCH-001` and
+  `WP-PAPER-001`. It must remain deterministic, persistent, reconcilable, and
+  incapable of reaching a live broker.
+- Broker work is limited to read-only capability checks and provider-native
+  simulation environments until `WP-BROKER-001` is ready. Sandbox access must
+  not weaken `ExecutionDisabledGuard` or enable live orders.
+- The 84-day provider-evidence horizon runs in parallel with controlled-launch
+  engineering. It governs historical-evidence claims, not whether Paper
+  Trading code may be developed.
+- Live trading remains frozen while `execution.mode = "disabled"` and
+  `allow_live_orders = false`. A future promotion requires a separate reviewed
+  approval; Paper results cannot promote live execution automatically.
 - Build the MVP before complex strategies or advanced AI.
 
 ## Development Style
