@@ -158,9 +158,13 @@ without depending on paid Tushare access or introducing trading functionality.
   `9180999a...88711`, schema `0.8.1`, migration head `0009`, 19 runs, 95 checks,
   and 19 baselines. Each required scope now has one scheduled check, zero
   qualified observation days, seven checks remaining, and 84 days remaining.
-  The local archive is retained privately; a second independently verified
-  durable copy remains outstanding for this observation. No evidence or PIT
-  readiness promotion occurred.
+  The local archive is retained privately. On October 13, an independent copy
+  was added to the AES-256 encrypted private iCloud sparse-bundle and verified
+  from its final location. Archive `e0b8e0e0...735a0` passed the isolated
+  restore drill with the same audit hash, migration head, schema fingerprint,
+  and table counts. The volume was detached before CloudDocs reported the
+  sparse-bundle caught up at 15:48 Malaysia time. This closes the two-copy gap
+  for this observation; no evidence or PIT readiness promotion occurred.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do

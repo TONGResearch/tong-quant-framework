@@ -140,10 +140,15 @@ downloaded ZIP; archive verification and an isolated restore drill recovered
 19 runs, 95 checks, and 19 baselines with matching source/restored audit hashes.
 Each required scope now has 1/8 provenance-qualified scheduled checks and a
 0/84-day qualified observation span. The retained local archive ID is
-`367af4cd...80444`. The time gate cannot become eligible before approximately
-January 4, 2027, and eligibility would still require uninterrupted evidence,
-an independent provenance review, a second durable copy, and a separate PIT
-readiness reassessment. PIT readiness remains `UNSUITABLE`.
+`367af4cd...80444`. On October 13, a second independently verified copy was
+retained in the AES-256 encrypted private iCloud sparse-bundle. Its archive ID
+is `e0b8e0e0...735a0`; verification and an isolated restore drill reproduced
+audit hash `9180999a...88711`, migration head `0009`, and matching table counts.
+CloudDocs reported the detached sparse-bundle caught up at 15:48 Malaysia time.
+The time gate cannot become eligible before approximately January 4, 2027, and
+eligibility would still require uninterrupted evidence, an independent
+provenance review, and a separate PIT readiness reassessment. PIT readiness
+remains `UNSUITABLE`.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 
