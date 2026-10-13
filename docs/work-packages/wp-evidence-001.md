@@ -146,6 +146,21 @@ without depending on paid Tushare access or introducing trading functionality.
   `38065714984` attempt 1. All five horizon scopes correctly show 18 total
   checks, zero scheduled checks, and no readiness-reassessment eligibility.
   This smoke test earns no scheduled-observation credit.
+- The first provenance-qualified scheduled observation is
+  [run #19](https://github.com/TONGResearch/tong-quant-framework/actions/runs/38227888290),
+  completed successfully on commit `539b676` on October 12. GitHub reports a
+  scheduled event, while both the run JSON and SQLite history record
+  `scheduled` with reference
+  `github_actions:TONGResearch/tong-quant-framework:38227888290:1`.
+  The downloaded ZIP matched GitHub digest `0c817d5a...cd490`. Its
+  content-addressed archive (`367af4cd...80444`) passed independent verification
+  and an isolated restore drill with matching source/restored audit hash
+  `9180999a...88711`, schema `0.8.1`, migration head `0009`, 19 runs, 95 checks,
+  and 19 baselines. Each required scope now has one scheduled check, zero
+  qualified observation days, seven checks remaining, and 84 days remaining.
+  The local archive is retained privately; a second independently verified
+  durable copy remains outstanding for this observation. No evidence or PIT
+  readiness promotion occurred.
 - All five required scopes remain under repeated-degradation warnings. Field
   coverage is 82.4% for direct CNInfo, 88.2% for CNInfo via AKShare, 100% for
   Yahoo Hong Kong and US, and 65.7% for Yahoo Malaysia. These observations do

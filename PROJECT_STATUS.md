@@ -131,6 +131,20 @@ The new run is recorded as `manual` with its GitHub run reference; all five
 scopes have zero provenance-qualified scheduled checks. This verifies deployment
 and recovery, not the evidence horizon or PIT readiness.
 
+The first provenance-qualified scheduled observation is
+[run #19](https://github.com/TONGResearch/tong-quant-framework/actions/runs/38227888290),
+completed successfully on October 12 from commit `539b676`. The Actions event,
+run JSON, and SQLite row independently agree on `scheduled` origin and GitHub
+run `38227888290` attempt 1. Its artifact digest `0c817d5a...cd490` matched the
+downloaded ZIP; archive verification and an isolated restore drill recovered
+19 runs, 95 checks, and 19 baselines with matching source/restored audit hashes.
+Each required scope now has 1/8 provenance-qualified scheduled checks and a
+0/84-day qualified observation span. The retained local archive ID is
+`367af4cd...80444`. The time gate cannot become eligible before approximately
+January 4, 2027, and eligibility would still require uninterrupted evidence,
+an independent provenance review, a second durable copy, and a separate PIT
+readiness reassessment. PIT readiness remains `UNSUITABLE`.
+
 Planned work must respect dependencies in `config/project-governance.toml`.
 
 Future planned work after the evidence and readiness gates:
