@@ -119,6 +119,16 @@ class PortfolioSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class PortfolioEvidenceSettings:
+    policy_version: str
+    maximum_proposal_age_seconds: int
+    maximum_validation_age_seconds: int
+    maximum_risk_age_seconds: int
+    validation_configuration_hash: str
+    risk_model_version: str
+
+
+@dataclass(frozen=True, slots=True)
 class RiskSettings:
     max_position_weight: float
     max_sector_weight: float
@@ -195,6 +205,7 @@ class Settings:
     screening: ScreeningSettings
     research: ResearchSettings
     portfolio: PortfolioSettings
+    portfolio_evidence: PortfolioEvidenceSettings
     risk: RiskSettings
     notifications: NotificationSettings
     execution: ExecutionSettings
@@ -274,6 +285,7 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             pattern=PatternResearchSettings(**raw["research"]["pattern"]),
         ),
         portfolio=PortfolioSettings(**raw["portfolio"]),
+        portfolio_evidence=PortfolioEvidenceSettings(**raw["portfolio_evidence"]),
         risk=RiskSettings(**raw["risk"]),
         notifications=NotificationSettings(**raw["notifications"]),
         execution=ExecutionSettings(**raw["execution"]),
@@ -312,6 +324,26 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
     _validate_fraction("maximum_theme_weight", settings.risk.maximum_theme_weight)
     _validate_fraction("maximum_average_correlation", settings.risk.maximum_average_correlation)
     _validate_fraction("stress_loss_limit", settings.risk.stress_loss_limit)
+    evidence = settings.portfolio_evidence
+    if not evidence.policy_version.strip() or not evidence.risk_model_version.strip():
+        raise ValueError("portfolio evidence policy requires versions")
+    if any(
+        age <= 0
+        for age in (
+            evidence.maximum_proposal_age_seconds,
+            evidence.maximum_validation_age_seconds,
+            evidence.maximum_risk_age_seconds,
+        )
+    ):
+        raise ValueError("portfolio evidence maximum ages must be positive")
+    if evidence.validation_configuration_hash and (
+        len(evidence.validation_configuration_hash) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in evidence.validation_configuration_hash.lower()
+        )
+    ):
+        raise ValueError("portfolio evidence validation hash must be SHA-256")
     if not 0 <= settings.risk.minimum_liquidity_score <= 100:
         raise ValueError("minimum_liquidity_score must be between 0 and 100")
     if settings.market.default not in settings.market.enabled:

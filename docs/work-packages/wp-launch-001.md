@@ -16,15 +16,25 @@ Status: `ready`
   decision timestamp, with an explicit age/version/configuration policy and
   deterministic policy hash. Passing this structural check is not Paper or
   live-trading authorization.
+- The policy can now be constructed from effective project settings. The
+  checked Portfolio and Validation model versions come from their settings;
+  age limits and the Risk model version are explicit configuration. The
+  validation configuration hash is empty by default, so this construction
+  fails closed until a reviewed run hash is pinned in an override. Changing
+  the pinned hash changes the deterministic policy hash and requires review.
 - Cash remains visible in exposure reports but no longer breaches sector,
   country, or theme concentration caps merely because it is a large buffer.
   Existing proposals and RiskAssessments are not rewritten; they need new
   proposal identities and fresh verification before future simulation use.
 - A-share sellability and price-limit calls now fail closed when dated rule
   evidence is absent.
-- Remaining before this package can complete: authoritative policy sourcing,
-  versioned market-rule capability declarations, pilot-market fixtures, and
-  binding the structural check to the future simulation-intent boundary.
+- US, Hong Kong, and Malaysia sellability and price-limit calls also fail
+  closed. Their former same-day-sell and unrestricted-price defaults were not
+  backed by account-specific settlement or effective-dated exchange evidence.
+- Remaining before this package can complete: review and pin an authoritative
+  validation configuration hash, versioned market-rule capability declarations,
+  pilot-market fixtures, and binding the structural check to the future
+  simulation-intent boundary.
   No simulation or live trading is authorized by this partial slice.
 
 ## Objective

@@ -65,6 +65,14 @@ This is the canonical short handoff for developers and AI agents. Read it with
   using explicit freshness, model-version, and configuration requirements;
   cash is exempt from sector/country/theme concentration breaches. This is
   structural research evidence only, not a Paper or live approval.
+- Its policy now reads effective project configuration; a reviewed Validation
+  configuration hash must be pinned explicitly because the default is empty
+  and refuses construction. This provides a controlled policy path, but the
+  future simulation boundary must still require it. Paper, PIT, and live
+  readiness are unchanged.
+- US, Hong Kong, and Malaysia market-rule helpers no longer assume same-day
+  sellability or unrestricted prices without dated evidence; they now reject
+  those calls until the relevant rule capabilities are supplied.
 
 ## Controlled Launch Boundary
 

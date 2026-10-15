@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from tong_quant.core.exceptions import MarketRuleEvidenceUnavailableError
 from tong_quant.domain.enums import Market
 from tong_quant.domain.models import Instrument
 from tong_quant.markets.base import MarketRules, PriceLimit
@@ -25,7 +26,10 @@ class GlobalEquityRules(MarketRules):
         return quantity // lot_size * lot_size
 
     def earliest_sell_date(self, buy_date: date) -> date:
-        return buy_date
+        del buy_date
+        raise MarketRuleEvidenceUnavailableError(
+            f"{self.market.value} sellability requires dated settlement and account-rule evidence"
+        )
 
     def daily_price_limit(
         self,
@@ -35,4 +39,6 @@ class GlobalEquityRules(MarketRules):
         is_initial_listing_period: bool = False,
     ) -> PriceLimit:
         del previous_close, is_special_treatment, is_initial_listing_period
-        return PriceLimit(lower=None, upper=None)
+        raise MarketRuleEvidenceUnavailableError(
+            f"{self.market.value} price-limit handling requires dated exchange-rule evidence"
+        )

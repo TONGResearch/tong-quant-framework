@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Protocol
 
+from tong_quant.config.settings import Settings
 from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
     PortfolioProposalStatus,
@@ -30,6 +31,27 @@ class PortfolioEvidencePolicy:
     validation_model_version: str
     portfolio_model_version: str
     risk_model_version: str
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "PortfolioEvidencePolicy":
+        """Build a pinned policy; an unapproved validation hash fails closed."""
+        configured = settings.portfolio_evidence
+        if not configured.validation_configuration_hash:
+            raise ValueError("validation configuration hash has not been approved")
+        return cls(
+            policy_version=configured.policy_version,
+            maximum_proposal_age=timedelta(
+                seconds=configured.maximum_proposal_age_seconds
+            ),
+            maximum_validation_age=timedelta(
+                seconds=configured.maximum_validation_age_seconds
+            ),
+            maximum_risk_age=timedelta(seconds=configured.maximum_risk_age_seconds),
+            validation_configuration_hash=configured.validation_configuration_hash,
+            validation_model_version=settings.validation.model_version,
+            portfolio_model_version=settings.portfolio.model_version,
+            risk_model_version=configured.risk_model_version,
+        )
 
     def __post_init__(self) -> None:
         if not self.policy_version.strip():

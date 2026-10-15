@@ -33,9 +33,17 @@ def test_a_share_price_limit_fails_closed_without_dated_board_rules() -> None:
     with pytest.raises(MarketRuleEvidenceUnavailableError, match="trade date"):
         ChinaAShareRules().daily_price_limit(Decimal("10.00"))
 
+@pytest.mark.parametrize("market", [Market.US, Market.HONG_KONG, Market.MALAYSIA])
+def test_global_sellability_fails_closed_without_dated_rules(market: Market) -> None:
+    rules = GlobalEquityRules(market)
+
+    with pytest.raises(MarketRuleEvidenceUnavailableError, match="settlement"):
+        rules.earliest_sell_date(date(2026, 1, 5))
 
 
-def test_global_market_can_sell_same_day_by_default() -> None:
-    rules = GlobalEquityRules(Market.US)
+@pytest.mark.parametrize("market", [Market.US, Market.HONG_KONG, Market.MALAYSIA])
+def test_global_price_limits_fail_closed_without_dated_rules(market: Market) -> None:
+    rules = GlobalEquityRules(market)
 
-    assert rules.earliest_sell_date(date(2026, 1, 5)) == date(2026, 1, 5)
+    with pytest.raises(MarketRuleEvidenceUnavailableError, match="exchange-rule"):
+        rules.daily_price_limit(Decimal("10.00"))
