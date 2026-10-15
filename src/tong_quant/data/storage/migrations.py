@@ -145,6 +145,29 @@ PROVIDER_CONTRACT_RUN_ORIGIN = Migration(
     """,
 )
 
+PORTFOLIO_EVIDENCE_LINEAGE = Migration(
+    migration_id="0010_portfolio_evidence_lineage",
+    description="persist portfolio research and validation evidence lineage",
+    definition="""
+    portfolio_evidence_references(
+        proposal_id REFERENCES portfolio_proposals,
+        instrument_id,
+        research_report_id,
+        investment_assessment_id,
+        investment_assessment_status,
+        investment_score_id,
+        investment_score,
+        investment_confidence,
+        validation_report_id,
+        validation_status,
+        validation_generated_at,
+        validation_configuration_hash,
+        validation_model_version,
+        PRIMARY KEY (proposal_id, instrument_id)
+    );
+    """,
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -156,6 +179,7 @@ MIGRATIONS = (
     CNINFO_ARTIFACT_CAPTURE,
     PROVIDER_CALIBRATION_ATTEMPTS,
     PROVIDER_CONTRACT_RUN_ORIGIN,
+    PORTFOLIO_EVIDENCE_LINEAGE,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -252,6 +276,9 @@ def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> No
         return
     if migration is PROVIDER_CONTRACT_RUN_ORIGIN:
         _apply_provider_contract_run_origin(connection)
+        return
+    if migration is PORTFOLIO_EVIDENCE_LINEAGE:
+        _apply_portfolio_evidence_lineage(connection)
         return
     raise RuntimeError(f"unknown migration: {migration.migration_id}")
 
@@ -800,6 +827,50 @@ def _apply_provider_contract_run_origin(connection: sqlite3.Connection) -> None:
     )
 
 
+def _apply_portfolio_evidence_lineage(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS portfolio_evidence_references (
+            proposal_id TEXT NOT NULL,
+            instrument_id TEXT NOT NULL,
+            research_report_id TEXT NOT NULL,
+            investment_assessment_id TEXT NOT NULL,
+            investment_assessment_status TEXT NOT NULL CHECK (
+                investment_assessment_status IN ('completed', 'low_confidence')
+            ),
+            investment_score_id TEXT NOT NULL,
+            investment_score REAL NOT NULL CHECK (
+                investment_score >= 0 AND investment_score <= 100
+            ),
+            investment_confidence REAL NOT NULL CHECK (
+                investment_confidence >= 0 AND investment_confidence <= 100
+            ),
+            validation_report_id TEXT NOT NULL,
+            validation_status TEXT NOT NULL CHECK (
+                validation_status IN ('reliable', 'conditionally_reliable')
+            ),
+            validation_generated_at TEXT NOT NULL,
+            validation_configuration_hash TEXT NOT NULL CHECK (
+                length(validation_configuration_hash) = 64
+            ),
+            validation_model_version TEXT NOT NULL,
+            ingested_at TEXT NOT NULL,
+            PRIMARY KEY (proposal_id, instrument_id),
+            FOREIGN KEY (proposal_id)
+                REFERENCES portfolio_proposals (proposal_id) ON DELETE CASCADE
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_portfolio_evidence_validation
+        ON portfolio_evidence_references (
+            validation_report_id, validation_status, proposal_id
+        )
+        """
+    )
+
+
 def schema_fingerprint(connection: sqlite3.Connection) -> str:
     rows = connection.execute(
         """
@@ -946,6 +1017,7 @@ __all__ = [
     "MIGRATION_HEAD",
     "MIGRATIONS",
     "Migration",
+    "PORTFOLIO_EVIDENCE_LINEAGE",
     "PROVIDER_CALIBRATION_ATTEMPTS",
     "PROVIDER_CONTRACT_RUN_ORIGIN",
     "SCHEMA_DEFINITION_HASHES",

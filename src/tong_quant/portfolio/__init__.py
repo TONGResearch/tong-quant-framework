@@ -6,6 +6,7 @@ from tong_quant.portfolio.construction import (
 )
 from tong_quant.portfolio.models import (
     PortfolioCandidate,
+    PortfolioEvidenceReference,
     PortfolioProposal,
     PositionProposal,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "PortfolioCandidate",
     "PortfolioConstraintRecord",
     "PortfolioConstructionConfig",
+    "PortfolioEvidenceReference",
     "PortfolioProposal",
     "PortfolioProposalEngine",
     "PositionProposal",

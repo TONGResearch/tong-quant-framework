@@ -2,6 +2,23 @@
 
 Status: `ready`
 
+## Current implementation slice
+
+- Portfolio candidates and proposals carry typed, persisted ResearchReport,
+  InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
+- Repository writes verify authoritative identity, status, value, timestamp,
+  configuration hash, and validation model version before saving the proposal
+  and its children in one transaction. Reusing a proposal identifier is rejected
+  rather than silently replacing persisted evidence.
+- Conditional validation and low-confidence investment assessments cannot
+  produce an unconditional proposal.
+- A-share sellability and price-limit calls now fail closed when dated rule
+  evidence is absent.
+- Remaining before this package can complete: explicit freshness policy,
+  versioned market-rule capability declarations, pilot-market fixtures, and
+  simulation-boundary authority checks. No simulation or live trading is
+  authorized by this partial slice.
+
 ## Objective
 
 Remove the known authority, lineage, and market-rule gaps that would make even

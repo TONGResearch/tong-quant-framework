@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ from tong_quant.domain.enums import (
     Market,
     PortfolioAssetCategory,
     PortfolioProposalStatus,
+    ResearchRunStatus,
+    ValidationStatus,
 )
 from tong_quant.domain.models import Instrument
 from tong_quant.portfolio import (
@@ -32,6 +35,7 @@ def test_portfolio_proposal_consumes_investment_score_candidates_only() -> None:
         PortfolioProposalStatus.CONDITIONAL,
         PortfolioProposalStatus.REJECTED,
     }
+    assert proposal.status is not PortfolioProposalStatus.PROPOSED
     assert proposal.metadata["artifact_type"] == "research_artifact"
     assert "Research artifact only" in proposal.limitations
     assert proposal.cash_weight >= 0.05
@@ -45,13 +49,17 @@ def test_candidate_without_investment_score_is_rejected() -> None:
     with pytest.raises(ValueError, match="InvestmentScore"):
         PortfolioCandidate(
             instrument=_instrument("600000"),
+            research_report_id="research-1",
             investment_assessment_id="assessment-1",
             investment_score_id="",
             validation_report_id="validation-1",
             score=80,
             confidence=80,
             assessment_status=InvestmentAssessmentStatus.COMPLETED,
-            validation_status="reliable",
+            validation_status=ValidationStatus.RELIABLE,
+            validation_generated_at=datetime(2026, 1, 1, tzinfo=UTC),
+            validation_configuration_hash="a" * 64,
+            validation_model_version="validation-test-v1",
             expected_role="value",
             sector="Banks",
             country="China",
@@ -61,6 +69,27 @@ def test_candidate_without_investment_score_is_rejected() -> None:
             average_correlation=0.3,
             max_drawdown=0.2,
             reasons=("scored",),
+        )
+
+
+def test_candidate_requires_typed_validation_status() -> None:
+    with pytest.raises(ValueError, match="validation status must be typed"):
+        replace(
+            _candidate("600000", "score-1", 88, 82),
+            validation_status="reliable",  # type: ignore[arg-type]
+        )
+
+
+def test_duplicate_instrument_or_score_is_rejected() -> None:
+    first = _candidate("600000", "score-1", 88, 82)
+    engine = PortfolioProposalEngine()
+
+    with pytest.raises(ValueError, match="unique scores and instruments"):
+        engine.build((first, first), as_of=datetime(2026, 1, 2, tzinfo=UTC))
+    with pytest.raises(ValueError, match="unique scores and instruments"):
+        engine.build(
+            (first, replace(first, investment_score_id="score-2")),
+            as_of=datetime(2026, 1, 2, tzinfo=UTC),
         )
 
 
@@ -134,8 +163,9 @@ def test_fund_category_is_reserved_but_not_constructed_by_engine() -> None:
 def test_portfolio_repository_persists_research_artifacts(tmp_path: Path) -> None:
     store = SQLiteStore(tmp_path / "portfolio.sqlite3")
     store.initialize()
+    candidate = _persisted_candidate(store, "600000", "score-1", 88, 82)
     proposal = PortfolioProposalEngine().build(
-        (_candidate("600000", "score-1", 88, 82),),
+        (candidate,),
         as_of=datetime(2026, 1, 2, tzinfo=UTC),
     )
 
@@ -143,6 +173,7 @@ def test_portfolio_repository_persists_research_artifacts(tmp_path: Path) -> Non
     repository.save_proposal(proposal)
 
     assert store.table_count("portfolio_proposals") == 1
+    assert store.table_count("portfolio_evidence_references") == 1
     assert store.table_count("position_proposals") == 2
     assert store.table_count("risk_assessments") == 1
     assert store.table_count("portfolio_exposures") == 3
@@ -151,6 +182,7 @@ def test_portfolio_repository_persists_research_artifacts(tmp_path: Path) -> Non
     loaded = repository.get_proposal(proposal.proposal_id)
     assert loaded is not None
     assert loaded.proposal_id == proposal.proposal_id
+    assert loaded.evidence_references == proposal.evidence_references
     assert len(loaded.positions) == 2
     assert loaded.risk_assessment is not None
     assert proposal.risk_assessment is not None
@@ -158,6 +190,85 @@ def test_portfolio_repository_persists_research_artifacts(tmp_path: Path) -> Non
     assert len(loaded.risk_assessment.scenario_results) == 4
     assert repository.get_exposures(proposal.proposal_id)
     assert len(repository.get_constraints(proposal.proposal_id)) == 4
+
+
+def test_portfolio_repository_rejects_missing_lineage_atomically(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    proposal = PortfolioProposalEngine().build(
+        (_candidate("600000", "score-1", 88, 82),),
+        as_of=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+
+    with pytest.raises(ValueError, match="missing or mismatched"):
+        SQLitePortfolioRepository(store).save_proposal(proposal)
+
+    assert store.table_count("portfolio_proposals") == 0
+    assert store.table_count("portfolio_evidence_references") == 0
+    assert store.table_count("position_proposals") == 0
+
+
+def test_portfolio_repository_rejects_replacing_proposal(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(store, "600000", "score-1", 88, 82)
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+
+    with pytest.raises(ValueError, match="identifiers are immutable"):
+        repository.save_proposal(proposal)
+
+    assert store.table_count("portfolio_proposals") == 1
+    assert store.table_count("portfolio_evidence_references") == 1
+    assert store.table_count("position_proposals") == 2
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    (
+        ({"score": 99.0}, "investment score does not match"),
+        ({"confidence": 99.0}, "investment score does not match"),
+        ({"assessment_status": InvestmentAssessmentStatus.LOW_CONFIDENCE},
+         "assessment status does not match"),
+        ({"validation_status": ValidationStatus.RELIABLE},
+         "validation status does not match"),
+        ({"validation_configuration_hash": "b" * 64},
+         "configuration hash does not match"),
+        ({"validation_model_version": "wrong-version"},
+         "validation version does not match"),
+    ),
+)
+def test_portfolio_repository_rejects_conflicting_authoritative_evidence(
+    tmp_path: Path,
+    change: dict[str, object],
+    message: str,
+) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(store, "600000", "score-1", 88, 82)
+    proposal = PortfolioProposalEngine().build(
+        (replace(candidate, **change),),  # type: ignore[arg-type]
+        as_of=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+
+    with pytest.raises(ValueError, match=message):
+        SQLitePortfolioRepository(store).save_proposal(proposal)
+
+    assert store.table_count("portfolio_proposals") == 0
+
+
+def test_future_validation_evidence_cannot_enter_portfolio() -> None:
+    candidate = replace(
+        _candidate("600000", "score-1", 88, 82),
+        validation_generated_at=datetime(2026, 1, 2, tzinfo=UTC) + timedelta(days=1),
+    )
+    with pytest.raises(ValueError, match="newer than the proposal"):
+        PortfolioProposalEngine().build(
+            (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+        )
 
 
 def _candidate(
@@ -172,13 +283,17 @@ def _candidate(
 ) -> PortfolioCandidate:
     return PortfolioCandidate(
         instrument=_instrument(symbol),
+        research_report_id=f"research-{score_id}",
         investment_assessment_id=f"assessment-{score_id}",
         investment_score_id=score_id,
         validation_report_id=f"validation-{score_id}",
         score=score,
         confidence=confidence,
         assessment_status=status,
-        validation_status="conditionally_reliable",
+        validation_status=ValidationStatus.CONDITIONALLY_RELIABLE,
+        validation_generated_at=datetime(2026, 1, 1, tzinfo=UTC),
+        validation_configuration_hash="a" * 64,
+        validation_model_version="validation-test-v1",
         expected_role="Value",
         sector="Banks",
         country="China",
@@ -189,6 +304,115 @@ def _candidate(
         max_drawdown=0.25,
         reasons=("InvestmentScore survived research and validation",),
         limitations=("PortfolioProposal is not an execution instruction",),
+    )
+
+
+def _persisted_candidate(
+    store: SQLiteStore,
+    symbol: str,
+    score_id: str,
+    score: float,
+    confidence: float,
+) -> PortfolioCandidate:
+    now = datetime(2026, 1, 2, tzinfo=UTC)
+    instrument = _instrument(symbol)
+    instrument_key = f"china_a:equity:{symbol}"
+    research_report_id = f"research-{score_id}"
+    validation_report_id = f"validation-{score_id}"
+    validation_run_id = f"validation-run-{score_id}"
+    store.upsert_instruments((instrument,))
+    store.save_research_report(
+        run_id=f"research-run-{score_id}",
+        report_id=research_report_id,
+        queue_id=f"queue-{score_id}",
+        instrument_id_value=instrument_key,
+        generated_at=now,
+        available_at=now,
+        status=ResearchRunStatus.COMPLETED,
+        thesis="Test thesis",
+        counter_thesis="Test counter thesis",
+        invalidation_conditions=[{"metric": "test", "operator": "lt", "threshold": 0}],
+        confidence={"overall": confidence},
+        key_findings=("Research completed",),
+        key_risks=("Test risk",),
+        unresolved_questions=(),
+        policy_assessment=None,
+        market_regime=None,
+        model_version="research-test-v1",
+    )
+    assessment_id = store.save_investment_assessment(
+        report_id=research_report_id,
+        instrument_id_value=instrument_key,
+        status=InvestmentAssessmentStatus.COMPLETED,
+        assessed_at=now,
+        score=score,
+        confidence=confidence,
+        components=[
+            {
+                "name": "research",
+                "score": score,
+                "confidence": confidence,
+                "weight": 1,
+                "contribution": score,
+                "reasons": ["test evidence"],
+            }
+        ],
+        reasons=("Assessment completed",),
+        limitations=(),
+        market_regime=None,
+        model_version="investment-test-v1",
+    )
+    score_row = store.investment_score_row_for_assessment(assessment_id)
+    assert score_row is not None
+    persisted_score_id = score_row["score_id"]
+    store.save_validation_observation(
+        run_id=validation_run_id,
+        sample_id=f"sample-{score_id}",
+        instrument_id_value=instrument_key,
+        research_report_id=research_report_id,
+        decision_at=now,
+        research_expected_success=True,
+        market_regime=None,
+        factor_scores={},
+        portfolio_position=None,
+    )
+    configuration_hash = "a" * 64
+    store.save_validation_report(
+        run_id=validation_run_id,
+        report_id=validation_report_id,
+        validation_id=f"validation-id-{score_id}",
+        generated_at=now,
+        status="completed",
+        aggregate_status=ValidationStatus.CONDITIONALLY_RELIABLE.value,
+        framework_snapshot={"configuration_hash": configuration_hash},
+        known_limitations=("Test validation",),
+        reproducibility_manifest={"configuration_hash": configuration_hash},
+        decision_summary=None,
+        portfolio_risk=None,
+        model_version="validation-test-v1",
+    )
+    return PortfolioCandidate(
+        instrument=instrument,
+        research_report_id=research_report_id,
+        investment_assessment_id=assessment_id,
+        investment_score_id=persisted_score_id,
+        validation_report_id=validation_report_id,
+        score=score,
+        confidence=confidence,
+        assessment_status=InvestmentAssessmentStatus.COMPLETED,
+        validation_status=ValidationStatus.CONDITIONALLY_RELIABLE,
+        validation_generated_at=now,
+        validation_configuration_hash=configuration_hash,
+        validation_model_version="validation-test-v1",
+        expected_role="Value",
+        sector="Banks",
+        country="China",
+        theme="Value",
+        volatility=0.18,
+        liquidity_score=85,
+        average_correlation=0.35,
+        max_drawdown=0.25,
+        reasons=("Persisted research and validation lineage",),
     )
 
 

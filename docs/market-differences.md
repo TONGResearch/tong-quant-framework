@@ -28,5 +28,15 @@ A-shares. Market behavior is supplied through explicit rules and configuration.
 - Volatility interruptions
 - Exchange and broker fee schedules
 
-V0.1 contains interfaces and conservative placeholders only. Exact production
-rules require source-backed implementation and tests per market.
+`ChinaAShareRules` now fails closed for sellability and price limits until
+exchange-calendar, board, dated status, and effective-date evidence is supplied.
+Its former next-calendar-day T+1 approximation and static 5% ST / 10% other
+price-limit approximation must not be used for Paper Trading. For example,
+the Shanghai Stock Exchange changed the main-board risk-warning limit from
+5% to 10%, effective 2026-07-06. This alone makes an undated ST rule unsafe
+for historical reconstruction. Source:
+https://www.sse.com.cn/aboutus/mediacenter/hotandd/c/c_20260424_10816474.shtml
+
+Market-specific rules remain a blocking dependency for simulation eligibility.
+The selected pilot market needs source-backed, effective-dated fixtures before
+its paper fill model may claim realistic market behavior.

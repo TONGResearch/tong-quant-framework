@@ -1,6 +1,9 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
+from tong_quant.core.exceptions import MarketRuleEvidenceUnavailableError
 from tong_quant.domain.enums import Market
 from tong_quant.domain.models import Instrument
 from tong_quant.markets.china_a import ChinaAShareRules
@@ -19,17 +22,17 @@ def test_a_share_buy_quantity_uses_board_lot() -> None:
     assert rules.normalize_buy_quantity(instrument, 250) == 200
 
 
-def test_a_share_has_t_plus_one_sale_constraint() -> None:
+def test_a_share_sellability_fails_closed_without_calendar_evidence() -> None:
     rules = ChinaAShareRules()
 
-    assert rules.earliest_sell_date(date(2026, 1, 5)) == date(2026, 1, 6)
+    with pytest.raises(MarketRuleEvidenceUnavailableError, match="trading calendar"):
+        rules.earliest_sell_date(date(2026, 1, 5))
 
 
-def test_a_share_standard_price_limit() -> None:
-    limit = ChinaAShareRules().daily_price_limit(Decimal("10.00"))
+def test_a_share_price_limit_fails_closed_without_dated_board_rules() -> None:
+    with pytest.raises(MarketRuleEvidenceUnavailableError, match="trade date"):
+        ChinaAShareRules().daily_price_limit(Decimal("10.00"))
 
-    assert limit.lower == Decimal("9.00")
-    assert limit.upper == Decimal("11.00")
 
 
 def test_global_market_can_sell_same_day_by_default() -> None:

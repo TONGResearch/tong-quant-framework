@@ -3421,6 +3421,165 @@ class SQLiteStore:
             )
         return position_id
 
+    def save_portfolio_evidence_reference(
+        self,
+        *,
+        proposal_id: str,
+        instrument_id_value: str,
+        research_report_id: str,
+        investment_assessment_id: str,
+        investment_assessment_status: str,
+        investment_score_id: str,
+        investment_score: float,
+        investment_confidence: float,
+        validation_report_id: str,
+        validation_status: str,
+        validation_generated_at: datetime,
+        validation_configuration_hash: str,
+        validation_model_version: str,
+    ) -> None:
+        identifiers = (
+            proposal_id,
+            instrument_id_value,
+            research_report_id,
+            investment_assessment_id,
+            investment_score_id,
+            validation_report_id,
+        )
+        if any(not identifier.strip() for identifier in identifiers):
+            raise ValueError("portfolio evidence references require complete lineage")
+        if validation_status not in {"reliable", "conditionally_reliable"}:
+            raise ValueError("portfolio evidence validation status is not accepted")
+        if investment_assessment_status not in {"completed", "low_confidence"}:
+            raise ValueError("portfolio evidence assessment status is not scored")
+        if not 0 <= investment_score <= 100 or not 0 <= investment_confidence <= 100:
+            raise ValueError("portfolio evidence score or confidence is invalid")
+        self._require_aware(validation_generated_at)
+        if len(validation_configuration_hash) != 64:
+            raise ValueError("portfolio evidence configuration hash is invalid")
+        if not validation_model_version.strip():
+            raise ValueError("portfolio evidence validation version is missing")
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO portfolio_evidence_references (
+                    proposal_id, instrument_id, research_report_id,
+                    investment_assessment_id, investment_assessment_status,
+                    investment_score_id, investment_score, investment_confidence,
+                    validation_report_id, validation_status,
+                    validation_generated_at, validation_configuration_hash,
+                    validation_model_version, ingested_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    proposal_id,
+                    instrument_id_value,
+                    research_report_id,
+                    investment_assessment_id,
+                    investment_assessment_status,
+                    investment_score_id,
+                    investment_score,
+                    investment_confidence,
+                    validation_report_id,
+                    validation_status,
+                    _datetime_text(validation_generated_at),
+                    validation_configuration_hash,
+                    validation_model_version,
+                    _datetime_text(datetime.now(UTC)),
+                ),
+            )
+
+    def portfolio_evidence_reference_rows(
+        self,
+        proposal_id: str,
+    ) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM portfolio_evidence_references
+                WHERE proposal_id = ?
+                ORDER BY instrument_id
+                """,
+                (proposal_id,),
+            ).fetchall()
+        return list(rows)
+
+    def portfolio_evidence_lineage_row(
+        self,
+        *,
+        instrument_id_value: str,
+        research_report_id: str,
+        investment_assessment_id: str,
+        investment_score_id: str,
+        validation_report_id: str,
+    ) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT
+                    research.status AS research_status,
+                    research.available_at AS research_available_at,
+                    assessment.status AS assessment_status,
+                    assessment.assessed_at AS assessment_assessed_at,
+                    assessment.score AS assessment_score,
+                    assessment.confidence AS assessment_confidence,
+                    score.calculated_at AS score_calculated_at,
+                    score.score AS investment_score,
+                    score.confidence AS investment_confidence,
+                    validation.status AS validation_run_status,
+                    validation.aggregate_status AS validation_status,
+                    validation.generated_at AS validation_generated_at,
+                    validation.framework_snapshot_json,
+                    validation.reproducibility_manifest_json,
+                    validation.model_version AS validation_model_version
+                FROM research_reports AS research
+                JOIN investment_assessments AS assessment
+                  ON assessment.assessment_id = ?
+                 AND assessment.report_id = research.report_id
+                 AND assessment.instrument_id = research.instrument_id
+                JOIN investment_scores AS score
+                  ON score.score_id = ?
+                 AND score.assessment_id = assessment.assessment_id
+                 AND score.report_id = research.report_id
+                 AND score.instrument_id = research.instrument_id
+                JOIN validation_reports AS validation
+                  ON validation.report_id = ?
+                JOIN validation_observations AS observation
+                  ON observation.run_id = validation.run_id
+                 AND observation.research_report_id = research.report_id
+                 AND observation.instrument_id = research.instrument_id
+                WHERE research.report_id = ?
+                  AND research.instrument_id = ?
+                LIMIT 1
+                """,
+                (
+                    investment_assessment_id,
+                    investment_score_id,
+                    validation_report_id,
+                    research_report_id,
+                    instrument_id_value,
+                ),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
+    def investment_score_row_for_assessment(
+        self,
+        assessment_id: str,
+    ) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM investment_scores
+                WHERE assessment_id = ?
+                ORDER BY calculated_at DESC
+                LIMIT 1
+                """,
+                (assessment_id,),
+            ).fetchone()
+        return cast(sqlite3.Row | None, row)
+
     def save_risk_assessment(
         self,
         *,
@@ -4808,6 +4967,7 @@ class SQLiteStore:
             "investment_assessments",
             "investment_scores",
             "portfolio_proposals",
+            "portfolio_evidence_references",
             "position_proposals",
             "risk_assessments",
             "portfolio_exposures",

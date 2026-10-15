@@ -69,6 +69,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("investment_assessments") == 0
     assert store.table_count("investment_scores") == 0
     assert store.table_count("portfolio_proposals") == 0
+    assert store.table_count("portfolio_evidence_references") == 0
     assert store.table_count("position_proposals") == 0
     assert store.table_count("risk_assessments") == 0
     assert store.table_count("portfolio_exposures") == 0
@@ -77,7 +78,7 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("notification_deliveries") == 0
     assert store.table_count("notification_dead_letters") == 0
     assert store.table_count("schema_metadata") == 3
-    assert store.table_count("schema_migrations") == 10
+    assert store.table_count("schema_migrations") == 11
     assert store.table_count("schema_fingerprints") == 1
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
     assert store.migration_head() == MIGRATION_HEAD

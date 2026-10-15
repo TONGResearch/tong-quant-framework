@@ -1,16 +1,25 @@
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from math import isclose
 from typing import cast
 
 from tong_quant.data.storage.sqlite import SQLiteStore, instrument_id
 from tong_quant.domain.enums import (
+    InvestmentAssessmentStatus,
     PortfolioAssetCategory,
     PortfolioProposalStatus,
+    ResearchRunStatus,
     RiskAssessmentStatus,
     StressScenarioType,
+    ValidationRunStatus,
+    ValidationStatus,
 )
-from tong_quant.portfolio.models import PortfolioProposal, PositionProposal
+from tong_quant.portfolio.models import (
+    PortfolioEvidenceReference,
+    PortfolioProposal,
+    PositionProposal,
+)
 from tong_quant.risk.models import (
     ExposureBreakdown,
     RiskAssessment,
@@ -33,6 +42,14 @@ class SQLitePortfolioRepository:
     store: SQLiteStore
 
     def save_proposal(self, proposal: PortfolioProposal) -> None:
+        with self.store.transaction():
+            if self.store.portfolio_proposal_row(proposal.proposal_id) is not None:
+                raise ValueError("portfolio proposal identifiers are immutable")
+            self._save_proposal(proposal)
+
+    def _save_proposal(self, proposal: PortfolioProposal) -> None:
+        for reference in proposal.evidence_references:
+            self._verify_evidence_reference(proposal, reference)
         instruments = tuple(
             position.instrument
             for position in proposal.positions
@@ -56,6 +73,26 @@ class SQLitePortfolioRepository:
             metadata=proposal.metadata,
             model_version=proposal.model_version,
         )
+        for reference in proposal.evidence_references:
+            self.store.save_portfolio_evidence_reference(
+                proposal_id=proposal.proposal_id,
+                instrument_id_value=instrument_id(reference.instrument),
+                research_report_id=reference.research_report_id,
+                investment_assessment_id=reference.investment_assessment_id,
+                investment_assessment_status=(
+                    reference.investment_assessment_status.value
+                ),
+                investment_score_id=reference.investment_score_id,
+                investment_score=reference.investment_score,
+                investment_confidence=reference.investment_confidence,
+                validation_report_id=reference.validation_report_id,
+                validation_status=reference.validation_status.value,
+                validation_generated_at=reference.validation_generated_at,
+                validation_configuration_hash=(
+                    reference.validation_configuration_hash
+                ),
+                validation_model_version=reference.validation_model_version,
+            )
         for position in proposal.positions:
             self.store.save_position_proposal(
                 proposal_id=proposal.proposal_id,
@@ -118,12 +155,72 @@ class SQLitePortfolioRepository:
                 reasons=assessment.required_adjustments or ("constraint recorded",),
             )
 
+    def _verify_evidence_reference(
+        self,
+        proposal: PortfolioProposal,
+        reference: PortfolioEvidenceReference,
+    ) -> None:
+        row = self.store.portfolio_evidence_lineage_row(
+            instrument_id_value=instrument_id(reference.instrument),
+            research_report_id=reference.research_report_id,
+            investment_assessment_id=reference.investment_assessment_id,
+            investment_score_id=reference.investment_score_id,
+            validation_report_id=reference.validation_report_id,
+        )
+        if row is None:
+            raise ValueError("portfolio evidence lineage is missing or mismatched")
+        if row["research_status"] != ResearchRunStatus.COMPLETED.value:
+            raise ValueError("portfolio evidence research report is not completed")
+        if row["assessment_status"] not in {
+            InvestmentAssessmentStatus.COMPLETED.value,
+            InvestmentAssessmentStatus.LOW_CONFIDENCE.value,
+        }:
+            raise ValueError("portfolio evidence investment assessment is not scored")
+        if row["assessment_status"] != reference.investment_assessment_status.value:
+            raise ValueError("portfolio evidence assessment status does not match")
+        for field_name, expected in (
+            ("assessment_score", reference.investment_score),
+            ("investment_score", reference.investment_score),
+            ("assessment_confidence", reference.investment_confidence),
+            ("investment_confidence", reference.investment_confidence),
+        ):
+            value = row[field_name]
+            if value is None or not isclose(float(value), expected, abs_tol=1e-9):
+                raise ValueError("portfolio evidence investment score does not match")
+        if row["validation_run_status"] != ValidationRunStatus.COMPLETED.value:
+            raise ValueError("portfolio evidence validation report is not completed")
+        if row["validation_status"] != reference.validation_status.value:
+            raise ValueError("portfolio evidence validation status does not match")
+        if datetime.fromisoformat(row["validation_generated_at"]) != (
+            reference.validation_generated_at
+        ):
+            raise ValueError("portfolio evidence validation timestamp does not match")
+        for field_name in (
+            "research_available_at",
+            "assessment_assessed_at",
+            "score_calculated_at",
+            "validation_generated_at",
+        ):
+            if datetime.fromisoformat(row[field_name]) > proposal.as_of:
+                raise ValueError("portfolio evidence contains future information")
+        snapshot = json.loads(row["framework_snapshot_json"])
+        manifest = json.loads(row["reproducibility_manifest_json"])
+        snapshot_hash = snapshot.get("configuration_hash")
+        manifest_hash = manifest.get("configuration_hash")
+        if not snapshot_hash or snapshot_hash != manifest_hash:
+            raise ValueError("portfolio evidence configuration binding is invalid")
+        if snapshot_hash != reference.validation_configuration_hash:
+            raise ValueError("portfolio evidence configuration hash does not match")
+        if row["validation_model_version"] != reference.validation_model_version:
+            raise ValueError("portfolio evidence validation version does not match")
+
     def get_proposal(self, proposal_id: str) -> PortfolioProposal | None:
         row = self.store.portfolio_proposal_row(proposal_id)
         if row is None:
             return None
         as_of = datetime.fromisoformat(row["as_of"])
         positions = self.get_positions(proposal_id, as_of=as_of)
+        evidence_references = self.get_evidence_references(proposal_id, as_of=as_of)
         risk_assessment = self.get_risk_assessment(proposal_id)
         return PortfolioProposal(
             proposal_id=row["proposal_id"],
@@ -131,6 +228,7 @@ class SQLitePortfolioRepository:
             base_currency=row["base_currency"],
             status=PortfolioProposalStatus(row["status"]),
             positions=positions,
+            evidence_references=evidence_references,
             cash_weight=float(row["cash_weight"]),
             target_volatility=float(row["target_volatility"]),
             expected_portfolio_volatility=float(row["expected_portfolio_volatility"]),
@@ -155,6 +253,41 @@ class SQLitePortfolioRepository:
             model_version=row["model_version"],
             metadata=json.loads(row["metadata_json"]),
         )
+
+    def get_evidence_references(
+        self,
+        proposal_id: str,
+        *,
+        as_of: datetime,
+    ) -> tuple[PortfolioEvidenceReference, ...]:
+        references: list[PortfolioEvidenceReference] = []
+        for row in self.store.portfolio_evidence_reference_rows(proposal_id):
+            instrument = self.store.get_instrument_by_id(row["instrument_id"], as_of=as_of)
+            if instrument is None:
+                raise ValueError("portfolio evidence instrument cannot be reconstructed")
+            references.append(
+                PortfolioEvidenceReference(
+                    instrument=instrument,
+                    research_report_id=row["research_report_id"],
+                    investment_assessment_id=row["investment_assessment_id"],
+                    investment_assessment_status=InvestmentAssessmentStatus(
+                        row["investment_assessment_status"]
+                    ),
+                    investment_score_id=row["investment_score_id"],
+                    investment_score=float(row["investment_score"]),
+                    investment_confidence=float(row["investment_confidence"]),
+                    validation_report_id=row["validation_report_id"],
+                    validation_status=ValidationStatus(row["validation_status"]),
+                    validation_generated_at=datetime.fromisoformat(
+                        row["validation_generated_at"]
+                    ),
+                    validation_configuration_hash=row[
+                        "validation_configuration_hash"
+                    ],
+                    validation_model_version=row["validation_model_version"],
+                )
+            )
+        return tuple(references)
 
     def get_positions(
         self,

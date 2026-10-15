@@ -56,7 +56,7 @@ NOW = datetime(2026, 1, 2, tzinfo=UTC)
 
 
 def test_notification_and_schema_versions_are_v08() -> None:
-    assert DATABASE_SCHEMA_VERSION == "0.8.1"
+    assert DATABASE_SCHEMA_VERSION == "0.8.2"
     assert FRAMEWORK_VERSION == "0.8.0"
     assert NOTIFICATION_ENGINE_VERSION == "notification-engine-v0.8"
 
@@ -482,13 +482,17 @@ def _portfolio_proposal() -> PortfolioProposal:
             available_at=NOW,
             source="test",
         ),
+        research_report_id="research-report-1",
         investment_assessment_id="investment-assessment-1",
         investment_score_id="investment-score-1",
         validation_report_id="validation-report-1",
         score=80,
         confidence=75,
         assessment_status=InvestmentAssessmentStatus.COMPLETED,
-        validation_status="reliable",
+        validation_status=ValidationStatus.RELIABLE,
+        validation_generated_at=NOW,
+        validation_configuration_hash="0" * 64,
+        validation_model_version="validation-engine-v0.6",
         expected_role="value",
         sector="Banks",
         country="China",

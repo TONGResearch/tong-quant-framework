@@ -19,6 +19,7 @@ from tong_quant.data.storage.migrations import (
     CNINFO_ARTIFACT_CAPTURE,
     MIGRATION_HEAD,
     PROVIDER_CALIBRATION_ATTEMPTS,
+    PROVIDER_CONTRACT_RUN_ORIGIN,
     SCHEMA_DEFINITION_HASHES,
     schema_fingerprint,
 )
@@ -111,14 +112,15 @@ def test_backup_and_dry_run_restore_preserve_database_state(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize(
-    "previous_head",
+    ("previous_head", "schema_version"),
     (
-        PROVIDER_CALIBRATION_ATTEMPTS.migration_id,
-        CNINFO_ARTIFACT_CAPTURE.migration_id,
+        (PROVIDER_CONTRACT_RUN_ORIGIN.migration_id, "0.8.1"),
+        (PROVIDER_CALIBRATION_ATTEMPTS.migration_id, "0.8.0"),
+        (CNINFO_ARTIFACT_CAPTURE.migration_id, "0.8.0"),
     ),
 )
 def test_restore_migrates_a_supported_fingerprinted_backup(
-    tmp_path: Path, previous_head: str
+    tmp_path: Path, previous_head: str, schema_version: str
 ) -> None:
     source = tmp_path / "source.sqlite3"
     restored = tmp_path / "restored.sqlite3"
@@ -133,10 +135,12 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
             """,
             ("legacy-run", NOW.isoformat(), NOW.isoformat(), "healthy", "v1", NOW.isoformat()),
         )
-        connection.execute(
-            "ALTER TABLE provider_contract_runs DROP COLUMN origin_reference"
-        )
-        connection.execute("ALTER TABLE provider_contract_runs DROP COLUMN run_origin")
+        connection.execute("DROP TABLE portfolio_evidence_references")
+        if previous_head != PROVIDER_CONTRACT_RUN_ORIGIN.migration_id:
+            connection.execute(
+                "ALTER TABLE provider_contract_runs DROP COLUMN origin_reference"
+            )
+            connection.execute("ALTER TABLE provider_contract_runs DROP COLUMN run_origin")
         if previous_head == CNINFO_ARTIFACT_CAPTURE.migration_id:
             connection.execute("DROP TABLE provider_calibration_attempts")
         fingerprint = schema_fingerprint(connection)
@@ -144,6 +148,11 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
             "DELETE FROM schema_migrations WHERE migration_id = ?",
             (MIGRATION_HEAD,),
         )
+        if previous_head != PROVIDER_CONTRACT_RUN_ORIGIN.migration_id:
+            connection.execute(
+                "DELETE FROM schema_migrations WHERE migration_id = ?",
+                (PROVIDER_CONTRACT_RUN_ORIGIN.migration_id,),
+            )
         if previous_head == CNINFO_ARTIFACT_CAPTURE.migration_id:
             connection.execute(
                 "DELETE FROM schema_migrations WHERE migration_id = ?",
@@ -169,7 +178,8 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
             (previous_head,),
         )
         connection.execute(
-            "UPDATE schema_metadata SET value = '0.8.0' WHERE key = 'schema_version'"
+            "UPDATE schema_metadata SET value = ? WHERE key = 'schema_version'",
+            (schema_version,),
         )
         connection.execute(
             "UPDATE schema_metadata SET value = ? WHERE key = 'schema_fingerprint'",
@@ -187,17 +197,21 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
     assert before.requires_migration is True
     assert before.schema_fingerprint_valid is True
     assert before.schema_definition_valid is True
-    assert before.schema_version == "0.8.0"
+    assert before.schema_version == schema_version
     assert report.source_migration_head == previous_head
     assert report.restored_migration_head == MIGRATION_HEAD
     assert report.migration_applied is True
     assert report.common_table_counts_match is True
     assert integrity.audit(restored).passed is True
     with sqlite3.connect(restored) as connection:
+        if previous_head != PROVIDER_CONTRACT_RUN_ORIGIN.migration_id:
+            assert connection.execute(
+                "SELECT run_origin, origin_reference FROM provider_contract_runs WHERE run_id = ?",
+                ("legacy-run",),
+            ).fetchone() == ("unknown", None)
         assert connection.execute(
-            "SELECT run_origin, origin_reference FROM provider_contract_runs WHERE run_id = ?",
-            ("legacy-run",),
-        ).fetchone() == ("unknown", None)
+            "SELECT COUNT(*) FROM portfolio_evidence_references"
+        ).fetchone() == (0,)
 
 
 def test_backup_never_overwrites_existing_destination(tmp_path: Path) -> None:

@@ -716,7 +716,7 @@ def _require_restorable(report: DatabaseIntegrityReport) -> None:
             report.schema_fingerprint_valid,
             report.schema_definition_valid,
             report.credential_columns_absent,
-            report.schema_version in {DATABASE_SCHEMA_VERSION, "0.8.0"},
+            report.schema_version in {DATABASE_SCHEMA_VERSION, "0.8.1", "0.8.0"},
         )
     )
     if not safe_for_forward_migration:

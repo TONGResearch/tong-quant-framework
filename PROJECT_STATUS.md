@@ -6,8 +6,8 @@ This is the canonical short handoff for developers and AI agents. Read it with
 ## Current Baseline
 
 - Framework version: `0.8.0`
-- Database schema version: `0.8.1`
-- Migration head: `0009_provider_contract_run_origin`
+- Database schema version: `0.8.2`
+- Migration head: `0010_portfolio_evidence_lineage`
 - Current phase: Parallel evidence and controlled launch
 - PIT readiness: `UNSUITABLE`
 - Production readiness: `NOT_READY`
@@ -57,6 +57,10 @@ This is the canonical short handoff for developers and AI agents. Read it with
   readiness evidence hashes before ValidationRequest creation
 - CI type-checking covers both the reusable `src` packages and operational
   `scripts` entry points
+- Portfolio proposals now preserve a typed, persisted research/assessment/
+  score/validation evidence chain; repository writes verify that chain against
+  authoritative records. A-share sellability and price-limit helpers fail
+  closed until effective-dated exchange evidence exists.
 
 ## Controlled Launch Boundary
 
@@ -81,6 +85,10 @@ replace placeholder market-rule assumptions; and preserve the existing
 fail-closed live-execution guard. After it completes, `WP-PAPER-001` may become
 ready. `WP-BROKER-001` remains planned until the deterministic paper ledger is
 complete.
+
+The first `WP-LAUNCH-001` lineage and market-rule hardening slice is described
+in [the controlled-launch architecture audit](docs/controlled-launch-architecture-audit-2026-10-15.md).
+It does not complete the package or change PIT/live readiness.
 
 `WP-READINESS-001` completed with 12 reviewed datasets, zero promotion-review
 eligible datasets, and unchanged `UNSUITABLE` effective readiness. The next
@@ -130,8 +138,8 @@ bundled contract-run, check, or baseline identities absent from its embedded
 SQLite history. Both retained copies are recoverable, but this does not close
 the 84-day evidence-horizon deficit or change PIT readiness.
 
-On the current `0.8.1` code, restoring the retained `0.8.0` snapshot applies
-the `0009` migration in the isolated copy, so its post-migration audit hash is
+On the current `0.8.2` code, restoring the retained `0.8.0` snapshot applies
+the `0009` and `0010` migrations in the isolated copy, so its post-migration audit hash is
 expected to differ from the untouched source. Table counts and historical
 records remain intact.
 
@@ -162,6 +170,20 @@ The time gate cannot become eligible before approximately January 4, 2027, and
 eligibility would still require uninterrupted evidence, an independent
 provenance review, and a separate PIT readiness reassessment. PIT readiness
 remains `UNSUITABLE`.
+
+The next [scheduled run #20](https://github.com/TONGResearch/tong-quant-framework/actions/runs/38698359370)
+completed on October 15 from commit `e6e98d2`, attempt 1. The GitHub schedule
+event, artifact digest `053d4704...347733c`, run JSON, and SQLite origin row
+were independently matched. The artifact contains 20 contract runs, 100 checks,
+and 20 baseline manifests; all five required scopes have 2/8 qualified
+scheduled checks across 2.9/84 days. Its evidence bundle and temporary
+content-addressed archive passed verification and an isolated restore drill;
+the restored copy advanced from schema `0009` to `0010` with matching table
+counts. The five pre-existing provider/data-limitation warnings remain, with
+no newly observed implementation defect. The calibration-attempt and conflict
+ledgers are still empty, so they do not demonstrate provider agreement. The
+October 15 artifact still needs durable private-local and encrypted off-device
+retention. PIT readiness remains `UNSUITABLE`.
 
 Planned work must respect dependencies in `config/project-governance.toml`.
 

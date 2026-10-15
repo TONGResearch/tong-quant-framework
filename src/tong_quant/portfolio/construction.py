@@ -6,9 +6,11 @@ from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
     PortfolioAssetCategory,
     PortfolioProposalStatus,
+    ValidationStatus,
 )
 from tong_quant.portfolio.models import (
     PortfolioCandidate,
+    PortfolioEvidenceReference,
     PortfolioProposal,
     PositionProposal,
 )
@@ -44,6 +46,17 @@ class PortfolioProposalEngine:
         if not candidates:
             raise ValueError("PortfolioProposal requires InvestmentScore candidates")
         eligible = tuple(_eligible_candidate(candidate) for candidate in candidates)
+        score_ids = {candidate.investment_score_id for candidate in eligible}
+        instruments = {
+            (
+                candidate.instrument.market,
+                candidate.instrument.asset_type,
+                candidate.instrument.symbol,
+            )
+            for candidate in eligible
+        }
+        if len(score_ids) != len(eligible) or len(instruments) != len(eligible):
+            raise ValueError("portfolio candidates must have unique scores and instruments")
         weights = _raw_weights(eligible)
         weights = _cap_weights(weights, self.config.maximum_single_position_weight)
         weights = _apply_volatility_target(
@@ -73,6 +86,7 @@ class PortfolioProposalEngine:
                 constraints_applied=("minimum_cash_weight",),
             ),
         )
+        evidence_references = tuple(_evidence_reference(candidate) for candidate in eligible)
         proposal_id = str(uuid4())
         risk_budget = RiskBudget(
             total_risk_budget=self.config.total_risk_budget,
@@ -88,7 +102,11 @@ class PortfolioProposalEngine:
             as_of=proposal_as_of,
         )
         status = PortfolioProposalStatus.PROPOSED
-        if risk_assessment.status.value == "conditional":
+        if risk_assessment.status.value == "conditional" or any(
+            candidate.validation_status is ValidationStatus.CONDITIONALLY_RELIABLE
+            or candidate.assessment_status is InvestmentAssessmentStatus.LOW_CONFIDENCE
+            for candidate in eligible
+        ):
             status = PortfolioProposalStatus.CONDITIONAL
         if risk_assessment.status.value == "rejected":
             status = PortfolioProposalStatus.REJECTED
@@ -98,6 +116,7 @@ class PortfolioProposalEngine:
             base_currency=self.config.base_currency,
             status=status,
             positions=all_positions,
+            evidence_references=evidence_references,
             cash_weight=round(cash_weight, 6),
             target_volatility=self.config.target_volatility,
             expected_portfolio_volatility=round(
@@ -121,12 +140,11 @@ class PortfolioProposalEngine:
             exposure_summary=_exposure_summary(all_positions),
             correlation_summary=_correlation_summary(all_positions),
             risk_assessment=risk_assessment,
-            reasons=("PortfolioProposal is a research artifact built from InvestmentScore",),
-            limitations=(
-                "Research artifact only",
-                "Not an execution instruction",
-                "No execution-side object or live connectivity is created",
+            reasons=(
+                "PortfolioProposal is a research artifact built from InvestmentScore",
+                "Research, assessment, score, and validation lineage is preserved",
             ),
+            limitations=_proposal_limitations(eligible),
             model_version=self.config.model_version,
             metadata={"artifact_type": "research_artifact"},
         )
@@ -142,7 +160,50 @@ def _eligible_candidate(candidate: PortfolioCandidate) -> PortfolioCandidate:
         raise ValueError("Portfolio cannot bypass InvestmentScore")
     if not candidate.validation_report_id.strip():
         raise ValueError("Portfolio cannot bypass Validation")
+    if candidate.validation_status not in {
+        ValidationStatus.RELIABLE,
+        ValidationStatus.CONDITIONALLY_RELIABLE,
+    }:
+        raise ValueError("Portfolio requires accepted validation evidence")
     return candidate
+
+
+def _evidence_reference(candidate: PortfolioCandidate) -> PortfolioEvidenceReference:
+    return PortfolioEvidenceReference(
+        instrument=candidate.instrument,
+        research_report_id=candidate.research_report_id,
+        investment_assessment_id=candidate.investment_assessment_id,
+        investment_assessment_status=candidate.assessment_status,
+        investment_score_id=candidate.investment_score_id,
+        investment_score=candidate.score,
+        investment_confidence=candidate.confidence,
+        validation_report_id=candidate.validation_report_id,
+        validation_status=candidate.validation_status,
+        validation_generated_at=candidate.validation_generated_at,
+        validation_configuration_hash=candidate.validation_configuration_hash,
+        validation_model_version=candidate.validation_model_version,
+    )
+
+
+def _proposal_limitations(
+    candidates: tuple[PortfolioCandidate, ...],
+) -> tuple[str, ...]:
+    limitations = [
+        "Research artifact only",
+        "Not an execution instruction",
+        "No execution-side object or live connectivity is created",
+    ]
+    if any(
+        candidate.validation_status is ValidationStatus.CONDITIONALLY_RELIABLE
+        for candidate in candidates
+    ):
+        limitations.append("At least one candidate has conditionally reliable validation")
+    if any(
+        candidate.assessment_status is InvestmentAssessmentStatus.LOW_CONFIDENCE
+        for candidate in candidates
+    ):
+        limitations.append("At least one candidate has a low-confidence assessment")
+    return tuple(limitations)
 
 
 def _raw_weights(candidates: tuple[PortfolioCandidate, ...]) -> dict[str, float]:
@@ -187,6 +248,8 @@ def _position(candidate: PortfolioCandidate, weight: float) -> PositionProposal:
     flags: tuple[str, ...] = (f"correlation={candidate.average_correlation}",)
     if candidate.assessment_status is InvestmentAssessmentStatus.LOW_CONFIDENCE:
         flags = (*flags, "low_confidence_investment_score")
+    if candidate.validation_status is ValidationStatus.CONDITIONALLY_RELIABLE:
+        flags = (*flags, "conditionally_reliable_validation")
     return PositionProposal(
         instrument=candidate.instrument,
         asset_category=PortfolioAssetCategory.EQUITY,

@@ -8,7 +8,7 @@ stored in `schema_migrations` with an identifier, checksum, description, and
 application time. A checksum mismatch fails closed.
 
 `schema_metadata` records both the public database schema version and the exact
-migration head. The current schema is `0.8.1` while the framework remains
+migration head. The current schema is `0.8.2` while the framework remains
 `0.8.0`; the patch version records an operational database change without a
 new trading milestone.
 
@@ -79,9 +79,19 @@ Migration `0009_provider_contract_run_origin` adds:
 - a default of `unknown` for pre-migration runs; historical origin is never
   inferred from timestamps or check counts
 
-The current migration head is `0009_provider_contract_run_origin`. Restore
-drills accept verified `0.8.0` snapshots at supported prior migration heads,
-including `0007` and `0008`, and apply pending migrations in an isolated copy.
+Migration `0010_portfolio_evidence_lineage` adds:
+
+- `portfolio_evidence_references`, keyed by proposal and instrument, with a
+  foreign key to the proposal and research, assessment, score, and validation
+  identities
+- the assessment status, score, confidence, validation status, timestamp,
+  configuration hash, and validation model version used by the proposal
+- an index for validation-lineage review
+
+The current migration head is `0010_portfolio_evidence_lineage`. Restore
+drills accept verified `0.8.0` and `0.8.1` snapshots at supported prior
+migration heads, including `0007`, `0008`, and `0009`, and apply pending
+migrations in an isolated copy.
 The old source database and retained artifact are not rewritten.
 
 `SQLiteStore.initialize()` validates the last recorded physical fingerprint

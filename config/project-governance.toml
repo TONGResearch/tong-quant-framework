@@ -1,7 +1,7 @@
 [baseline]
 framework_version = "0.8.0"
-database_schema_version = "0.8.1"
-migration_head = "0009_provider_contract_run_origin"
+database_schema_version = "0.8.2"
+migration_head = "0010_portfolio_evidence_lineage"
 current_phase = "parallel-evidence-and-controlled-launch"
 canonical_status_document = "PROJECT_STATUS.md"
 

@@ -10,6 +10,10 @@ class FutureDataError(TongQuantError):
     """Raised when a decision attempts to use unavailable future data."""
 
 
+class MarketRuleEvidenceUnavailableError(TongQuantError):
+    """Raised when market-rule evidence cannot support a trading calculation."""
+
+
 class LayerViolationError(TongQuantError):
     """Raised when a module crosses an architecture boundary."""
 

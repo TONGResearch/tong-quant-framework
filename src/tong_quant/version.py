@@ -1,6 +1,6 @@
 FRAMEWORK_VERSION = "0.8.0"
 AKSHARE_QUALITY_AUDIT_VERSION = "akshare-quality-audit-v0.8-phase3"
-DATABASE_SCHEMA_VERSION = "0.8.1"
+DATABASE_SCHEMA_VERSION = "0.8.2"
 DATABASE_ENGINEERING_VERSION = "database-engineering-v0.8-hardening"
 RESEARCH_ENGINE_VERSION = "research-engine-v0.5"
 VALIDATION_ENGINE_VERSION = "validation-engine-v0.6"

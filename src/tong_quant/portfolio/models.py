@@ -8,6 +8,7 @@ from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
     PortfolioAssetCategory,
     PortfolioProposalStatus,
+    ValidationStatus,
 )
 from tong_quant.domain.models import Instrument, require_timezone
 
@@ -28,13 +29,17 @@ def _require_percentage(name: str, value: float) -> None:
 @dataclass(frozen=True, slots=True)
 class PortfolioCandidate:
     instrument: Instrument
+    research_report_id: str
     investment_assessment_id: str
     investment_score_id: str
     validation_report_id: str
     score: float
     confidence: float
     assessment_status: InvestmentAssessmentStatus
-    validation_status: str
+    validation_status: ValidationStatus
+    validation_generated_at: datetime
+    validation_configuration_hash: str
+    validation_model_version: str
     expected_role: str
     sector: str
     country: str
@@ -47,10 +52,21 @@ class PortfolioCandidate:
     limitations: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        if not isinstance(self.assessment_status, InvestmentAssessmentStatus):
+            raise ValueError("portfolio candidate assessment status must be typed")
+        if not isinstance(self.validation_status, ValidationStatus):
+            raise ValueError("portfolio candidate validation status must be typed")
+        if not self.research_report_id.strip():
+            raise ValueError("portfolio candidates require a ResearchReport identifier")
         if not self.investment_assessment_id.strip() or not self.investment_score_id.strip():
             raise ValueError("portfolio candidates require InvestmentScore identifiers")
         if not self.validation_report_id.strip():
             raise ValueError("portfolio candidates require validation evidence")
+        require_timezone(self.validation_generated_at, "validation_generated_at")
+        if len(self.validation_configuration_hash) != 64:
+            raise ValueError("portfolio candidates require a validation configuration hash")
+        if not self.validation_model_version.strip():
+            raise ValueError("portfolio candidates require a validation model version")
         _require_percentage("candidate score", self.score)
         _require_percentage("candidate confidence", self.confidence)
         _require_percentage("liquidity score", self.liquidity_score)
@@ -65,8 +81,62 @@ class PortfolioCandidate:
             InvestmentAssessmentStatus.LOW_CONFIDENCE,
         }:
             raise ValueError("portfolio candidates require scored InvestmentAssessment")
+        if self.validation_status not in {
+            ValidationStatus.RELIABLE,
+            ValidationStatus.CONDITIONALLY_RELIABLE,
+        }:
+            raise ValueError(
+                "portfolio candidates require reliable or conditionally reliable validation"
+            )
         if not self.reasons:
             raise ValueError("portfolio candidate must be explainable")
+
+
+@dataclass(frozen=True, slots=True)
+class PortfolioEvidenceReference:
+    instrument: Instrument
+    research_report_id: str
+    investment_assessment_id: str
+    investment_assessment_status: InvestmentAssessmentStatus
+    investment_score_id: str
+    investment_score: float
+    investment_confidence: float
+    validation_report_id: str
+    validation_status: ValidationStatus
+    validation_generated_at: datetime
+    validation_configuration_hash: str
+    validation_model_version: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.investment_assessment_status, InvestmentAssessmentStatus):
+            raise ValueError("portfolio evidence assessment status must be typed")
+        if not isinstance(self.validation_status, ValidationStatus):
+            raise ValueError("portfolio evidence validation status must be typed")
+        identifiers = (
+            self.research_report_id,
+            self.investment_assessment_id,
+            self.investment_score_id,
+            self.validation_report_id,
+        )
+        if any(not identifier.strip() for identifier in identifiers):
+            raise ValueError("portfolio evidence references require complete lineage")
+        if self.investment_assessment_status not in {
+            InvestmentAssessmentStatus.COMPLETED,
+            InvestmentAssessmentStatus.LOW_CONFIDENCE,
+        }:
+            raise ValueError("portfolio evidence requires a scored assessment")
+        _require_percentage("investment score", self.investment_score)
+        _require_percentage("investment confidence", self.investment_confidence)
+        require_timezone(self.validation_generated_at, "validation_generated_at")
+        if len(self.validation_configuration_hash) != 64:
+            raise ValueError("portfolio evidence requires a configuration hash")
+        if not self.validation_model_version.strip():
+            raise ValueError("portfolio evidence requires a validation model version")
+        if self.validation_status not in {
+            ValidationStatus.RELIABLE,
+            ValidationStatus.CONDITIONALLY_RELIABLE,
+        }:
+            raise ValueError("portfolio evidence cannot carry rejected validation")
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,6 +181,7 @@ class PortfolioProposal:
     base_currency: str
     status: PortfolioProposalStatus
     positions: tuple[PositionProposal, ...]
+    evidence_references: tuple[PortfolioEvidenceReference, ...]
     cash_weight: float
     target_volatility: float
     expected_portfolio_volatility: float
@@ -137,6 +208,15 @@ class PortfolioProposal:
             _require_fraction(name, value)
         if not self.positions:
             raise ValueError("portfolio proposal requires position proposals")
+        cash_positions = tuple(
+            position
+            for position in self.positions
+            if position.asset_category is PortfolioAssetCategory.CASH
+        )
+        if len(cash_positions) != 1 or abs(
+            cash_positions[0].proposed_weight - self.cash_weight
+        ) > 1e-6:
+            raise ValueError("portfolio proposal requires one matching cash position")
         total_weight = sum(position.proposed_weight for position in self.positions)
         if abs(total_weight - 1) > 1e-6:
             raise ValueError("portfolio proposal weights must sum to one")
@@ -144,10 +224,63 @@ class PortfolioProposal:
             raise ValueError("portfolio proposal must be explainable")
         if self.metadata.get("artifact_type") != "research_artifact":
             raise ValueError("PortfolioProposal must be marked as a research artifact")
+        proposed_instruments = {
+            _instrument_key(position.instrument)
+            for position in self.positions
+            if position.instrument is not None
+        }
+        evidence_instruments = {
+            _instrument_key(reference.instrument)
+            for reference in self.evidence_references
+        }
+        if len(proposed_instruments) != len(self.positions) - 1:
+            raise ValueError("portfolio positions must be unique by instrument")
+        if len(evidence_instruments) != len(self.evidence_references):
+            raise ValueError("portfolio evidence references must be unique by instrument")
+        if evidence_instruments != proposed_instruments:
+            raise ValueError(
+                "every non-cash position requires exactly one evidence reference"
+            )
+        if any(
+            reference.validation_generated_at > self.as_of
+            for reference in self.evidence_references
+        ):
+            raise ValueError("portfolio evidence cannot be newer than the proposal")
+        if (
+            self.status is PortfolioProposalStatus.PROPOSED
+            and any(
+                reference.validation_status is not ValidationStatus.RELIABLE
+                or reference.investment_assessment_status
+                is InvestmentAssessmentStatus.LOW_CONFIDENCE
+                for reference in self.evidence_references
+            )
+        ):
+            raise ValueError("conditional evidence cannot produce a proposed portfolio")
+        if self.risk_assessment is None:
+            raise ValueError("portfolio proposal requires a RiskAssessment")
+        if self.risk_assessment.proposal_id != self.proposal_id:
+            raise ValueError("portfolio risk assessment belongs to a different proposal")
+        if self.risk_assessment.assessed_at > self.as_of:
+            raise ValueError("portfolio risk assessment is from the future")
+        if (
+            self.status is PortfolioProposalStatus.PROPOSED
+            and self.risk_assessment.status.value != "acceptable"
+        ):
+            raise ValueError("proposed portfolio requires acceptable risk")
+        if (
+            self.risk_assessment.status.value == "rejected"
+            and self.status is not PortfolioProposalStatus.REJECTED
+        ):
+            raise ValueError("rejected risk requires a rejected portfolio")
+
+
+def _instrument_key(instrument: Instrument) -> tuple[str, str, str]:
+    return instrument.market.value, instrument.asset_type.value, instrument.symbol
 
 
 __all__ = [
     "PortfolioCandidate",
+    "PortfolioEvidenceReference",
     "PortfolioProposal",
     "PositionProposal",
 ]
