@@ -55,6 +55,7 @@ required_documents = [
   "docs/technical-debt-register.md",
   "docs/yahoo-daily-bar-calibration.md",
   "docs/accelerated-controlled-launch.md",
+  "docs/architecture-audit-2026-10-15.md",
 ]
 
 [next_phase]

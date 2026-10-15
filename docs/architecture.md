@@ -19,15 +19,20 @@ Provider adapters
       |
 Canonical point-in-time data
       |
-Discovery -> Screening -> Research -> Validation
-    |            |           |            |
-    +------------+-----------+------------+
-                         universal Signals
+Discovery -> Hard Screening -> Research Queue -> ResearchReport
+                                                    |
+                                      InvestmentAssessment + InvestmentScore
+                                                    |
+                                              ValidationReport
+                                                    |
+                                       PortfolioProposal + RiskAssessment
+
+ResearchReport / ValidationReport / PortfolioProposal / RiskAssessment
                                |
-                    Portfolio -> RiskAssessment
-                               +------> Notification outbox
-                                            |
-                                    Deferred delivery
+                     Notification outbox -> Deferred delivery
+
+Universal Signals accompany analytical stages; they do not replace
+completed Research, InvestmentScore, or authoritative Validation lineage.
 
                      Execution remains disabled
       ^
@@ -46,10 +51,16 @@ MarketRules + calendar + fees + currency + corporate actions
 - Auction and intraday execution rules
 - Fees, stamp duty, and currency
 
-The initial `ChinaAShareRules` models only a small safe subset. Board-specific
-limits, holidays, commissions, transfer fees, STAR/ChiNext rules, Beijing Stock
-Exchange rules, and exact listing-period rules require dedicated reference data
-before production use.
+The current market-rule helpers reject quantity, sellability, and price-limit
+queries until dated evidence and evaluators exist. `markets.capabilities`
+inspects versioned evidence for calendar, settlement, quantity, price limits,
+and security status within an exact market/exchange/board/account scope.
+Intervals use an inclusive start and exclusive end. Future, untrusted, expired,
+or overlapping evidence cannot complete coverage. Coverage is metadata only;
+the production catalog is empty and no rule evaluator or fill is authorized.
+Availability precision is separate from trust: unknown, estimated and date-only
+timestamps remain incomplete until conservative visibility is established.
+Retrieval-time evidence can be used only after capture and keeps that warning.
 
 ## Layer Boundaries
 
@@ -96,6 +107,19 @@ simulate orders, fills, Paper Trading, or live execution.
 Portfolio construction proposes allocation research artifacts. Risk may mark a
 PortfolioProposal acceptable, conditional, rejected, or incomplete, but it does
 not create or reduce orders.
+
+`PortfolioProposalEngine.from_settings()` configures Portfolio and Risk from
+one effective Settings object. Candidate sector/country/theme classifications
+flow directly into generic `RiskPositionInput` records and consistent exposure
+summaries; holding role and listing market must not replace those fields.
+These classifications remain declared research inputs, not independently
+verified issuer exposures. Portfolio and Risk model versions are centralized
+and checked by governance; the current versions are `v0.7.1`.
+
+Authoritative proposal reconstruction and lineage verification share a SQLite
+read snapshot. Risk remains independent of Portfolio domain classes. Risk
+estimates are heuristics pending empirical calibration, especially drawdown,
+correlation, currency, and multi-theme exposure.
 
 ### Execution
 

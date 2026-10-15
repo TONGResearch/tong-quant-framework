@@ -927,6 +927,25 @@ class SQLiteStore:
             )
 
     @contextmanager
+    def read_snapshot(self) -> Iterator["SQLiteStore"]:
+        """Keep multi-query reads on one snapshot; independent snapshots cannot write."""
+        if self._transaction_connection.get() is not None:
+            yield self
+            return
+        connection = self._new_connection()
+        token = self._transaction_connection.set(connection)
+        try:
+            connection.execute("PRAGMA query_only = ON")
+            connection.execute("BEGIN")
+            yield self
+        finally:
+            try:
+                connection.rollback()
+            finally:
+                self._transaction_connection.reset(token)
+                connection.close()
+
+    @contextmanager
     def transaction(self) -> Iterator["SQLiteStore"]:
         if self._transaction_connection.get() is not None:
             raise RuntimeError("nested SQLiteStore transactions are not supported")
@@ -1026,16 +1045,44 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
-            connection.executemany(
-                """
-                INSERT OR REPLACE INTO daily_bars (
+            for row in rows:
+                connection.execute(
+                    """
+                INSERT OR IGNORE INTO daily_bars (
                     instrument_id, trade_date, timestamp, available_at,
                     open, high, low, close, volume, turnover, adjustment,
                     is_suspended, source, ingested_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                rows,
-            )
+                    row,
+                )
+                stored = connection.execute(
+                    """
+                    SELECT timestamp, open, high, low, close, volume, turnover,
+                           is_suspended, source
+                    FROM daily_bars
+                    WHERE instrument_id = ? AND trade_date = ?
+                      AND adjustment = ? AND available_at = ?
+                    """,
+                    (row[0], row[1], row[10], row[3]),
+                ).fetchone()
+                if stored is None:
+                    raise ValueError("daily bar was not persisted")
+                numeric_fields = ("open", "high", "low", "close", "volume", "turnover")
+                numeric_values = tuple(
+                    None if value is None else Decimal(str(value)) for value in row[4:10]
+                )
+                stored_values = tuple(
+                    None if stored[name] is None else Decimal(stored[name])
+                    for name in numeric_fields
+                )
+                if (
+                    numeric_values != stored_values
+                    or stored["timestamp"] != row[2]
+                    or stored["is_suspended"] != row[11]
+                    or stored["source"] != row[12]
+                ):
+                    raise ValueError("daily bar conflict requires a new available_at version")
         return len(rows)
 
     def upsert_trading_sessions(self, sessions: Iterable[TradingSession]) -> int:
@@ -1054,14 +1101,24 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
-            connection.executemany(
-                """
-                INSERT OR REPLACE INTO trading_calendar (
+            for row in rows:
+                connection.execute(
+                    """
+                INSERT OR IGNORE INTO trading_calendar (
                     market, trade_date, is_open, available_at, source, ingested_at
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                rows,
-            )
+                    row,
+                )
+                stored = connection.execute(
+                    """
+                    SELECT is_open, source FROM trading_calendar
+                    WHERE market = ? AND trade_date = ? AND available_at = ?
+                    """,
+                    (row[0], row[1], row[3]),
+                ).fetchone()
+                if stored is None or stored["is_open"] != row[2] or stored["source"] != row[4]:
+                    raise ValueError("calendar conflict requires a new available_at version")
         return len(rows)
 
     def upsert_fundamental_facts(self, facts: Iterable[FundamentalFact]) -> int:
@@ -3923,11 +3980,12 @@ class SQLiteStore:
                 SET status = 'delivered', updated_at = ?, last_error_code = '',
                     lease_expires_at = NULL
                 WHERE notification_id = ? AND status = 'dispatching'
+                  AND attempt_count = ? AND channel = ? AND recipient = ?
                 """,
-                (_datetime_text(delivered_at), notification_id),
+                (_datetime_text(delivered_at), notification_id, attempt_number, channel, recipient),
             )
             if updated.rowcount != 1:
-                raise ValueError("notification is not in dispatching state")
+                raise ValueError("notification dispatch claim is no longer current")
             connection.execute(
                 """
                 INSERT INTO notification_deliveries (
@@ -3981,6 +4039,7 @@ class SQLiteStore:
                     last_error_code = ?, lease_expires_at = NULL,
                     dead_lettered_at = ?
                 WHERE notification_id = ? AND status = 'dispatching'
+                  AND attempt_count = ? AND channel = ? AND recipient = ?
                 """,
                 (
                     next_status,
@@ -3989,10 +4048,13 @@ class SQLiteStore:
                     safe_code,
                     None if retry_at is not None else _datetime_text(attempted_at),
                     notification_id,
+                    attempt_number,
+                    channel,
+                    recipient,
                 ),
             )
             if updated.rowcount != 1:
-                raise ValueError("notification is not in dispatching state")
+                raise ValueError("notification dispatch claim is no longer current")
             connection.execute(
                 """
                 INSERT INTO notification_deliveries (

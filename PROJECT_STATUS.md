@@ -13,6 +13,7 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Production readiness: `NOT_READY`
 - Execution default: `disabled`
 - Notification default: `disabled`
+- Portfolio/Risk model versions: `portfolio-proposal-v0.7.1` / `risk-assessment-v0.7.1`
 
 ## What Exists
 
@@ -76,6 +77,16 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - Buy/sell quantity normalization for all four markets also rejects calls
   without dated lot and account rules; the generic Instrument lot-size default
   must not become an executable market assumption.
+- The [project-wide audit](docs/architecture-audit-2026-10-15.md) repairs lost
+  candidate exposure classifications, Portfolio/Risk configuration drift,
+  mixed-version proposal reads, stale notification worker acknowledgements,
+  and silent same-version bar/calendar replacement. Existing persisted results
+  are not rewritten. New Portfolio/Risk model versions distinguish corrected
+  research artifacts.
+- Market-rule capability coverage now has versioned, PIT-visible declarations,
+  exact exchange/board/account scopes, explicit missing/ambiguous states, and
+  reproducible evidence hashes. Real rule evidence and evaluators are still
+  absent, so this does not complete `WP-LAUNCH-001` or authorize simulation.
 
 ## Controlled Launch Boundary
 

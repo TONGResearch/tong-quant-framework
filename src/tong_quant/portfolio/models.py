@@ -11,6 +11,7 @@ from tong_quant.domain.enums import (
     ValidationStatus,
 )
 from tong_quant.domain.models import Instrument, require_timezone
+from tong_quant.version import PORTFOLIO_MODEL_VERSION
 
 if TYPE_CHECKING:
     from tong_quant.risk.models import RiskAssessment
@@ -90,6 +91,8 @@ class PortfolioCandidate:
             )
         if not self.reasons:
             raise ValueError("portfolio candidate must be explainable")
+        if any(not value.strip() for value in (self.sector, self.country, self.theme)):
+            raise ValueError("portfolio candidate requires explicit exposure classifications")
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,7 +195,7 @@ class PortfolioProposal:
     risk_assessment: RiskAssessment | None
     reasons: tuple[str, ...]
     limitations: tuple[str, ...]
-    model_version: str = "portfolio-proposal-v0.7"
+    model_version: str = PORTFOLIO_MODEL_VERSION
     metadata: dict[str, str | float | int | bool | None] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

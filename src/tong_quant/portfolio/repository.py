@@ -215,6 +215,10 @@ class SQLitePortfolioRepository:
             raise ValueError("portfolio evidence validation version does not match")
 
     def get_proposal(self, proposal_id: str) -> PortfolioProposal | None:
+        with self.store.read_snapshot():
+            return self._get_proposal(proposal_id)
+
+    def _get_proposal(self, proposal_id: str) -> PortfolioProposal | None:
         row = self.store.portfolio_proposal_row(proposal_id)
         if row is None:
             return None
@@ -255,12 +259,13 @@ class SQLitePortfolioRepository:
         )
 
     def get_verified_proposal(self, proposal_id: str) -> PortfolioProposal | None:
-        proposal = self.get_proposal(proposal_id)
-        if proposal is None:
-            return None
-        for reference in proposal.evidence_references:
-            self._verify_evidence_reference(proposal, reference)
-        return proposal
+        with self.store.read_snapshot():
+            proposal = self._get_proposal(proposal_id)
+            if proposal is None:
+                return None
+            for reference in proposal.evidence_references:
+                self._verify_evidence_reference(proposal, reference)
+            return proposal
 
     def get_evidence_references(
         self,

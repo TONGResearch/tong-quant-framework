@@ -215,6 +215,38 @@ def test_expired_dispatch_lease_is_recovered_after_process_crash(
     assert stored.attempt_count == 2
 
 
+@pytest.mark.parametrize("late_success", [True, False])
+def test_expired_worker_cannot_complete_a_new_dispatch_claim(
+    tmp_path: Path, late_success: bool,
+) -> None:
+    _, repository = _repository(tmp_path)
+    service = NotificationService(
+        repository=repository, mode=NotificationMode.ENABLED, max_attempts=2,
+        clock=lambda: NOW,
+    )
+    queued = service.generate_research_report(_research_report(), (_target(),))[0]
+    old = repository.claim(
+        queued.notification_id, claimed_at=NOW, lease_expires_at=NOW + timedelta(minutes=1),
+    )
+    assert old is not None
+    now = NOW + timedelta(minutes=2)
+    assert repository.recover_orphaned(as_of=now).recovered == 1
+    current = repository.claim(
+        queued.notification_id, claimed_at=now, lease_expires_at=now + timedelta(minutes=1),
+    )
+    assert current is not None and current.attempt_count == 2
+    with pytest.raises(ValueError, match="claim is no longer current"):
+        if late_success:
+            repository.mark_delivered(old, DeliveryReceipt("old-worker", now))
+        else:
+            repository.mark_failed(old, attempted_at=now, error_code="LateFailure", retry_at=None)
+    stored = repository.get_by_dedup_key(queued.dedup_key)
+    assert stored is not None and stored.status is NotificationStatus.DISPATCHING
+    assert repository.deliveries(queued.notification_id) == ()
+    repository.mark_delivered(current, DeliveryReceipt("current-worker", now))
+    assert repository.deliveries(queued.notification_id)[0].attempt_number == 2
+
+
 def test_expired_final_lease_moves_notification_to_dead_letter(tmp_path: Path) -> None:
     store, repository = _repository(tmp_path)
     service = NotificationService(

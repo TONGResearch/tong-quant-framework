@@ -4,6 +4,7 @@ import pytest
 
 from tong_quant.config.settings import load_settings
 from tong_quant.portfolio import PortfolioEvidencePolicy
+from tong_quant.version import RISK_MODEL_VERSION
 
 
 def test_default_configuration_is_safe() -> None:
@@ -78,7 +79,7 @@ def test_portfolio_evidence_policy_uses_effective_configuration(tmp_path: Path) 
     assert policy.maximum_proposal_age.total_seconds() == 3600
     assert policy.portfolio_model_version == "portfolio-test-v2"
     assert policy.validation_model_version == "validation-test-v2"
-    assert policy.risk_model_version == "risk-assessment-v0.7"
+    assert policy.risk_model_version == RISK_MODEL_VERSION
     assert len(policy.policy_hash) == 64
 
 

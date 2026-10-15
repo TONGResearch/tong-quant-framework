@@ -4,6 +4,18 @@ Status: `ready`
 
 ## Current implementation slice
 
+- The [project-wide audit](../architecture-audit-2026-10-15.md) records the
+  current fixes, residual risks, dependency map, and continuation plan.
+- Portfolio and Risk factories read the same effective Settings; candidate
+  sector/country/theme classifications are preserved. Model versions advance
+  to `v0.7.1` so old results cannot silently acquire corrected semantics.
+- Authoritative portfolio reconstruction and lineage checks use one read
+  snapshot. Risk inputs reject unnormalized or duplicate position sets, and
+  acceptable risk cannot carry unresolved breaches or required adjustments.
+- Versioned market-rule evidence coverage is implemented with exact
+  market/exchange/board/account scopes, PIT visibility, half-open effective
+  intervals, trust checks, deterministic hashes, and ambiguity rejection.
+  No actual exchange rule evidence or evaluator is supplied yet.
 - Portfolio candidates and proposals carry typed, persisted ResearchReport,
   InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
 - Repository writes verify authoritative identity, status, value, timestamp,
@@ -37,9 +49,9 @@ Status: `ready`
   None of these helpers may authorize a simulated quantity until dated market
   and account-rule evidence is implemented.
 - Remaining before this package can complete: review and pin an authoritative
-  validation configuration hash, versioned market-rule capability declarations,
-  pilot-market fixtures, and binding the structural check to the future
-  simulation-intent boundary.
+  validation configuration hash, populate the capability declarations with
+  reviewed pilot-market evidence and dated evaluators, and bind the structural
+  check to the future simulation-intent boundary.
   No simulation or live trading is authorized by this partial slice.
 
 ## Objective

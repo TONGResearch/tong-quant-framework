@@ -50,6 +50,22 @@ def test_validation_has_no_execution_or_order_dependency() -> None:
     assert offenders == []
 
 
+def test_risk_stays_independent_of_portfolio_and_execution() -> None:
+    dependencies = _tong_quant_dependencies(PACKAGE_ROOT / "risk")
+    assert not any(
+        module.split(".")[1] in {"portfolio", "execution", "notifications"}
+        for module in dependencies
+    )
+
+
+def test_upstream_engines_do_not_import_execution() -> None:
+    for package in ("screening", "research", "market_regime", "portfolio", "markets"):
+        assert not any(
+            module == "tong_quant.execution" or module.startswith("tong_quant.execution.")
+            for module in _tong_quant_dependencies(PACKAGE_ROOT / package)
+        ), package
+
+
 def test_screening_does_not_own_research_outcome_or_investment_models() -> None:
     screening_root = Path("src/tong_quant/screening")
     offenders = []

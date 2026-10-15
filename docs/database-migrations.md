@@ -102,6 +102,18 @@ head.
 
 ## Transaction Boundary
 
+`SQLiteStore.read_snapshot()` pins multi-query reads to one SQLite snapshot.
+Independent read snapshots use `query_only` and reject writes. Reads inside an
+existing transaction reuse that transaction. Portfolio reconstruction and its
+authoritative lineage verification now use this boundary together, preventing
+a concurrent writer from supplying mixed versions to one verification.
+
+Daily-bar and trading-calendar versions are immutable at their existing keys.
+Identical re-ingestion is idempotent; a changed payload or source requires a
+new `available_at` version. This changes persistence behavior, not DDL, so the
+schema and migration head remain unchanged. No existing history is rewritten.
+
+
 `SQLiteStore.transaction()` reuses one connection for repository calls and
 commits or rolls back the entire unit. Research and Validation final-run writes
 use this boundary. Run creation remains separate so a failed run can retain an

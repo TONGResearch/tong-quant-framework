@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
+from math import isfinite
 
 from tong_quant.domain.enums import RiskAssessmentStatus, StressScenarioType
 from tong_quant.domain.models import require_timezone
+from tong_quant.version import RISK_MODEL_VERSION
 
 
 def _require_fraction(name: str, value: float) -> None:
@@ -107,8 +109,8 @@ class StressScenarioResult:
 
     def __post_init__(self) -> None:
         _require_fraction("affected_weight", self.affected_weight)
-        if self.estimated_loss < 0:
-            raise ValueError("estimated stress loss cannot be negative")
+        if not isfinite(self.estimated_loss) or self.estimated_loss < 0:
+            raise ValueError("estimated stress loss must be finite and non-negative")
         if not self.reasons:
             raise ValueError("stress scenario result must be explainable")
 
@@ -134,10 +136,12 @@ class RiskAssessment:
     reasons: tuple[str, ...]
     required_adjustments: tuple[str, ...]
     limitations: tuple[str, ...]
-    model_version: str = "risk-assessment-v0.7"
+    model_version: str = RISK_MODEL_VERSION
 
     def __post_init__(self) -> None:
         require_timezone(self.assessed_at, "assessed_at")
+        if not isinstance(self.status, RiskAssessmentStatus):
+            raise ValueError("risk assessment requires a typed status")
         if not self.assessment_id.strip() or not self.proposal_id.strip():
             raise ValueError("risk assessment requires identifiers")
         _require_percentage("risk score", self.score)
@@ -154,6 +158,15 @@ class RiskAssessment:
             raise ValueError("risk assessment requires scenario stress results")
         if not self.reasons:
             raise ValueError("risk assessment must be explainable")
+        if self.status is RiskAssessmentStatus.ACCEPTABLE and (
+            self.required_adjustments
+            or any(
+                exposure.breached
+                for exposure in (self.sector_exposure, self.country_exposure, self.theme_exposure)
+            )
+            or any(result.breached for result in self.scenario_results)
+        ):
+            raise ValueError("acceptable risk cannot contain unresolved breaches or adjustments")
 
 
 __all__ = [

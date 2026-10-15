@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from tong_quant.config.settings import load_settings
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
@@ -24,6 +25,7 @@ from tong_quant.portfolio import (
     PositionProposal,
     SQLitePortfolioRepository,
 )
+from tong_quant.version import PORTFOLIO_MODEL_VERSION, RISK_MODEL_VERSION
 
 
 def test_portfolio_proposal_consumes_investment_score_candidates_only() -> None:
@@ -163,6 +165,53 @@ def test_cash_buffer_does_not_breach_sector_country_or_theme_caps() -> None:
     assert not proposal.risk_assessment.country_exposure.breached
     assert not proposal.risk_assessment.theme_exposure.breached
     assert proposal.status is PortfolioProposalStatus.PROPOSED
+
+
+def test_candidate_exposure_classifications_reach_risk_without_substitution() -> None:
+    candidates = tuple(
+        replace(
+            _candidate(str(600000 + index), f"score-{index}", 80, 80),
+            instrument=replace(_instrument(str(600000 + index)), industry=f"old-{index}"),
+            sector="Semiconductors", country="China", theme="AI",
+            expected_role="long-term core",
+        )
+        for index in range(2)
+    )
+    proposal = PortfolioProposalEngine(
+        PortfolioConstructionConfig(maximum_single_position_weight=0.60)
+    ).build(candidates, as_of=datetime(2026, 1, 2, tzinfo=UTC))
+
+    risk = proposal.risk_assessment
+    assert risk is not None
+    assert risk.sector_exposure.breached
+    for dimension, breakdown, expected in (
+        ("sector", risk.sector_exposure, "Semiconductors"),
+        ("country", risk.country_exposure, "China"),
+        ("theme", risk.theme_exposure, "AI"),
+    ):
+        assert breakdown.exposures[expected] > 0.6
+        assert proposal.exposure_summary[dimension] == breakdown.exposures
+        assert set(breakdown.exposures) == {expected, "cash"}
+
+
+def test_portfolio_factory_applies_effective_risk_configuration() -> None:
+    settings = load_settings(Path("config/default.toml"))
+    settings = replace(
+        settings,
+        portfolio=replace(settings.portfolio, minimum_cash_weight=0.25),
+        risk=replace(settings.risk, max_portfolio_drawdown=0.08, minimum_liquidity_score=0),
+    )
+
+    engine = PortfolioProposalEngine.from_settings(settings)
+    proposal = engine.build(
+        (_candidate("600000", "score-1", 88, 82, liquidity=0),),
+        as_of=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+
+    assert engine.config.minimum_cash_weight == 0.25
+    assert engine.risk_engine.config.maximum_drawdown == 0.08
+    assert proposal.risk_assessment is not None
+    assert proposal.risk_assessment.liquidity_risk == 0
 
 
 def test_fund_category_is_reserved_but_not_constructed_by_engine() -> None:
@@ -368,6 +417,47 @@ def test_portfolio_evidence_gate_rechecks_database_lineage(tmp_path: Path) -> No
 
     assert not check.verified
     assert check.reasons == ("lineage_unverified",)
+
+
+def test_verified_proposal_uses_one_snapshot_during_concurrent_updates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(
+        store, "600000", "score-1", 88, 82, validation_status=ValidationStatus.RELIABLE,
+    )
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+    original = SQLitePortfolioRepository._get_proposal
+
+    def load_and_update(
+        repository: SQLitePortfolioRepository, proposal_id: str,
+    ) -> object:
+        loaded = original(repository, proposal_id)
+        with sqlite3.connect(store.path) as connection:
+            connection.execute(
+                "UPDATE validation_reports SET aggregate_status = ? WHERE report_id = ?",
+                (ValidationStatus.UNRELIABLE.value, candidate.validation_report_id),
+            )
+        return loaded
+
+    monkeypatch.setattr(SQLitePortfolioRepository, "_get_proposal", load_and_update)
+    assert repository.get_verified_proposal(proposal.proposal_id) is not None
+    monkeypatch.setattr(SQLitePortfolioRepository, "_get_proposal", original)
+    with pytest.raises(ValueError, match="validation status does not match"):
+        repository.get_verified_proposal(proposal.proposal_id)
+
+
+def test_read_snapshot_blocks_writes_and_restores_connection_scope(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "readonly.sqlite3")
+    store.initialize()
+    with store.read_snapshot(), pytest.raises(sqlite3.OperationalError, match="readonly"):
+        store.upsert_instruments((_instrument("600000"),))
+    assert store.upsert_instruments((_instrument("600000"),)) == 1
 
 
 def test_portfolio_evidence_policy_requires_explicit_positive_limits() -> None:
@@ -582,8 +672,8 @@ def _evidence_policy() -> PortfolioEvidencePolicy:
         maximum_risk_age=timedelta(days=1),
         validation_configuration_hash="a" * 64,
         validation_model_version="validation-test-v1",
-        portfolio_model_version="portfolio-proposal-v0.7",
-        risk_model_version="risk-assessment-v0.7",
+        portfolio_model_version=PORTFOLIO_MODEL_VERSION,
+        risk_model_version=RISK_MODEL_VERSION,
     )
 
 

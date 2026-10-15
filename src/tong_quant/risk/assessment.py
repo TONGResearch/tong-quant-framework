@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isclose, isfinite
 from uuid import uuid4
 
+from tong_quant.config.settings import Settings
 from tong_quant.domain.enums import RiskAssessmentStatus, StressScenarioType
 from tong_quant.risk.models import (
     ExposureBreakdown,
@@ -11,6 +13,7 @@ from tong_quant.risk.models import (
     StressScenario,
     StressScenarioResult,
 )
+from tong_quant.version import RISK_MODEL_VERSION
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,11 +23,11 @@ class RiskConstraintConfig:
     maximum_country_weight: float = 0.60
     maximum_theme_weight: float = 0.35
     target_volatility: float = 0.15
-    maximum_drawdown: float = 0.20
+    maximum_drawdown: float = 0.15
     minimum_liquidity_score: float = 60
     maximum_average_correlation: float = 0.70
     stress_loss_limit: float = 0.12
-    model_version: str = "risk-assessment-v0.7"
+    model_version: str = RISK_MODEL_VERSION
     stress_scenarios: tuple[StressScenario, ...] = field(
         default_factory=lambda: (
             StressScenario(
@@ -50,6 +53,36 @@ class RiskConstraintConfig:
         )
     )
 
+    def __post_init__(self) -> None:
+        for name in (
+            "maximum_single_position_weight", "maximum_sector_weight",
+            "maximum_country_weight", "maximum_theme_weight", "target_volatility",
+            "maximum_drawdown", "maximum_average_correlation", "stress_loss_limit",
+        ):
+            value = getattr(self, name)
+            if not isfinite(value) or not 0 < value <= 1:
+                raise ValueError(f"{name} must be finite and in (0, 1]")
+        if not 0 <= self.minimum_liquidity_score <= 100:
+            raise ValueError("minimum_liquidity_score must be between 0 and 100")
+        if not self.model_version.strip() or not self.stress_scenarios:
+            raise ValueError("risk configuration requires a version and stress scenarios")
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "RiskConstraintConfig":
+        risk = settings.risk
+        return cls(
+            maximum_single_position_weight=risk.max_position_weight,
+            maximum_sector_weight=risk.max_sector_weight,
+            maximum_country_weight=risk.maximum_country_weight,
+            maximum_theme_weight=risk.maximum_theme_weight,
+            target_volatility=settings.portfolio.target_volatility,
+            maximum_drawdown=risk.max_portfolio_drawdown,
+            minimum_liquidity_score=risk.minimum_liquidity_score,
+            maximum_average_correlation=risk.maximum_average_correlation,
+            stress_loss_limit=risk.stress_loss_limit,
+            model_version=settings.portfolio_evidence.risk_model_version,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class RiskAssessmentEngine:
@@ -64,6 +97,13 @@ class RiskAssessmentEngine:
         as_of: datetime | None = None,
     ) -> RiskAssessment:
         assessed_at = as_of or datetime.now(UTC)
+        if not positions or not isclose(
+            sum(position.proposed_weight for position in positions), 1.0,
+            rel_tol=0.0, abs_tol=1e-6,
+        ):
+            raise ValueError("risk positions must be non-empty and weights must sum to one")
+        if len({position.position_id for position in positions}) != len(positions):
+            raise ValueError("risk positions require unique identifiers")
         exposure_sector = _exposure("sector", positions, self.config.maximum_sector_weight)
         exposure_country = _exposure("country", positions, self.config.maximum_country_weight)
         exposure_theme = _exposure("theme", positions, self.config.maximum_theme_weight)
@@ -202,6 +242,8 @@ def _liquidity_risk(
     positions: tuple[RiskPositionInput, ...],
     minimum_liquidity_score: float,
 ) -> float:
+    if minimum_liquidity_score == 0:
+        return 0.0
     risks = [
         position.proposed_weight
         * max(0.0, minimum_liquidity_score - position.liquidity_score)

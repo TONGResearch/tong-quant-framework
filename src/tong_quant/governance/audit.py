@@ -8,7 +8,12 @@ from tong_quant.governance.models import (
     ProjectGovernance,
     project_governance_from_dict,
 )
-from tong_quant.version import DATABASE_SCHEMA_VERSION, FRAMEWORK_VERSION
+from tong_quant.version import (
+    DATABASE_SCHEMA_VERSION,
+    FRAMEWORK_VERSION,
+    PORTFOLIO_MODEL_VERSION,
+    RISK_MODEL_VERSION,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +49,10 @@ def audit_project_governance(
     status_path = project_root / governance.baseline.canonical_status_document
     status_text = status_path.read_text(encoding="utf-8") if status_path.exists() else ""
     checks = [
+        _equal_check("portfolio_model_version", settings.portfolio.model_version,
+                     PORTFOLIO_MODEL_VERSION),
+        _equal_check("risk_model_version", settings.portfolio_evidence.risk_model_version,
+                     RISK_MODEL_VERSION),
         _equal_check(
             "framework_version",
             governance.baseline.framework_version,

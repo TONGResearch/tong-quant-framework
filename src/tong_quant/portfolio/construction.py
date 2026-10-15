@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from tong_quant.config.settings import Settings
 from tong_quant.domain.enums import (
     InvestmentAssessmentStatus,
     PortfolioAssetCategory,
@@ -14,8 +15,9 @@ from tong_quant.portfolio.models import (
     PortfolioProposal,
     PositionProposal,
 )
-from tong_quant.risk.assessment import RiskAssessmentEngine
+from tong_quant.risk.assessment import RiskAssessmentEngine, RiskConstraintConfig
 from tong_quant.risk.models import RiskBudget, RiskPositionInput
+from tong_quant.version import PORTFOLIO_MODEL_VERSION
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,13 +30,46 @@ class PortfolioConstructionConfig:
     per_position_risk_budget: float = 0.03
     per_sector_risk_budget: float = 0.06
     per_theme_risk_budget: float = 0.05
-    model_version: str = "portfolio-proposal-v0.7"
+    model_version: str = PORTFOLIO_MODEL_VERSION
+
+    def __post_init__(self) -> None:
+        for name in (
+            "minimum_cash_weight", "maximum_single_position_weight", "target_volatility",
+            "total_risk_budget", "per_position_risk_budget", "per_sector_risk_budget",
+            "per_theme_risk_budget",
+        ):
+            if not 0 < getattr(self, name) <= 1:
+                raise ValueError(f"{name} must be in (0, 1]")
+        if not self.base_currency.strip() or not self.model_version.strip():
+            raise ValueError("portfolio configuration requires currency and version")
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "PortfolioConstructionConfig":
+        portfolio, risk = settings.portfolio, settings.risk
+        return cls(
+            base_currency=portfolio.base_currency,
+            minimum_cash_weight=portfolio.minimum_cash_weight,
+            maximum_single_position_weight=portfolio.maximum_single_position_weight,
+            target_volatility=portfolio.target_volatility,
+            total_risk_budget=risk.total_risk_budget,
+            per_position_risk_budget=risk.per_position_risk_budget,
+            per_sector_risk_budget=risk.per_sector_risk_budget,
+            per_theme_risk_budget=risk.per_theme_risk_budget,
+            model_version=portfolio.model_version,
+        )
 
 
 @dataclass(slots=True)
 class PortfolioProposalEngine:
     config: PortfolioConstructionConfig = PortfolioConstructionConfig()
     risk_engine: RiskAssessmentEngine = field(default_factory=RiskAssessmentEngine)
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "PortfolioProposalEngine":
+        return cls(
+            config=PortfolioConstructionConfig.from_settings(settings),
+            risk_engine=RiskAssessmentEngine(RiskConstraintConfig.from_settings(settings)),
+        )
 
     def build(
         self,
@@ -94,7 +129,13 @@ class PortfolioProposalEngine:
             per_sector_risk_budget=self.config.per_sector_risk_budget,
             per_theme_risk_budget=self.config.per_theme_risk_budget,
         )
-        risk_inputs = tuple(_risk_position(position) for position in all_positions)
+        risk_inputs = (
+            *(
+                _risk_position(position, candidate)
+                for position, candidate in zip(positions, eligible, strict=True)
+            ),
+            _risk_position(all_positions[-1]),
+        )
         risk_assessment = self.risk_engine.assess(
             proposal_id=proposal_id,
             positions=risk_inputs,
@@ -137,8 +178,8 @@ class PortfolioProposalEngine:
                 6,
             ),
             concentration_summary=_concentration_summary(all_positions),
-            exposure_summary=_exposure_summary(all_positions),
-            correlation_summary=_correlation_summary(all_positions),
+            exposure_summary=_exposure_summary(risk_inputs),
+            correlation_summary=_correlation_summary(risk_inputs),
             risk_assessment=risk_assessment,
             reasons=(
                 "PortfolioProposal is a research artifact built from InvestmentScore",
@@ -280,7 +321,7 @@ def _concentration_summary(positions: tuple[PositionProposal, ...]) -> dict[str,
 
 
 def _exposure_summary(
-    positions: tuple[PositionProposal, ...],
+    positions: tuple[RiskPositionInput, ...],
 ) -> dict[str, dict[str, float]]:
     summary: dict[str, dict[str, float]] = {
         "sector": {},
@@ -289,19 +330,19 @@ def _exposure_summary(
         "asset_category": {},
     }
     for position in positions:
-        category = position.asset_category.value
+        category = position.asset_category
         summary["asset_category"][category] = (
             summary["asset_category"].get(category, 0.0) + position.proposed_weight
         )
-        if position.instrument is None:
+        if position.is_cash:
             for dimension in ("sector", "country", "theme"):
                 summary[dimension]["cash"] = (
                     summary[dimension].get("cash", 0.0) + position.proposed_weight
                 )
             continue
-        sector = position.instrument.industry or "unknown"
-        country = position.instrument.market.value
-        theme = position.expected_role
+        sector = position.sector
+        country = position.country
+        theme = position.theme
         summary["sector"][sector] = summary["sector"].get(sector, 0.0) + position.proposed_weight
         summary["country"][country] = (
             summary["country"].get(country, 0.0) + position.proposed_weight
@@ -313,16 +354,18 @@ def _exposure_summary(
     }
 
 
-def _correlation_summary(positions: tuple[PositionProposal, ...]) -> dict[str, float]:
+def _correlation_summary(positions: tuple[RiskPositionInput, ...]) -> dict[str, float]:
     values = [
-        position.proposed_weight * _position_correlation(position)
+        position.proposed_weight * position.average_correlation
         for position in positions
-        if position.instrument is not None
+        if not position.is_cash
     ]
     return {"weighted_average_correlation": round(sum(values), 6)}
 
 
-def _risk_position(position: PositionProposal) -> RiskPositionInput:
+def _risk_position(
+    position: PositionProposal, candidate: PortfolioCandidate | None = None,
+) -> RiskPositionInput:
     instrument = position.instrument
     if instrument is None:
         return RiskPositionInput(
@@ -337,6 +380,8 @@ def _risk_position(position: PositionProposal) -> RiskPositionInput:
             theme=position.expected_role,
             average_correlation=0.0,
         )
+    if candidate is None or candidate.instrument != instrument:
+        raise ValueError("non-cash risk inputs require the matching portfolio candidate")
     return RiskPositionInput(
         position_id=f"{instrument.market.value}:{instrument.asset_type.value}:{instrument.symbol}",
         asset_category=position.asset_category.value,
@@ -344,19 +389,12 @@ def _risk_position(position: PositionProposal) -> RiskPositionInput:
         confidence=position.confidence,
         liquidity_score=position.liquidity_score,
         volatility_estimate=position.volatility_estimate,
-        sector=str(instrument.industry or "unknown"),
-        country=instrument.market.value,
-        theme=position.expected_role,
+        sector=candidate.sector,
+        country=candidate.country,
+        theme=candidate.theme,
         symbol=instrument.symbol,
-        average_correlation=_position_correlation(position),
+        average_correlation=candidate.average_correlation,
     )
-
-
-def _position_correlation(position: PositionProposal) -> float:
-    for flag in position.risk_flags:
-        if flag.startswith("correlation="):
-            return float(flag.split("=", 1)[1])
-    return 0.0
 
 
 __all__ = ["PortfolioConstructionConfig", "PortfolioProposalEngine"]

@@ -112,7 +112,7 @@ volume_period = 20
 
 [portfolio]
 enabled = true
-model_version = "portfolio-proposal-v0.7"
+model_version = "portfolio-proposal-v0.7.1"
 base_currency = "CNY"
 minimum_cash_weight = 0.05
 maximum_single_position_weight = 0.10
@@ -124,7 +124,7 @@ maximum_proposal_age_seconds = 86400
 maximum_validation_age_seconds = 2592000
 maximum_risk_age_seconds = 86400
 validation_configuration_hash = ""
-risk_model_version = "risk-assessment-v0.7"
+risk_model_version = "risk-assessment-v0.7.1"
 
 [risk]
 max_position_weight = 0.10

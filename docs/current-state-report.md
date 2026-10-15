@@ -1,5 +1,12 @@
 # Tong Quant Current State Report
 
+This is the historical 2026-08-22 freeze. Current development authority is
+`PROJECT_STATUS.md` and `config/project-governance.toml`; the current schema is
+`0.8.2` at migration `0010_portfolio_evidence_lineage`. See the
+[2026-10-15 architecture audit](architecture-audit-2026-10-15.md) for the latest
+review, fixes, and controlled-launch gaps. Historical evidence and counts below
+retain their original scope and must not override current governance.
+
 ## Baseline Freeze
 
 This document is the project-wide architecture and readiness baseline for Tong
