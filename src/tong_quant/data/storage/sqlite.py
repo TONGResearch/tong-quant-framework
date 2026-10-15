@@ -59,6 +59,7 @@ from tong_quant.domain.enums import (
     Adjustment,
     AssetType,
     AvailabilityPrecision,
+    CorporateActionType,
     DataTrustLevel,
     FundSubtype,
     InstrumentCategory,
@@ -875,13 +876,16 @@ class _ConnectionScope(AbstractContextManager[sqlite3.Connection]):
 
 
 class SQLiteStore:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, read_only: bool = False) -> None:
         self.path = path
+        self.read_only = read_only
         self._transaction_connection: ContextVar[sqlite3.Connection | None] = (
             ContextVar(f"sqlite_transaction_{id(self)}", default=None)
         )
 
     def initialize(self) -> None:
+        if self.read_only:
+            raise RuntimeError("read-only stores cannot initialize or migrate databases")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             validate_latest_schema_fingerprint(
@@ -2626,15 +2630,31 @@ class SQLiteStore:
         *,
         as_of: datetime,
     ) -> list[date]:
+        return [
+            session.trade_date
+            for session in self.trading_sessions(market, start, end, as_of=as_of)
+            if session.is_open
+        ]
+
+    def trading_sessions(
+        self,
+        market: Market,
+        start: date,
+        end: date,
+        *,
+        as_of: datetime,
+    ) -> list[TradingSession]:
+        """Return latest visible versions, retaining explicitly closed dates."""
         self._require_aware(as_of)
+        if start > end:
+            raise ValueError("calendar start cannot follow end")
         with self._connect() as connection:
             rows = connection.execute(
                 """
-                SELECT calendar.trade_date
+                SELECT calendar.*
                 FROM trading_calendar AS calendar
                 WHERE calendar.market = ?
                   AND calendar.trade_date BETWEEN ? AND ?
-                  AND calendar.is_open = 1
                   AND calendar.available_at <= ?
                   AND calendar.available_at = (
                       SELECT MAX(version.available_at)
@@ -2653,7 +2673,67 @@ class SQLiteStore:
                     _datetime_text(as_of),
                 ),
             ).fetchall()
-        return [date.fromisoformat(row["trade_date"]) for row in rows]
+        return [
+            TradingSession(
+                market=Market(row["market"]),
+                trade_date=date.fromisoformat(row["trade_date"]),
+                is_open=bool(row["is_open"]),
+                available_at=datetime.fromisoformat(row["available_at"]),
+                source=row["source"],
+            )
+            for row in rows
+        ]
+
+    def corporate_actions(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        start: date,
+        end: date,
+        *,
+        as_of: datetime,
+    ) -> list[CorporateAction]:
+        """Keep all visible observations/revisions; absence is not proof of no action."""
+        self._require_aware(as_of)
+        if start > end:
+            raise ValueError("corporate action start cannot follow end")
+        instrument = self.get_instrument(symbol, market, asset_type, as_of=as_of)
+        if instrument is None:
+            return []
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM corporate_actions
+                WHERE instrument_id = ? AND effective_date BETWEEN ? AND ?
+                  AND available_at <= ?
+                ORDER BY effective_date, available_at, action_type, raw_data_hash,
+                         source, provider_dataset, value, cash_amount, ratio
+                """,
+                (
+                    instrument_id(instrument), start.isoformat(), end.isoformat(),
+                    _datetime_text(as_of),
+                ),
+            ).fetchall()
+        return [
+            CorporateAction(
+                instrument=instrument,
+                action_type=CorporateActionType(row["action_type"]),
+                effective_date=date.fromisoformat(row["effective_date"]),
+                available_at=datetime.fromisoformat(row["available_at"]),
+                source=row["source"],
+                value=None if row["value"] is None else Decimal(row["value"]),
+                cash_amount=None if row["cash_amount"] is None else Decimal(row["cash_amount"]),
+                ratio=None if row["ratio"] is None else Decimal(row["ratio"]),
+                currency=row["currency"],
+                raw_data_hash=row["raw_data_hash"],
+                batch_id=row["batch_id"],
+                provider_dataset=row["provider_dataset"],
+                availability_precision=AvailabilityPrecision(row["availability_precision"]),
+                trust_level=DataTrustLevel(row["trust_level"]),
+            )
+            for row in rows
+        ]
 
     def fundamental_facts(
         self,
@@ -5066,10 +5146,16 @@ class SQLiteStore:
         return _ConnectionScope(self._new_connection(), owns_connection=True)
 
     def _new_connection(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path)
+        connection = (
+            sqlite3.connect(f"{self.path.resolve().as_uri()}?mode=ro", uri=True)
+            if self.read_only else sqlite3.connect(self.path)
+        )
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA journal_mode = WAL")
+        if self.read_only:
+            connection.execute("PRAGMA query_only = ON")
+        else:
+            connection.execute("PRAGMA journal_mode = WAL")
         return connection
 
     @staticmethod

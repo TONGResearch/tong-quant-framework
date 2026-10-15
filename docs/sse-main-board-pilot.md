@@ -109,7 +109,61 @@ Local verification: 416 tests passed, 6 skipped; Ruff, mypy (204 source/script
 files), governance and git diff checks passed. Network calls remain explicit;
 the new automated integration tests use synthetic source bytes and HTTP fakes.
 
-## Remaining gates
+## Runtime input inventory (October 16 continuation)
+
+`application.sse_runtime_inputs.SSERuntimeInputReader` reconstructs existing
+inputs through MarketDataService in one consistent SQLite snapshot. It returns
+the actual instrument and status, open **and closed** calendar sessions,
+missing calendar dates, previous explicit open session and visible unadjusted
+close, and every visible corporate-action observation/revision in the window.
+It preserves ST/suspended/delisted records and original trust/precision.
+
+```bash
+.venv/bin/python scripts/inspect_sse_runtime_inputs.py \
+  --database data/tong_quant.sqlite3 --symbol 600000 \
+  --trade-date 2026-10-16 --as-of 2026-10-16T10:00:00+08:00 \
+  --calendar-start 2026-10-02
+```
+
+Dates are explicit examples, not a request to reconstruct evidence that was
+unavailable then. The CLI opens only an existing database with SQLite
+`mode=ro`/query-only access. It never initializes or migrates a source, never
+switches its journal mode, and never connects to a provider/broker. SQLite may
+still need its normal WAL shared-memory sidecars; this is not immutable-file
+snapshot access. `--database` must point to a separately populated operational
+database, not a provider-monitor archive.
+
+Exit 2 means missing database, unresolved input requirements, or an inspection
+error. Errors report only their class, not possibly sensitive database values.
+JSON output is screened for credential-like fields/assignments. No report or
+database is written. The content hash covers the query/window, reconstructed
+input objects, gap codes and reader version (`sse-runtime-input-v1`); it is not
+a hash of the entire database. A changed visible input changes that hash.
+
+The default local `data/tong_quant.sqlite3` was absent at the October 16 check;
+the real command returned `database_missing` and left it absent. This describes
+the local operational path only, not a loss of archived monitor evidence.
+
+This inventory intentionally cannot create SSECalculationContext. Stored
+TradingSession/Bar models do not carry reviewed exchange-scoped
+trust/precision/raw-hash bindings. LISTED and an old listing date do not prove
+normal phase or exclude relisting. An empty corporate-action query does not
+prove action-free coverage. No account lots are imported or synthesized.
+Those remain explicit gaps even with otherwise populated rows. Filling them
+requires actual provenance, not setting favorable flags in a demo.
+
+No schema change or migration is required. Synthetic integration tests cover
+closed/missing dates, future revisions, adjusted-price exclusion, trust
+preservation, exceptional statuses, corporate-action history, deterministic
+hashes, concurrent writes, read-only writes/initialization rejection, and CLI
+failure without file creation. They are not real-data evidence.
+
+Continuation verification: 434 tests passed, 6 optional network tests skipped;
+Ruff, mypy (206 source/script files), governance and git diff checks passed.
+Execution and Notification remain disabled; PIT remains UNSUITABLE. The
+work package remains partial, not complete.
+
+## Remaining gates (unchanged)
 
 1. Produce independently reviewed, PIT-visible runtime calendar, security,
    listing-phase, corporate-action, close, and account-lot inputs. Synthetic

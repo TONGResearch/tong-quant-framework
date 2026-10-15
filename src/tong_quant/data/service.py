@@ -1,9 +1,18 @@
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import date, datetime
 
 from tong_quant.data.models import FundamentalPublicationEvent, SecurityLifecycleEvent
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import Adjustment, AssetType, Market
-from tong_quant.domain.models import Bar, FundamentalFact, Instrument, InstrumentStatus
+from tong_quant.domain.models import (
+    Bar,
+    CorporateAction,
+    FundamentalFact,
+    Instrument,
+    InstrumentStatus,
+    TradingSession,
+)
 
 
 class MarketDataService:
@@ -11,6 +20,11 @@ class MarketDataService:
 
     def __init__(self, store: SQLiteStore) -> None:
         self._store = store
+
+    @contextmanager
+    def read_snapshot(self) -> Iterator["MarketDataService"]:
+        with self._store.read_snapshot():
+            yield self
 
     def instrument(
         self,
@@ -52,6 +66,35 @@ class MarketDataService:
         as_of: datetime,
     ) -> list[date]:
         return self._store.trading_days(market, start, end, as_of=as_of)
+
+    def trading_sessions(
+        self,
+        market: Market,
+        start: date,
+        end: date,
+        *,
+        as_of: datetime,
+    ) -> list[TradingSession]:
+        return self._store.trading_sessions(market, start, end, as_of=as_of)
+
+    def corporate_actions(
+        self,
+        symbol: str,
+        market: Market,
+        asset_type: AssetType,
+        start: date,
+        end: date,
+        *,
+        as_of: datetime,
+    ) -> list[CorporateAction]:
+        return self._store.corporate_actions(
+            symbol,
+            market,
+            asset_type,
+            start,
+            end,
+            as_of=as_of,
+        )
 
     def fundamental_facts(
         self,

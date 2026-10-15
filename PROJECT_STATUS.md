@@ -91,8 +91,15 @@ This is the canonical short handoff for developers and AI agents. Read it with
   settled-lot sellability, odd-lot sell quantities and daily price bands. Its
   typed inputs bind dates, source review, status/classification flags, calendar
   content and calculation hashes. Raw sources are local ignored artifacts
-  and can be recaptured on a new device. Real runtime input readers, intraday
-  restrictions and the simulation boundary remain incomplete; this does not
+  and can be recaptured on a new device. A read-only runtime input inventory
+  now reconstructs stored sessions (including closed dates), status,
+  unadjusted previous close and corporate-action observations in one SQLite
+  snapshot. It preserves trust and reports missing evidence; it does not
+  construct trusted calculation context. On October 16 the default local
+  `data/tong_quant.sqlite3` did not exist; the command reported
+  `database_missing` without creating it. Reviewed provenance, listing-phase,
+  action-coverage and account-lot readers, intraday restrictions and the
+  simulation boundary remain incomplete; this does not
   complete `WP-LAUNCH-001` or change PIT/live readiness.
 
 ## Controlled Launch Boundary

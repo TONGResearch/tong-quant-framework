@@ -37,6 +37,10 @@ validation, risk management, and controlled execution.
   and separately reviewed runtime calendar, status/phase/action and account-lot
   evidence. Never manufacture HIGH trust or a normal-listing flag to make a
   demo pass. Its calculation outputs cannot authorize Paper or live execution.
+- The SSE runtime inventory reads an existing database only, through one
+  MarketDataService snapshot. Missing calendar dates are unknown, not closed.
+  An empty corporate-action query is not proof of action-free status. Keep
+  raw-data inventory separate from independently reviewed calculation inputs.
 - Use point-in-time timestamps and reject future data.
 - Treat availability precision and data trust as separate concepts.
 - Research, Validation, and future HistoricalReplay consumers must inspect

@@ -2,8 +2,10 @@
 
 Continuation on 2026-10-16: the [SSE pilot](sse-main-board-pilot.md) adds pinned
 official reference recovery and limited dated calculations. Finding A-07 now
-has a partial implementation; real runtime inputs and simulation integration
-remain open. The findings below retain the scope of the original audit.
+has a partial implementation. A read-only, single-snapshot runtime inventory
+now exposes stored inputs and gaps without upgrading trust or manufacturing
+calculation context. Reviewed provenance, real input population and simulation
+integration remain open. The findings below retain the original audit scope.
 
 ## Scope and method
 

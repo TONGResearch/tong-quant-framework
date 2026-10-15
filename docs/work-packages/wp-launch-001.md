@@ -17,8 +17,13 @@ Status: `ready`
   intervals, trust checks, deterministic hashes, and ambiguity rejection.
   The [SSE main-board pilot](../sse-main-board-pilot.md) now adds reviewed,
   hash-verified official source capture and dated ordinary-equity calculations.
-  Real calendar/security/account input readers and full simulation integration
-  are still absent.
+  A read-only runtime inventory now reads stored calendar/security/close/action
+  inputs through MarketDataService in one snapshot and reports exact gaps.
+  It preserves closed dates, low trust and exceptional statuses; it cannot
+  manufacture trusted context, normal-listing status or action-free flags.
+  Reviewed runtime provenance, account readers and full simulation integration
+  are still absent. The default local business database was missing in the
+  October 16 inspection; no database was initialized for this diagnostic.
 - Portfolio candidates and proposals carry typed, persisted ResearchReport,
   InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
 - Repository writes verify authoritative identity, status, value, timestamp,
@@ -62,6 +67,25 @@ Status: `ready`
 
 Remove the known authority, lineage, and market-rule gaps that would make even
 Paper Trading misleading, while preserving the live-execution freeze.
+
+## Next bounded implementation
+
+1. Locate or explicitly populate an operational research database via the
+   existing ingestion pipeline; do not substitute monitor history or test
+   fixtures for operational market inputs.
+2. Add independently reviewed exchange-calendar and price-source provenance
+   through the existing provider-neutral evidence/artifact contracts. Current
+   TradingSession and Bar rows have no trust/precision/raw-hash binding.
+3. Establish dated listing-phase and corporate-action coverage evidence.
+   No matching event is not evidence of no event; LISTED is not normal phase.
+4. Add read-only account-lot and confirmed-settlement provenance only within
+   approved package boundaries, then bind verified inputs to calculation
+   hashes. No broker connection or paper ledger belongs to this inventory.
+5. Complete the existing intraday/cost, policy and simulation-boundary gates.
+
+The repeatable diagnostic is `scripts/inspect_sse_runtime_inputs.py`; see the
+pilot document for explicit arguments and exit-code semantics. Its input hash
+identifies reconstructed content, not the entire database or a readiness pass.
 
 ## Dependencies
 

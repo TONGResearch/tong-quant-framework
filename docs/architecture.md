@@ -59,7 +59,13 @@ Intervals use an inclusive start and exclusive end. Future, untrusted, expired,
 or overlapping evidence cannot complete coverage. Coverage alone cannot
 authorize simulation. The SSE main-board pilot adds reviewed official source
 capture and a typed evaluator for ordinary quantity/sellability/daily-band
-calculations; real runtime readers and full trading restrictions are missing.
+calculations. Its application-level runtime inventory reads existing PIT data
+through MarketDataService in one SQLite read snapshot, preserves explicit
+closed dates and corporate-action revisions, and produces hashed input/gap
+records. Optional SQLite `read_only=True` uses `mode=ro` and query-only access,
+never initializes/migrates or changes journal mode. It is not an authoritative
+context builder: reviewed calendar/price provenance, listing-phase/action
+coverage, account evidence and full trading restrictions are still missing.
 See [the pilot contract and recovery steps](sse-main-board-pilot.md).
 Availability precision is separate from trust: unknown, estimated and date-only
 timestamps remain incomplete until conservative visibility is established.
