@@ -120,6 +120,12 @@ in the same commit.
 - Never overwrite point-in-time facts, security-status history, universe
   membership, or corporate actions silently. Use revisions, raw hashes, and
   ingestion batches to preserve auditability.
+- New AKShare bars, calendars and numeric statement values must not be
+  backdated before actual retrieval. A matching disclosure event cannot prove
+  numeric revision provenance. Missing fallback turnover is unknown, not zero;
+  price/action ingestion must not replace company snapshots with placeholders.
+  Legacy backdated records require separate audit/reconstruction, not automatic
+  acceptance after a code upgrade.
 - AKShare provider limitations and missing publication timestamps must be
   persisted as warnings instead of hidden inside normalizers.
 - AKShare endpoints without native timeout parameters must use a bounded Tong

@@ -57,6 +57,7 @@ required_documents = [
   "docs/accelerated-controlled-launch.md",
   "docs/architecture-audit-2026-10-15.md",
   "docs/sse-main-board-pilot.md",
+  "docs/operational-data-sample-2026-10-16.md",
 ]
 
 [next_phase]

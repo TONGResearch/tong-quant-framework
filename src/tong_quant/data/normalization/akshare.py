@@ -45,14 +45,13 @@ def normalize_daily_bars(
     for row in dataset.frame.to_dict(orient="records"):
         trade_date = _to_date(row["日期"])
         timestamp = datetime.combine(trade_date, MARKET_CLOSE, tzinfo=SHANGHAI)
-        available_at = timestamp + timedelta(minutes=1)
-        if available_at > dataset.retrieved_at.astimezone(SHANGHAI):
+        if timestamp + timedelta(minutes=1) > dataset.retrieved_at:
             continue
         bars.append(
             Bar(
                 instrument=instrument,
                 timestamp=timestamp,
-                available_at=available_at,
+                available_at=dataset.retrieved_at,
                 open=_decimal(row["开盘"]),
                 high=_decimal(row["最高"]),
                 low=_decimal(row["最低"]),
@@ -71,13 +70,12 @@ def normalize_trading_calendar(dataset: RawDataset) -> list[TradingSession]:
     sessions = []
     for raw_date in dataset.frame["trade_date"].tolist():
         trade_date = _to_date(raw_date)
-        known_at = datetime.combine(trade_date, time.min, tzinfo=SHANGHAI)
         sessions.append(
             TradingSession(
                 market=Market.CHINA_A,
                 trade_date=trade_date,
                 is_open=True,
-                available_at=known_at,
+                available_at=dataset.retrieved_at,
                 source=dataset.source,
             )
         )
@@ -150,7 +148,10 @@ def normalize_financial_statement(
         )
         if period_end is None:
             continue
-        publication = _latest_publication(publication_events, period_end)
+        publication = _latest_publication(
+            [event for event in publication_events if event.available_at <= dataset.retrieved_at],
+            period_end,
+        )
         facts.append(
             FundamentalFact(
                 instrument=instrument,
@@ -161,11 +162,8 @@ def normalize_financial_statement(
                     if publication is None
                     else publication.published_at
                 ),
-                available_at=(
-                    dataset.retrieved_at
-                    if publication is None
-                    else publication.available_at
-                ),
+                # A matching disclosure date does not authenticate this numeric revision.
+                available_at=dataset.retrieved_at,
                 value=value,
                 currency="CNY",
                 revision=0 if publication is None else publication.revision,
@@ -173,16 +171,8 @@ def normalize_financial_statement(
                 raw_data_hash=raw_hash,
                 batch_id=batch_id,
                 provider_dataset=dataset.dataset,
-                availability_precision=(
-                    AvailabilityPrecision.RETRIEVAL_TIME
-                    if publication is None
-                    else publication.availability_precision
-                ),
-                trust_level=(
-                    DataTrustLevel.LOW
-                    if publication is None
-                    else DataTrustLevel.MEDIUM
-                ),
+                availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
+                trust_level=DataTrustLevel.LOW,
             )
         )
     return facts
@@ -654,8 +644,8 @@ def build_bar_instrument(
 
 
 def first_bar_available_at(dataset: RawDataset) -> datetime:
-    first_date = min(_to_date(value) for value in dataset.frame["日期"].tolist())
-    return datetime.combine(first_date, MARKET_CLOSE, tzinfo=SHANGHAI) + timedelta(minutes=1)
+    """Compatibility name: historical observations do not prove earlier availability."""
+    return dataset.retrieved_at
 
 
 def infer_exchange(symbol: str) -> str:

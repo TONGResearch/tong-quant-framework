@@ -151,7 +151,9 @@ class FakeAkShareClient:
 
 
 @pytest.fixture
-def data_foundation(tmp_path: Path) -> tuple[
+def data_foundation(
+    tmp_path: Path,
+) -> tuple[
     FakeAkShareClient,
     DataIngestionPipeline,
     MarketDataService,
@@ -205,7 +207,7 @@ def test_daily_pipeline_caches_normalizes_and_enforces_point_in_time(
         date(2024, 1, 3),
         as_of=before_second_bar,
     )
-    assert [bar.timestamp.date() for bar in visible] == [date(2024, 1, 2)]
+    assert visible == []
 
     after_second_bar = datetime(2024, 1, 3, 7, 2, tzinfo=UTC)
     visible = service.daily_bars(
@@ -216,10 +218,22 @@ def test_daily_pipeline_caches_normalizes_and_enforces_point_in_time(
         date(2024, 1, 3),
         as_of=after_second_bar,
     )
+    assert visible == []
+    retrieved_at = datetime(2024, 1, 5, 8, tzinfo=UTC)
+    visible = service.daily_bars(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        date(2024, 1, 2),
+        date(2024, 1, 3),
+        as_of=retrieved_at,
+    )
     assert [bar.timestamp.date() for bar in visible] == [
         date(2024, 1, 2),
         date(2024, 1, 3),
     ]
+    assert all(bar.available_at == retrieved_at for bar in visible)
+    assert "retrieval time" in " ".join(first.warnings)
 
 
 @pytest.mark.integration
@@ -294,6 +308,16 @@ def test_index_calendar_company_and_universe_ingestion(
     pipeline.ingest_trading_calendar()
     pipeline.ingest_company_info("600000")
     pipeline.ingest_a_share_universe()
+
+    assert (
+        service.trading_days(
+            Market.CHINA_A,
+            date(2024, 1, 1),
+            date(2024, 1, 4),
+            as_of=datetime(2024, 1, 4, tzinfo=UTC),
+        )
+        == []
+    )
 
     assert client.index_calls == 1
     assert store.table_count("daily_bars") == 2
@@ -423,6 +447,40 @@ def test_pit_remediation_ingests_lifecycle_and_publication_evidence(
     assert financial.accepted == 2
     assert facts[0].revision == 1
     assert facts[0].published_at == datetime(2024, 1, 4, 10, tzinfo=UTC)
+    assert facts[0].available_at == datetime(2024, 1, 5, 8, tzinfo=UTC)
+    assert facts[0].trust_level.value == "low"
+
+
+def test_price_and_action_ingestion_do_not_replace_company_metadata_with_placeholders(
+    data_foundation: tuple[
+        FakeAkShareClient, DataIngestionPipeline, MarketDataService, SQLiteStore
+    ],
+) -> None:
+    client, pipeline, service, store = data_foundation
+    pipeline.ingest_company_info("600000")
+    before = service.instrument(
+        "600000",
+        Market.CHINA_A,
+        AssetType.EQUITY,
+        as_of=datetime(2024, 1, 6, tzinfo=UTC),
+    )
+    assert before is not None and before.industry == "银行"
+    later = DataIngestionPipeline(
+        AkShareAdapter(client=client, clock=lambda: datetime(2024, 1, 6, tzinfo=UTC)),
+        store,
+    )
+    later.ingest_daily_bars(DailyBarRequest("600000", "20240102", "20240103"))
+    later.ingest_corporate_actions("600000")
+    assert (
+        service.instrument(
+            "600000",
+            Market.CHINA_A,
+            AssetType.EQUITY,
+            as_of=datetime(2024, 1, 7, tzinfo=UTC),
+        )
+        == before
+    )
+    assert store.table_count("instruments") == 1
 
 
 def _daily_frame(*, include_symbol: bool) -> pd.DataFrame:

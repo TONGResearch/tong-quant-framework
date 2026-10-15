@@ -119,6 +119,24 @@ def _context() -> SSECalculationContext:
     )
 
 
+def test_canonical_exchange_identifier_uses_same_rules_without_rewriting_input() -> None:
+    context = _context()
+    instrument = replace(context.instrument, exchange="XSHG")
+    context = replace(
+        context, instrument=instrument, status=replace(context.status, instrument=instrument)
+    )
+    context = replace(
+        context,
+        status_evidence=replace(
+            context.status_evidence, content_sha256=security_input_hash(context)
+        ),
+    )
+    result = SSEMainBoardEvaluator(_references(), context).buy_quantity(250)
+    assert result.value == 200
+    assert result.model_version == "sse-main-board-calculation-v1.1"
+    assert context.instrument.exchange == "XSHG"
+
+
 def _lot(quantity: int = 299) -> SSEPositionLot:
     return SSEPositionLot(
         "lot-1",

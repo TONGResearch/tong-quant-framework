@@ -45,6 +45,8 @@ def test_akshare_adapter_uses_tencent_fallback() -> None:
     assert response.dataset.frame.empty is False
     assert client.calls == 1
     assert response.dataset.source == "akshare:stock_zh_a_hist_tx"
+    assert response.dataset.frame["成交额"].isna().all()
+    assert response.dataset.parameters["normalization_version"] == "akshare-market-data-v2"
 
 
 def test_index_membership_uses_guarded_fetcher_timeout() -> None:

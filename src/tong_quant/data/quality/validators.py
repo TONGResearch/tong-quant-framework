@@ -134,13 +134,16 @@ def invalid_numeric_rows(frame: pd.DataFrame, columns: tuple[str, ...]) -> set[i
     invalid: set[int] = set()
     for column in columns:
         numeric = pd.to_numeric(frame[column], errors="coerce")
-        invalid.update(int(index) for index in frame.index[numeric.isna()])
+        invalid.update(
+            int(index)
+            for index in frame.index[numeric.isna() | numeric.isin([float("inf"), float("-inf")])]
+        )
     return invalid
 
 
 def _daily_frame_issues(frame: pd.DataFrame) -> list[QualityIssue]:
     issues: list[QualityIssue] = []
-    numeric_columns = ("开盘", "收盘", "最高", "最低", "成交量", "成交额")
+    numeric_columns = ("开盘", "收盘", "最高", "最低", "成交量")
     for row in sorted(invalid_numeric_rows(frame, numeric_columns)):
         issues.append(
             QualityIssue(
@@ -151,6 +154,27 @@ def _daily_frame_issues(frame: pd.DataFrame) -> list[QualityIssue]:
             )
         )
 
+    turnover_numeric = pd.to_numeric(frame["成交额"], errors="coerce")
+    invalid_turnover = frame["成交额"].notna() & (
+        turnover_numeric.isna() | turnover_numeric.isin([float("inf"), float("-inf")])
+    )
+    for row in frame.index[invalid_turnover]:
+        issues.append(
+            QualityIssue(
+                code="invalid_numeric_value",
+                message="turnover is present but non-numeric or non-finite",
+                severity=Severity.ERROR,
+                row=int(row),
+            )
+        )
+    if frame["成交额"].isna().any():
+        issues.append(
+            QualityIssue(
+                code="turnover_unavailable",
+                message="missing turnover remains unknown, not zero",
+                severity=Severity.WARNING,
+            )
+        )
     duplicated = frame["日期"].duplicated()
     for row in frame.index[duplicated]:
         issues.append(
@@ -170,7 +194,7 @@ def _daily_frame_issues(frame: pd.DataFrame) -> list[QualityIssue]:
         high_price = numeric.at[row, "最高"]
         low_price = numeric.at[row, "最低"]
         volume = numeric.at[row, "成交量"]
-        turnover = numeric.at[row, "成交额"]
+        turnover = Decimal(str(turnover_numeric.at[row]))
         if min(open_price, close_price, high_price, low_price) <= 0:
             issues.append(
                 QualityIssue(
@@ -191,7 +215,7 @@ def _daily_frame_issues(frame: pd.DataFrame) -> list[QualityIssue]:
                     row=int(row),
                 )
             )
-        if volume < 0 or turnover < 0:
+        if volume < 0 or (turnover.is_finite() and turnover < 0):
             issues.append(
                 QualityIssue(
                     code="negative_activity",

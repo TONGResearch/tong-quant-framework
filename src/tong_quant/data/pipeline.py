@@ -73,20 +73,31 @@ class DataIngestionPipeline:
         if not raw_report.is_valid:
             raise DataQualityError(raw_report)
 
-        instrument = build_bar_instrument(
-            request.symbol,
-            request.asset_type,
-            first_bar_available_at(response.dataset),
-        )
-        bars = normalize_daily_bars(response.dataset, request, instrument)
-        normalized_report = validate_bars(bars)
-        if not normalized_report.is_valid:
-            raise DataQualityError(normalized_report)
-
         with self._store.transaction():
-            self._store.upsert_instruments([instrument])
+            instrument = self._store.get_instrument(
+                request.symbol, request.market, request.asset_type,
+                as_of=response.dataset.retrieved_at,
+            )
+            if instrument is None:
+                instrument = build_bar_instrument(
+                    request.symbol, request.asset_type, first_bar_available_at(response.dataset),
+                )
+                self._store.upsert_instruments([instrument])
+            bars = normalize_daily_bars(response.dataset, request, instrument)
+            normalized_report = validate_bars(bars)
+            if not normalized_report.is_valid:
+                raise DataQualityError(normalized_report)
             accepted = self._store.upsert_daily_bars(bars)
-            batch_id, warnings = self._record_dataset_audit(response, accepted)
+            batch_id, warnings = self._record_dataset_audit(
+                response, accepted,
+                warning_code="retrieval_time_price_snapshot",
+                warning_message=(
+                    "Historical price values are visible only from retrieval time; "
+                    "original publication and correction history are unverified; "
+                    "missing turnover remains unknown and must not imply zero activity"
+                ),
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -105,7 +116,15 @@ class DataIngestionPipeline:
         sessions = normalize_trading_calendar(response.dataset)
         with self._store.transaction():
             accepted = self._store.upsert_trading_sessions(sessions)
-            batch_id, warnings = self._record_dataset_audit(response, accepted)
+            batch_id, warnings = self._record_dataset_audit(
+                response, accepted,
+                warning_code="retrieval_time_open_calendar_snapshot",
+                warning_message=(
+                    "Calendar dates are visible only from retrieval time; absent dates "
+                    "are unknown, not confirmed closures; historical revisions are unverified"
+                ),
+                trust_level=DataTrustLevel.LOW,
+            )
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
@@ -218,7 +237,9 @@ class DataIngestionPipeline:
                 warning_code="publication_time_unavailable",
                 warning_message=(
                     "AKShare financial statement payload does not provide reliable "
-                    "issuer publication timestamps; records are retrieval-time safe"
+                    "issuer publication timestamps or authenticated numeric revision history; "
+                    "matching publication events cannot backdate values; "
+                    "records are retrieval-time safe"
                 ),
                 trust_level=DataTrustLevel.LOW,
             )
@@ -481,19 +502,17 @@ class DataIngestionPipeline:
         report = validate_raw_dataset(response.dataset)
         if not report.is_valid:
             raise DataQualityError(report)
-        instrument = build_bar_instrument(
-            symbol,
-            asset_type=AssetType.EQUITY,
-            available_at=response.dataset.retrieved_at,
-        )
         batch_id = str(uuid4())
-        actions = normalize_corporate_actions(
-            response.dataset,
-            instrument,
-            batch_id=batch_id,
-        )
         with self._store.transaction():
-            self._store.upsert_instruments([instrument])
+            instrument = self._store.get_instrument(
+                symbol, Market.CHINA_A, AssetType.EQUITY, as_of=response.dataset.retrieved_at,
+            )
+            if instrument is None:
+                instrument = build_bar_instrument(
+                    symbol, AssetType.EQUITY, response.dataset.retrieved_at,
+                )
+                self._store.upsert_instruments([instrument])
+            actions = normalize_corporate_actions(response.dataset, instrument, batch_id=batch_id)
             accepted = self._store.upsert_corporate_actions(actions)
             recorded_batch_id, warnings = self._record_dataset_audit(
                 response,

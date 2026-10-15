@@ -17,6 +17,7 @@ from tong_quant.data.models import (
     dataframe_sha256,
 )
 from tong_quant.domain.enums import Adjustment, AssetType
+from tong_quant.version import AKSHARE_MARKET_NORMALIZATION_VERSION
 
 
 class AkShareClient(Protocol):
@@ -101,6 +102,7 @@ class AkShareAdapter:
             "end_date": request.end_date,
             "asset_type": request.asset_type.value,
             "adjustment": request.adjustment.value,
+            "normalization_version": AKSHARE_MARKET_NORMALIZATION_VERSION,
         }
 
         def fetch() -> pd.DataFrame:
@@ -145,7 +147,7 @@ class AkShareAdapter:
     def trading_calendar(self) -> ProviderResponse:
         return self._fetch(
             "trading_calendar",
-            {},
+            {"normalization_version": AKSHARE_MARKET_NORMALIZATION_VERSION},
             self._client.tool_trade_date_hist_sina,
         )
 
@@ -422,7 +424,7 @@ def _normalize_tencent_frame(
             "amount": "成交量",
         }
     ).copy()
-    normalized["成交额"] = 0
+    normalized["成交额"] = None
     if include_symbol:
         normalized["股票代码"] = symbol
     return normalized

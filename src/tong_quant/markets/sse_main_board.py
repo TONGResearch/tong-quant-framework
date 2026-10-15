@@ -31,13 +31,14 @@ from tong_quant.markets.capabilities import (
     MarketRuleQuery,
 )
 from tong_quant.markets.sse_references import (
+    SSE_EXCHANGE_IDENTIFIERS,
     SSE_PILOT_SCOPE,
     SSEReferenceBundle,
     evidence_hash,
     require_sha256,
 )
 
-SSE_CALCULATION_VERSION = "sse-main-board-calculation-v1"
+SSE_CALCULATION_VERSION = "sse-main-board-calculation-v1.1"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 TICK = Decimal("0.01")
 
@@ -171,7 +172,7 @@ class SSEMainBoardEvaluator:
                 "decision time must belong to the requested SSE date"
             )
         if (
-            instrument.exchange != "SSE"
+            instrument.exchange not in SSE_EXCHANGE_IDENTIFIERS
             or instrument.market is not Market.CHINA_A
             or instrument.asset_type is not AssetType.EQUITY
             or instrument.category is not InstrumentCategory.EQUITY

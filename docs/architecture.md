@@ -66,6 +66,13 @@ records. Optional SQLite `read_only=True` uses `mode=ro` and query-only access,
 never initializes/migrates or changes journal mode. It is not an authoritative
 context builder: reviewed calendar/price provenance, listing-phase/action
 coverage, account evidence and full trading restrictions are still missing.
+The [real operational sample](operational-data-sample-2026-10-16.md) now fills
+an isolated research database through the existing AKShare pipeline. New bars,
+calendars and numeric facts retain retrieval visibility; fallback turnover is
+unknown when absent, and price/action writes preserve existing company
+metadata. The ingestion CLI isolates provider access behind a bounded worker
+and reports zero accepted rows as partial. These changes do not migrate old
+data, authenticate numeric revisions, or supply trusted calculation context.
 See [the pilot contract and recovery steps](sse-main-board-pilot.md).
 Availability precision is separate from trust: unknown, estimated and date-only
 timestamps remain incomplete until conservative visibility is established.

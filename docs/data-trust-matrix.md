@@ -23,13 +23,13 @@ when runtime coverage passes, but that does not upgrade the entire dataset.
 
 | Dataset | AKShare endpoint | Classification | Trust | Historical-validation rule |
 |---|---|---|---|---|
-| A-share unadjusted daily bars | `stock_zh_a_hist`, Tencent fallback | Partially reliable | MEDIUM | Allowed only unadjusted; close+1 minute availability is an internal assumption and later corrections are not reconstructed. |
+| A-share unadjusted daily bars | `stock_zh_a_hist`, Tencent fallback | Retrieval-time snapshot only | LOW | New ingestion uses actual retrieval visibility, never assumed historical close+minute. Only unadjusted; historical corrections and optional turnover remain unverified. |
 | A-share adjusted daily bars | Same endpoints with qfq/hfq | Unsuitable for historical validation | LOW | Rejected in strict PIT mode until dated adjustment factors can be reconstructed as known at each decision time. |
-| China index daily bars | `index_zh_a_hist`, Tencent fallback | Partially reliable | MEDIUM | Price history is usable with the same assumed close availability and correction warning. |
-| Trading calendar | `tool_trade_date_hist_sina` | Partially reliable | MEDIUM | Useful as an operational calendar; emergency closures and historical source corrections are not versioned. |
+| China index daily bars | `index_zh_a_hist`, Tencent fallback | Retrieval-time snapshot only | LOW | Actual retrieval-time visibility; not authenticated historical publication or correction history. |
+| Trading calendar | `tool_trade_date_hist_sina` | Retrieval-time snapshot only | LOW | Actual retrieval-time visibility. Open dates do not prove absent dates were closed or establish historical emergency closures/revisions. |
 | Company information | `stock_individual_info_em`, CNInfo fallback | Retrieval-time snapshot only | LOW | Never use as historical company state before `retrieved_at`. |
 | Current A-share universe | `stock_zh_a_spot_em`, code-name fallback | Retrieval-time snapshot only | LOW | Must not reconstruct a historical listed or tradable universe. |
-| Financial statements without publication evidence | THS income, balance-sheet, cash-flow endpoints | Retrieval-time snapshot only | LOW | Facts are visible only from ingestion time and are unsuitable for pre-ingestion validation. |
+| Financial statement numeric values | THS income, balance-sheet, cash-flow endpoints | Retrieval-time snapshot only | LOW | Values are visible only from retrieval time, even if disclosure metadata matches. A publication date/revision label does not authenticate the numeric version. |
 | Actual disclosure schedule | `stock_yysj_em` | Partially reliable | MEDIUM | Date-only evidence is available for supported periods and becomes visible conservatively at end of day. |
 | Financial disclosure announcements | `stock_zh_a_disclosure_report_cninfo` | PIT-usable per covered record | HIGH | Exact announcement timestamps are retained; title parsing, report coverage, and numeric revision values still require warnings. |
 | Current ST status | `stock_zh_a_st_em` | Retrieval-time snapshot only | LOW | Preserves observed current ST membership only; cannot infer earlier ST intervals. |
@@ -47,6 +47,14 @@ Research, Validation, and Historical Replay must retain `DataTrustLevel`,
 Records classified as retrieval-time snapshots may be used only from their
 stored `available_at`. Incomplete records remain visible and must never be
 silently promoted to PIT-safe data.
+
+October 16 correction: the earlier close+minute/calendar-midnight assumptions
+and publication-linked numeric visibility are removed for new ingestion.
+Legacy backdated rows are not rewritten or made reliable by this code change;
+they need explicit raw-evidence audit/reconstruction before historical use.
+The [real operational sample](operational-data-sample-2026-10-16.md) records
+observed coverage, retained corrections and the open corporate-action mapping
+gap. A successful provider response is not a normalization/readiness pass.
 
 ## Provider Evidence Adapters
 

@@ -313,6 +313,17 @@ def test_missing_calendar_date_is_not_inferred_closed(store: SQLiteStore) -> Non
     assert "calendar_incomplete" in {gap.code for gap in snapshot.gaps}
 
 
+def test_canonical_exchange_identifier_does_not_create_a_false_scope_failure(
+    store: SQLiteStore,
+) -> None:
+    original = reader(store).read("600000", QUERY, calendar_start=START).instrument
+    assert original is not None
+    store.upsert_instruments((replace(original, exchange="XSHG", available_at=AS_OF),))
+    snapshot = reader(store).read("600000", QUERY, calendar_start=START)
+    assert "instrument_scope_unverified" not in {gap.code for gap in snapshot.gaps}
+    assert "listing_phase_unverified" in {gap.code for gap in snapshot.gaps}
+
+
 def test_read_apis_require_explicit_aware_cutoff(store: SQLiteStore) -> None:
     service = MarketDataService(store)
     with pytest.raises(ValueError, match="timezone-aware"):

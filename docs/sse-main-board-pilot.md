@@ -2,7 +2,8 @@
 
 Review date: 2026-10-16, Asia/Kuala_Lumpur. Package: `WP-LAUNCH-001`.
 Profile: `sse-main-board-2026-v1`. Calculation contract:
-`sse-main-board-calculation-v1`.
+`sse-main-board-calculation-v1.1` (accepts stored XSHG and legacy SSE identifiers
+without rewriting instrument content; other scope checks are unchanged).
 
 ## Scope
 
@@ -137,7 +138,7 @@ Exit 2 means missing database, unresolved input requirements, or an inspection
 error. Errors report only their class, not possibly sensitive database values.
 JSON output is screened for credential-like fields/assignments. No report or
 database is written. The content hash covers the query/window, reconstructed
-input objects, gap codes and reader version (`sse-runtime-input-v1`); it is not
+input objects, gap codes and reader version (`sse-runtime-input-v1.1`); it is not
 a hash of the entire database. A changed visible input changes that hash.
 
 The default local `data/tong_quant.sqlite3` was absent at the October 16 check;
@@ -162,6 +163,11 @@ Continuation verification: 434 tests passed, 6 optional network tests skipped;
 Ruff, mypy (206 source/script files), governance and git diff checks passed.
 Execution and Notification remain disabled; PIT remains UNSUITABLE. The
 work package remains partial, not complete.
+
+The [subsequent real operational sample](operational-data-sample-2026-10-16.md)
+populated that initially absent database and fixed observed ingestion defects.
+The seven remaining input requirements still fail closed. Source normalization
+now preserves retrieval-time visibility; it does not authenticate old rows.
 
 ## Remaining gates (unchanged)
 

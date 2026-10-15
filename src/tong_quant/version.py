@@ -1,8 +1,9 @@
 FRAMEWORK_VERSION = "0.8.0"
 PORTFOLIO_MODEL_VERSION = "portfolio-proposal-v0.7.1"
 RISK_MODEL_VERSION = "risk-assessment-v0.7.1"
-SSE_RUNTIME_INPUT_VERSION = "sse-runtime-input-v1"
+SSE_RUNTIME_INPUT_VERSION = "sse-runtime-input-v1.1"
 AKSHARE_QUALITY_AUDIT_VERSION = "akshare-quality-audit-v0.8-phase3"
+AKSHARE_MARKET_NORMALIZATION_VERSION = "akshare-market-data-v2"
 DATABASE_SCHEMA_VERSION = "0.8.2"
 DATABASE_ENGINEERING_VERSION = "database-engineering-v0.8-hardening"
 RESEARCH_ENGINE_VERSION = "research-engine-v0.5"
@@ -32,6 +33,7 @@ PROVIDER_EVIDENCE_ARCHIVE_VERSION = "provider-evidence-archive-v0.8-sqlite-integ
 
 __all__ = [
     "AKSHARE_QUALITY_AUDIT_VERSION",
+    "AKSHARE_MARKET_NORMALIZATION_VERSION",
     "DATABASE_SCHEMA_VERSION",
     "DATABASE_ENGINEERING_VERSION",
     "DATASET_CONFIDENCE_VERSION",

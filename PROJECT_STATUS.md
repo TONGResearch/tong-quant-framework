@@ -97,7 +97,16 @@ This is the canonical short handoff for developers and AI agents. Read it with
   snapshot. It preserves trust and reports missing evidence; it does not
   construct trusted calculation context. On October 16 the default local
   `data/tong_quant.sqlite3` did not exist; the command reported
-  `database_missing` without creating it. Reviewed provenance, listing-phase,
+  `database_missing` without creating it. A subsequent
+  [real ingestion exercise](docs/operational-data-sample-2026-10-16.md) created
+  a local research sample: six distinct daily bars (12 observed versions),
+  8,797 open-date rows and current company information. It also exposed
+  backdated availability, fabricated fallback turnover and placeholder
+  metadata replacement; new ingestion now fixes those behaviors and preserves
+  old observations. Numeric facts no longer inherit earlier visibility/trust
+  from matched publication events. The bounded CLI reports zero normalized
+  actions from 26 raw rows as partial, not absence of actions. Seven runtime
+  evidence requirements remain unresolved. Reviewed provenance, listing-phase,
   action-coverage and account-lot readers, intraday restrictions and the
   simulation boundary remain incomplete; this does not
   complete `WP-LAUNCH-001` or change PIT/live readiness.

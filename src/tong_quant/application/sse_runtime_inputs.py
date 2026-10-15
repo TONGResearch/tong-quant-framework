@@ -22,7 +22,12 @@ from tong_quant.domain.models import (
 )
 from tong_quant.markets.capabilities import MarketRuleQuery
 from tong_quant.markets.sse_main_board import SHANGHAI
-from tong_quant.markets.sse_references import SSE_PILOT_SCOPE, evidence_hash, require_sha256
+from tong_quant.markets.sse_references import (
+    SSE_EXCHANGE_IDENTIFIERS,
+    SSE_PILOT_SCOPE,
+    evidence_hash,
+    require_sha256,
+)
 from tong_quant.version import SSE_RUNTIME_INPUT_VERSION
 
 
@@ -147,7 +152,7 @@ class SSERuntimeInputReader:
         if instrument is None:
             gap("instrument_missing", "No instrument snapshot is visible at decision time")
         elif (
-            instrument.exchange != "SSE"
+            instrument.exchange not in SSE_EXCHANGE_IDENTIFIERS
             or instrument.currency != "CNY"
             or instrument.category is not InstrumentCategory.EQUITY
         ):

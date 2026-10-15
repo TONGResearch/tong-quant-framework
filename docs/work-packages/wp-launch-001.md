@@ -24,6 +24,12 @@ Status: `ready`
   Reviewed runtime provenance, account readers and full simulation integration
   are still absent. The default local business database was missing in the
   October 16 inspection; no database was initialized for this diagnostic.
+- The [subsequent real sample](../operational-data-sample-2026-10-16.md) now
+  populates that operational path through the existing pipeline. New market
+  ingestion uses actual retrieval visibility, preserves company metadata and
+  unknown turnover, and rejects silent success when normalization accepts no
+  rows. Matched publication metadata cannot backdate numeric values. Source
+  corrections do not authenticate legacy rows; reviewed context remains open.
 - Portfolio candidates and proposals carry typed, persisted ResearchReport,
   InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
 - Repository writes verify authoritative identity, status, value, timestamp,
@@ -70,9 +76,10 @@ Paper Trading misleading, while preserving the live-execution freeze.
 
 ## Next bounded implementation
 
-1. Locate or explicitly populate an operational research database via the
-   existing ingestion pipeline; do not substitute monitor history or test
-   fixtures for operational market inputs.
+1. Extend the small real operational sample only after fixing corporate-action
+   field/unit/event semantics. Current 26 raw rows normalize to zero events;
+   retain the partial audit and never interpret it as no corporate actions.
+   Do not substitute monitor history or test fixtures for operational inputs.
 2. Add independently reviewed exchange-calendar and price-source provenance
    through the existing provider-neutral evidence/artifact contracts. Current
    TradingSession and Bar rows have no trust/precision/raw-hash binding.

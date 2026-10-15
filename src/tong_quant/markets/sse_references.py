@@ -17,6 +17,7 @@ from tong_quant.markets.capabilities import (
 
 SSE_PROFILE_VERSION = "sse-main-board-2026-v1"
 SSE_PILOT_SCOPE = MarketRuleScope(Market.CHINA_A, "SSE", "main", "cash")
+SSE_EXCHANGE_IDENTIFIERS = frozenset({"SSE", "XSHG"})
 
 
 def evidence_hash(value: object) -> str:
