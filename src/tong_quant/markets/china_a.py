@@ -11,14 +11,16 @@ class ChinaAShareRules(MarketRules):
     market = Market.CHINA_A
 
     def normalize_buy_quantity(self, instrument: Instrument, quantity: int) -> int:
-        if quantity <= 0:
-            return 0
-        lot_size = instrument.lot_size or 100
-        return quantity // lot_size * lot_size
+        del instrument, quantity
+        raise MarketRuleEvidenceUnavailableError(
+            "A-share buy quantity requires dated exchange, board, and lot-rule evidence"
+        )
 
     def normalize_sell_quantity(self, instrument: Instrument, quantity: int) -> int:
-        del instrument
-        return max(0, quantity)
+        del instrument, quantity
+        raise MarketRuleEvidenceUnavailableError(
+            "A-share sell quantity requires dated position-lot and market-rule evidence"
+        )
 
     def earliest_sell_date(self, buy_date: date) -> date:
         del buy_date

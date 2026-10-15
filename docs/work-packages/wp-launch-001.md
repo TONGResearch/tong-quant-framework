@@ -31,6 +31,11 @@ Status: `ready`
 - US, Hong Kong, and Malaysia sellability and price-limit calls also fail
   closed. Their former same-day-sell and unrestricted-price defaults were not
   backed by account-specific settlement or effective-dated exchange evidence.
+- All four markets' buy/sell quantity helpers now fail closed too. The former
+  A-share buy helper could accept the generic Instrument default lot size of
+  one, and the global helpers rounded with an unverified stored lot size.
+  None of these helpers may authorize a simulated quantity until dated market
+  and account-rule evidence is implemented.
 - Remaining before this package can complete: review and pin an authoritative
   validation configuration hash, versioned market-rule capability declarations,
   pilot-market fixtures, and binding the structural check to the future

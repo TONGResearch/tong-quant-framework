@@ -14,16 +14,16 @@ class GlobalEquityRules(MarketRules):
         self.market = market
 
     def normalize_buy_quantity(self, instrument: Instrument, quantity: int) -> int:
-        if quantity <= 0:
-            return 0
-        lot_size = instrument.lot_size
-        return quantity // lot_size * lot_size
+        del instrument, quantity
+        raise MarketRuleEvidenceUnavailableError(
+            f"{self.market.value} buy quantity requires dated lot and account-rule evidence"
+        )
 
     def normalize_sell_quantity(self, instrument: Instrument, quantity: int) -> int:
-        if quantity <= 0:
-            return 0
-        lot_size = instrument.lot_size
-        return quantity // lot_size * lot_size
+        del instrument, quantity
+        raise MarketRuleEvidenceUnavailableError(
+            f"{self.market.value} sell quantity requires dated lot and account-rule evidence"
+        )
 
     def earliest_sell_date(self, buy_date: date) -> date:
         del buy_date

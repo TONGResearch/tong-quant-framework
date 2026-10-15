@@ -73,6 +73,9 @@ This is the canonical short handoff for developers and AI agents. Read it with
 - US, Hong Kong, and Malaysia market-rule helpers no longer assume same-day
   sellability or unrestricted prices without dated evidence; they now reject
   those calls until the relevant rule capabilities are supplied.
+- Buy/sell quantity normalization for all four markets also rejects calls
+  without dated lot and account rules; the generic Instrument lot-size default
+  must not become an executable market assumption.
 
 ## Controlled Launch Boundary
 
