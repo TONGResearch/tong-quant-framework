@@ -12,12 +12,20 @@ Status: `ready`
   rather than silently replacing persisted evidence.
 - Conditional validation and low-confidence investment assessments cannot
   produce an unconditional proposal.
+- A read-side PortfolioEvidenceGate rechecks authoritative lineage at the
+  decision timestamp, with an explicit age/version/configuration policy and
+  deterministic policy hash. Passing this structural check is not Paper or
+  live-trading authorization.
+- Cash remains visible in exposure reports but no longer breaches sector,
+  country, or theme concentration caps merely because it is a large buffer.
+  Existing proposals and RiskAssessments are not rewritten; they need new
+  proposal identities and fresh verification before future simulation use.
 - A-share sellability and price-limit calls now fail closed when dated rule
   evidence is absent.
-- Remaining before this package can complete: explicit freshness policy,
+- Remaining before this package can complete: authoritative policy sourcing,
   versioned market-rule capability declarations, pilot-market fixtures, and
-  simulation-boundary authority checks. No simulation or live trading is
-  authorized by this partial slice.
+  binding the structural check to the future simulation-intent boundary.
+  No simulation or live trading is authorized by this partial slice.
 
 ## Objective
 

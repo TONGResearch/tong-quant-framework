@@ -146,6 +146,7 @@ def _exposure(
     maximum: float,
 ) -> ExposureBreakdown:
     exposures: dict[str, float] = {}
+    non_cash_exposures: dict[str, float] = {}
     for position in positions:
         if position.is_cash:
             key = "cash"
@@ -158,7 +159,11 @@ def _exposure(
         else:
             key = "unknown"
         exposures[key] = exposures.get(key, 0.0) + position.proposed_weight
-    breached = any(weight > maximum for weight in exposures.values() if weight < 0.999999)
+        if not position.is_cash:
+            non_cash_exposures[key] = (
+                non_cash_exposures.get(key, 0.0) + position.proposed_weight
+            )
+    breached = any(weight > maximum for weight in non_cash_exposures.values())
     reasons = tuple(
         f"{name} exposure {weight:.1%}"
         for name, weight in sorted(exposures.items())

@@ -61,6 +61,10 @@ This is the canonical short handoff for developers and AI agents. Read it with
   score/validation evidence chain; repository writes verify that chain against
   authoritative records. A-share sellability and price-limit helpers fail
   closed until effective-dated exchange evidence exists.
+- The read-side PortfolioEvidenceGate re-verifies lineage at a decision time
+  using explicit freshness, model-version, and configuration requirements;
+  cash is exempt from sector/country/theme concentration breaches. This is
+  structural research evidence only, not a Paper or live approval.
 
 ## Controlled Launch Boundary
 

@@ -1,3 +1,4 @@
+import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -17,6 +18,8 @@ from tong_quant.domain.models import Instrument
 from tong_quant.portfolio import (
     PortfolioCandidate,
     PortfolioConstructionConfig,
+    PortfolioEvidenceGate,
+    PortfolioEvidencePolicy,
     PortfolioProposalEngine,
     PositionProposal,
     SQLitePortfolioRepository,
@@ -128,6 +131,7 @@ def test_risk_assessment_flags_concentration_liquidity_and_stress() -> None:
 
     assert proposal.risk_assessment is not None
     assert proposal.risk_assessment.liquidity_risk > 0
+    assert proposal.risk_assessment.sector_exposure.breached
     assert any(
         result.scenario.name == "single stock -30%"
         for result in proposal.risk_assessment.scenario_results
@@ -141,6 +145,24 @@ def test_risk_assessment_flags_concentration_liquidity_and_stress() -> None:
         "per_theme_risk_budget exceeded" in adjustment
         for adjustment in proposal.risk_assessment.required_adjustments
     )
+
+
+def test_cash_buffer_does_not_breach_sector_country_or_theme_caps() -> None:
+    candidate = replace(
+        _candidate("600000", "score-1", 88, 82),
+        validation_status=ValidationStatus.RELIABLE,
+    )
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+
+    assert proposal.cash_weight == 0.9
+    assert proposal.risk_assessment is not None
+    assert proposal.risk_assessment.sector_exposure.exposures["cash"] == 0.9
+    assert not proposal.risk_assessment.sector_exposure.breached
+    assert not proposal.risk_assessment.country_exposure.breached
+    assert not proposal.risk_assessment.theme_exposure.breached
+    assert proposal.status is PortfolioProposalStatus.PROPOSED
 
 
 def test_fund_category_is_reserved_but_not_constructed_by_engine() -> None:
@@ -224,6 +246,140 @@ def test_portfolio_repository_rejects_replacing_proposal(tmp_path: Path) -> None
     assert store.table_count("portfolio_proposals") == 1
     assert store.table_count("portfolio_evidence_references") == 1
     assert store.table_count("position_proposals") == 2
+
+
+def test_portfolio_evidence_gate_accepts_current_authoritative_research(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(
+        store, "600000", "score-1", 88, 82,
+        validation_status=ValidationStatus.RELIABLE,
+    )
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+
+    check = PortfolioEvidenceGate(repository, _evidence_policy()).check(
+        proposal.proposal_id,
+        as_of=datetime(2026, 1, 2, 1, tzinfo=UTC),
+    )
+
+    assert check.verified
+    assert check.reasons == ()
+    assert len(check.policy_hash) == 64
+    assert not hasattr(check, "order")
+
+
+@pytest.mark.parametrize(
+    ("policy_change", "decision_at", "reason"),
+    (
+        ({"maximum_proposal_age": timedelta(minutes=30)},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "proposal_stale"),
+        ({"maximum_validation_age": timedelta(minutes=30)},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "validation_stale"),
+        ({"maximum_risk_age": timedelta(minutes=30)},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "risk_stale"),
+        ({"validation_configuration_hash": "b" * 64},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "validation_config_mismatch"),
+        ({"validation_model_version": "other-v1"},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "validation_version_mismatch"),
+        ({"portfolio_model_version": "other-v1"},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "portfolio_version_mismatch"),
+        ({"risk_model_version": "other-v1"},
+         datetime(2026, 1, 2, 1, tzinfo=UTC), "risk_version_mismatch"),
+    ),
+)
+def test_portfolio_evidence_gate_rejects_stale_or_mismatched_artifacts(
+    tmp_path: Path,
+    policy_change: dict[str, object],
+    decision_at: datetime,
+    reason: str,
+) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(
+        store, "600000", "score-1", 88, 82,
+        validation_status=ValidationStatus.RELIABLE,
+    )
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+    policy = replace(_evidence_policy(), **policy_change)  # type: ignore[arg-type]
+
+    check = PortfolioEvidenceGate(repository, policy).check(
+        proposal.proposal_id, as_of=decision_at
+    )
+
+    assert not check.verified
+    assert reason in check.reasons
+
+
+def test_portfolio_evidence_gate_rejects_conditional_and_missing_proposals(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(store, "600000", "score-1", 88, 82)
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+    gate = PortfolioEvidenceGate(repository, _evidence_policy())
+    decision_at = datetime(2026, 1, 2, 1, tzinfo=UTC)
+
+    conditional = gate.check(proposal.proposal_id, as_of=decision_at)
+    missing = gate.check("missing", as_of=decision_at)
+
+    assert not conditional.verified
+    assert "proposal_not_proposed" in conditional.reasons
+    assert "validation_not_reliable" in conditional.reasons
+    assert missing.reasons == ("proposal_missing",)
+
+
+def test_portfolio_evidence_gate_rechecks_database_lineage(tmp_path: Path) -> None:
+    store = SQLiteStore(tmp_path / "portfolio.sqlite3")
+    store.initialize()
+    candidate = _persisted_candidate(
+        store, "600000", "score-1", 88, 82,
+        validation_status=ValidationStatus.RELIABLE,
+    )
+    proposal = PortfolioProposalEngine().build(
+        (candidate,), as_of=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    repository = SQLitePortfolioRepository(store)
+    repository.save_proposal(proposal)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute(
+            "UPDATE validation_reports SET aggregate_status = ? WHERE report_id = ?",
+            (ValidationStatus.UNRELIABLE.value, candidate.validation_report_id),
+        )
+
+    check = PortfolioEvidenceGate(repository, _evidence_policy()).check(
+        proposal.proposal_id,
+        as_of=datetime(2026, 1, 2, 1, tzinfo=UTC),
+    )
+
+    assert not check.verified
+    assert check.reasons == ("lineage_unverified",)
+
+
+def test_portfolio_evidence_policy_requires_explicit_positive_limits() -> None:
+    policy = _evidence_policy()
+    assert policy.policy_hash == _evidence_policy().policy_hash
+    assert policy.policy_hash != replace(
+        policy, maximum_proposal_age=timedelta(hours=2)
+    ).policy_hash
+    with pytest.raises(ValueError, match="maximum_proposal_age"):
+        replace(policy, maximum_proposal_age=timedelta(0))
+    with pytest.raises(ValueError, match="config hash"):
+        replace(policy, validation_configuration_hash="not-a-hash")
 
 
 @pytest.mark.parametrize(
@@ -313,6 +469,8 @@ def _persisted_candidate(
     score_id: str,
     score: float,
     confidence: float,
+    *,
+    validation_status: ValidationStatus = ValidationStatus.CONDITIONALLY_RELIABLE,
 ) -> PortfolioCandidate:
     now = datetime(2026, 1, 2, tzinfo=UTC)
     instrument = _instrument(symbol)
@@ -383,7 +541,7 @@ def _persisted_candidate(
         validation_id=f"validation-id-{score_id}",
         generated_at=now,
         status="completed",
-        aggregate_status=ValidationStatus.CONDITIONALLY_RELIABLE.value,
+        aggregate_status=validation_status.value,
         framework_snapshot={"configuration_hash": configuration_hash},
         known_limitations=("Test validation",),
         reproducibility_manifest={"configuration_hash": configuration_hash},
@@ -400,7 +558,7 @@ def _persisted_candidate(
         score=score,
         confidence=confidence,
         assessment_status=InvestmentAssessmentStatus.COMPLETED,
-        validation_status=ValidationStatus.CONDITIONALLY_RELIABLE,
+        validation_status=validation_status,
         validation_generated_at=now,
         validation_configuration_hash=configuration_hash,
         validation_model_version="validation-test-v1",
@@ -413,6 +571,19 @@ def _persisted_candidate(
         average_correlation=0.35,
         max_drawdown=0.25,
         reasons=("Persisted research and validation lineage",),
+    )
+
+
+def _evidence_policy() -> PortfolioEvidencePolicy:
+    return PortfolioEvidencePolicy(
+        policy_version="portfolio-evidence-test-v1",
+        maximum_proposal_age=timedelta(days=1),
+        maximum_validation_age=timedelta(days=1),
+        maximum_risk_age=timedelta(days=1),
+        validation_configuration_hash="a" * 64,
+        validation_model_version="validation-test-v1",
+        portfolio_model_version="portfolio-proposal-v0.7",
+        risk_model_version="risk-assessment-v0.7",
     )
 
 

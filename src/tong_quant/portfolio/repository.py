@@ -254,6 +254,14 @@ class SQLitePortfolioRepository:
             metadata=json.loads(row["metadata_json"]),
         )
 
+    def get_verified_proposal(self, proposal_id: str) -> PortfolioProposal | None:
+        proposal = self.get_proposal(proposal_id)
+        if proposal is None:
+            return None
+        for reference in proposal.evidence_references:
+            self._verify_evidence_reference(proposal, reference)
+        return proposal
+
     def get_evidence_references(
         self,
         proposal_id: str,

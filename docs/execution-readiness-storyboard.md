@@ -73,14 +73,16 @@ waive an earlier evidence gate.
 
 ## Concrete Engineering Gaps
 
-- `ChinaAShareRules` still approximates T+1 as the next calendar day and uses
-  one 5% ST / 10% non-ST price-limit rule without board or effective-date
-  inputs. This is unsuitable for historical simulation or live risk checks;
-  exchange rules must be versioned by venue, board, instrument, and date.
-- Portfolio eligibility checks for an InvestmentScore and a nonempty
-  ValidationReport ID, but does not check whether the corresponding report is
-  accepted, current, or authentic. Proposed weights remain heuristic and are
-  not capital-sizing instructions.
+- `ChinaAShareRules` now fails closed for T+1 sellability and price limits
+  rather than returning calendar-day or fixed-percentage approximations.
+  Exchange rules still need versioning by venue, board, instrument, and date
+  before realistic A-share simulation.
+- Portfolio writes verify authoritative research, score, and validation
+  lineage. The read-side PortfolioEvidenceGate checks that lineage again at
+  an explicit decision timestamp against a versioned age/configuration policy.
+  Policy provenance, PIT data eligibility, market rules, and a future
+  simulation-intent boundary remain separate gates. Proposed weights are
+  heuristic research artifacts, not capital-sizing instructions.
 - `ExecutionReadinessGate` currently checks configured mode, booleans, an
   approved RiskDecision, and nonempty artifact/approval/token strings. It does
   not retrieve artifacts, bind identities and versions, verify freshness or
