@@ -85,8 +85,15 @@ This is the canonical short handoff for developers and AI agents. Read it with
   research artifacts.
 - Market-rule capability coverage now has versioned, PIT-visible declarations,
   exact exchange/board/account scopes, explicit missing/ambiguous states, and
-  reproducible evidence hashes. Real rule evidence and evaluators are still
-  absent, so this does not complete `WP-LAUNCH-001` or authorize simulation.
+  reproducible evidence hashes.
+- The [SSE main-board pilot](docs/sse-main-board-pilot.md) now verifies three
+  pinned official documents and calculates ordinary buy increments, confirmed
+  settled-lot sellability, odd-lot sell quantities and daily price bands. Its
+  typed inputs bind dates, source review, status/classification flags, calendar
+  content and calculation hashes. Raw sources are local ignored artifacts
+  and can be recaptured on a new device. Real runtime input readers, intraday
+  restrictions and the simulation boundary remain incomplete; this does not
+  complete `WP-LAUNCH-001` or change PIT/live readiness.
 
 ## Controlled Launch Boundary
 

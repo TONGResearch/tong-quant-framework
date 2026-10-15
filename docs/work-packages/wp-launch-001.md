@@ -15,7 +15,10 @@ Status: `ready`
 - Versioned market-rule evidence coverage is implemented with exact
   market/exchange/board/account scopes, PIT visibility, half-open effective
   intervals, trust checks, deterministic hashes, and ambiguity rejection.
-  No actual exchange rule evidence or evaluator is supplied yet.
+  The [SSE main-board pilot](../sse-main-board-pilot.md) now adds reviewed,
+  hash-verified official source capture and dated ordinary-equity calculations.
+  Real calendar/security/account input readers and full simulation integration
+  are still absent.
 - Portfolio candidates and proposals carry typed, persisted ResearchReport,
   InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
 - Repository writes verify authoritative identity, status, value, timestamp,
@@ -46,12 +49,13 @@ Status: `ready`
 - All four markets' buy/sell quantity helpers now fail closed too. The former
   A-share buy helper could accept the generic Instrument default lot size of
   one, and the global helpers rounded with an unverified stored lot size.
-  None of these helpers may authorize a simulated quantity until dated market
-  and account-rule evidence is implemented.
+  These context-free helpers remain disabled. The separate typed SSE pilot
+  requires verified reference documents and dated runtime evidence; its
+  calculation output cannot authorize a simulated quantity by itself.
 - Remaining before this package can complete: review and pin an authoritative
-  validation configuration hash, populate the capability declarations with
-  reviewed pilot-market evidence and dated evaluators, and bind the structural
-  check to the future simulation-intent boundary.
+  validation configuration hash, supply reviewed runtime pilot inputs and
+  remaining intraday/cost restrictions, and bind the structural check and
+  exact calculation hashes to the future simulation-intent boundary.
   No simulation or live trading is authorized by this partial slice.
 
 ## Objective

@@ -56,6 +56,7 @@ required_documents = [
   "docs/yahoo-daily-bar-calibration.md",
   "docs/accelerated-controlled-launch.md",
   "docs/architecture-audit-2026-10-15.md",
+  "docs/sse-main-board-pilot.md",
 ]
 
 [next_phase]

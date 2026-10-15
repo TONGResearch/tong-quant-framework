@@ -1,5 +1,10 @@
 # Project Architecture and Code Audit: 2026-10-15
 
+Continuation on 2026-10-16: the [SSE pilot](sse-main-board-pilot.md) adds pinned
+official reference recovery and limited dated calculations. Finding A-07 now
+has a partial implementation; real runtime inputs and simulation integration
+remain open. The findings below retain the scope of the original audit.
+
 ## Scope and method
 
 Baseline reviewed: `f9e4360` on `codex/wp-launch-001-hardening`, followed by

@@ -56,8 +56,11 @@ queries until dated evidence and evaluators exist. `markets.capabilities`
 inspects versioned evidence for calendar, settlement, quantity, price limits,
 and security status within an exact market/exchange/board/account scope.
 Intervals use an inclusive start and exclusive end. Future, untrusted, expired,
-or overlapping evidence cannot complete coverage. Coverage is metadata only;
-the production catalog is empty and no rule evaluator or fill is authorized.
+or overlapping evidence cannot complete coverage. Coverage alone cannot
+authorize simulation. The SSE main-board pilot adds reviewed official source
+capture and a typed evaluator for ordinary quantity/sellability/daily-band
+calculations; real runtime readers and full trading restrictions are missing.
+See [the pilot contract and recovery steps](sse-main-board-pilot.md).
 Availability precision is separate from trust: unknown, estimated and date-only
 timestamps remain incomplete until conservative visibility is established.
 Retrieval-time evidence can be used only after capture and keeps that warning.

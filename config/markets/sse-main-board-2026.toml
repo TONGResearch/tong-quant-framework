@@ -1,0 +1,27 @@
+profile_version = "sse-main-board-2026-v1"
+effective_from = 2026-07-06
+reviewed_at = 2026-10-15T16:01:12Z
+review_expires_at = 2026-11-14T16:01:12Z
+review_basis = "Official rule text, deferred provisions, and odd-lot clarification"
+trust_level = "high"
+
+[[documents]]
+role = "rules"
+source_url = "https://www.sse.com.cn/lawandrules/sselawsrules2025/stocks/exchange/c/10816482/files/e3a3b98e36894edca77841837936e006.docx"
+content_sha256 = "fc922c433438b2636cb631eab25cca405209712acbb6aaded768c45456ff8888"
+file_name = "tong-quant-sse-2026-rules.docx"
+media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+[[documents]]
+role = "deferred"
+source_url = "https://www.sse.com.cn/lawandrules/sselawsrules2025/stocks/exchange/c/10816482/files/c4510656662e48dc9d8d0deb8cc864b3.docx"
+content_sha256 = "f4a0d0976a01e3e95f82460170900993824b70d91183e42d09e13ba10a9958c5"
+file_name = "tong-quant-sse-2026-deferred.docx"
+media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+[[documents]]
+role = "odd_lots"
+source_url = "https://www.sse.com.cn/lawandrules/guide/stock/jyglywznylc/tz/c/c_20230209_5716007.shtml"
+content_sha256 = "7556fed3ad228689bcdc4a6230bb69146faec299f3da41f85434bc3a3f462ea0"
+file_name = "tong-quant-sse-odd-lots.html"
+media_type = "text/html"

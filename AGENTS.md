@@ -33,6 +33,10 @@ validation, risk management, and controlled execution.
 - Put market-specific behavior behind `MarketRules`, calendars, fee models, and
   provider or broker adapters.
 - Never embed A-share assumptions in shared strategy logic.
+- The typed SSE main-board pilot requires hash-verified local source documents
+  and separately reviewed runtime calendar, status/phase/action and account-lot
+  evidence. Never manufacture HIGH trust or a normal-listing flag to make a
+  demo pass. Its calculation outputs cannot authorize Paper or live execution.
 - Use point-in-time timestamps and reject future data.
 - Treat availability precision and data trust as separate concepts.
 - Research, Validation, and future HistoricalReplay consumers must inspect
