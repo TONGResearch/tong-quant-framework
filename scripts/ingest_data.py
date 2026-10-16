@@ -94,10 +94,11 @@ def run_worker(args: argparse.Namespace) -> int:
     else:
         result = pipeline.ingest_a_share_universe()
 
-    record = {"status": "completed" if result.accepted else "partial", **asdict(result)}
+    complete = result.accepted > 0 and result.rejected == 0
+    record = {"status": "completed" if complete else "partial", **asdict(result)}
     reject_sensitive_structure(record, path="ingestion_result")
     print(json.dumps(record, sort_keys=True))
-    return 0 if result.accepted else 2
+    return 0 if complete else 2
 
 
 def main() -> int:

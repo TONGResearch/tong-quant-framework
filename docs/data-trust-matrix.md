@@ -38,7 +38,7 @@ when runtime coverage passes, but that does not upgrade the entire dataset.
 | Shenzhen ST name changes | `stock_info_sz_change_name` | Partially reliable | MEDIUM | Supports dated ST entry/exit evidence for Shenzhen only; Shanghai and Beijing remain incomplete. |
 | Delisted securities | Shanghai and Shenzhen delisting endpoints | Partially reliable | MEDIUM | Effective delisting dates may be useful, but announcement availability and complete exchange coverage require verification. |
 | CSI300/500/1000 membership | `index_stock_cons_csindex` | Retrieval-time snapshot only | LOW-MEDIUM | Stored as dated current snapshots. Missing entries/exits prevent backward survivorship-safe reconstruction. |
-| Corporate actions | `stock_fhps_detail_em` | Partially reliable | MEDIUM content / LOW timing | Effective dates are useful for audit; announcement availability and revision history are not reliable enough for PIT price adjustment. |
+| Corporate actions | `stock_fhps_detail_em` | Retrieval-time snapshot only | LOW | New supported observations corroborate explicit gross per-share/share-multiplier units and provider implementation labels; ex-dates are not publication times. Rejections remain visible; coverage and historical revisions are not adjustment-ready. |
 
 ## Mandatory Consumer Behavior
 
@@ -54,7 +54,10 @@ Legacy backdated rows are not rewritten or made reliable by this code change;
 they need explicit raw-evidence audit/reconstruction before historical use.
 The [real operational sample](operational-data-sample-2026-10-16.md) records
 observed coverage, retained corrections and the open corporate-action mapping
-gap. A successful provider response is not a normalization/readiness pass.
+gap at that initial stage. The subsequent
+[mapping repair](corporate-action-mapping-2026-10-16.md) fixes supported
+descriptions without upgrading trust or proving complete coverage. A
+successful provider response is not a normalization/readiness pass.
 
 ## Provider Evidence Adapters
 

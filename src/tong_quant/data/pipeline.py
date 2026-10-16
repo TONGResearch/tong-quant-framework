@@ -14,7 +14,7 @@ from tong_quant.data.normalization import (
     build_bar_instrument,
     first_bar_available_at,
     normalize_company_info,
-    normalize_corporate_actions,
+    normalize_corporate_action_batch,
     normalize_current_status_snapshot,
     normalize_daily_bars,
     normalize_delisted_statuses,
@@ -512,8 +512,11 @@ class DataIngestionPipeline:
                     symbol, AssetType.EQUITY, response.dataset.retrieved_at,
                 )
                 self._store.upsert_instruments([instrument])
-            actions = normalize_corporate_actions(response.dataset, instrument, batch_id=batch_id)
-            accepted = self._store.upsert_corporate_actions(actions)
+            normalization = normalize_corporate_action_batch(
+                response.dataset, instrument, batch_id=batch_id,
+            )
+            inserted = self._store.upsert_corporate_actions(normalization.actions)
+            accepted = normalization.accepted_rows
             recorded_batch_id, warnings = self._record_dataset_audit(
                 response,
                 accepted,
@@ -523,13 +526,33 @@ class DataIngestionPipeline:
                     "Corporate actions are stored for audit, but strict PIT adjusted "
                     "price reconstruction remains disabled until factors are complete"
                 ),
-                trust_level=DataTrustLevel.MEDIUM,
+                trust_level=DataTrustLevel.LOW,
             )
+            summary = (
+                f"{normalization.model_version}: accepted_rows={accepted}, "
+                f"normalized_events={len(normalization.actions)}, inserted_events={inserted}, "
+                f"rejected_rows={normalization.rejected_rows}; cash is gross per old share, "
+                "split ratio is total new shares per old share; missing components are unknown"
+            )
+            messages = [summary, *(
+                f"row={issue.row}: {issue.code}" for issue in normalization.issues
+            )]
+            for index, message in enumerate(messages):
+                self._store.save_data_availability_warning(DataAvailabilityWarning(
+                    dataset=response.dataset.dataset,
+                    warning_code=(
+                        "corporate_action_normalization" if index == 0
+                        else "corporate_action_row_rejected"
+                    ),
+                    message=message, trust_level=DataTrustLevel.LOW,
+                    created_at=datetime.now(UTC), batch_id=recorded_batch_id,
+                ))
+            warnings = (*warnings, *messages)
         return IngestionResult(
             dataset=response.dataset.dataset,
             received=len(response.dataset.frame),
             accepted=accepted,
-            rejected=len(response.dataset.frame) - accepted,
+            rejected=normalization.rejected_rows,
             cached=response.cache_hit,
             batch_id=recorded_batch_id,
             warnings=warnings,

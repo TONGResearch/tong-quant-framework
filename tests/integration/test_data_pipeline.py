@@ -98,8 +98,10 @@ class FakeAkShareClient:
         return pd.DataFrame(
             {
                 "除权除息日": ["2024-01-04"],
-                "现金分红": [0.5],
-                "送转股份": [0.0],
+                "方案进度": ["实施分配"],
+                "现金分红-现金分红比例": [0.5],
+                "现金分红-现金分红比例描述": ["10派0.50元(含税)"],
+                "送转股份-送转总比例": [0.0],
             }
         )
 
@@ -481,6 +483,39 @@ def test_price_and_action_ingestion_do_not_replace_company_metadata_with_placeho
         == before
     )
     assert store.table_count("instruments") == 1
+
+
+def test_corporate_action_row_warning_failure_rolls_back_entire_batch(
+    data_foundation: tuple[
+        FakeAkShareClient, DataIngestionPipeline, MarketDataService, SQLiteStore
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, pipeline, _, store = data_foundation
+    frame = client.stock_fhps_detail_em()
+    frame = pd.concat([frame, frame.assign(方案进度="董事会决议通过")], ignore_index=True)
+    monkeypatch.setattr(client, "stock_fhps_detail_em", lambda **kwargs: frame)
+    original = store.save_data_availability_warning
+
+    def fail_row_warning(warning: object) -> str:
+        from tong_quant.data.models import DataAvailabilityWarning
+
+        assert isinstance(warning, DataAvailabilityWarning)
+        if warning.warning_code == "corporate_action_row_rejected":
+            raise RuntimeError("synthetic row-warning failure")
+        return original(warning)
+
+    monkeypatch.setattr(store, "save_data_availability_warning", fail_row_warning)
+    with pytest.raises(RuntimeError, match="row-warning"):
+        pipeline.ingest_corporate_actions("600000")
+    for table in (
+        "instruments",
+        "corporate_actions",
+        "ingestion_batches",
+        "raw_dataset_fingerprints",
+        "data_availability_warnings",
+    ):
+        assert store.table_count(table) == 0
 
 
 def _daily_frame(*, include_symbol: bool) -> pd.DataFrame:

@@ -126,6 +126,12 @@ in the same commit.
   price/action ingestion must not replace company snapshots with placeholders.
   Legacy backdated records require separate audit/reconstruction, not automatic
   acceptance after a code upgrade.
+- New corporate-action cash amounts are gross currency per old share; split
+  ratios are total new shares per old share. Require explicit corroborated
+  units, provider implementation label and ex-date; never substitute the
+  registration date or treat a proposal as implemented. Preserve rejected rows
+  and LOW/RETRIEVAL_TIME evidence. Repeated observations are not cumulative
+  adjustments, and legacy action units are not silently migrated.
 - AKShare provider limitations and missing publication timestamps must be
   persisted as warnings instead of hidden inside normalizers.
 - AKShare endpoints without native timeout parameters must use a bounded Tong

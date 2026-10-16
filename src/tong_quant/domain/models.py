@@ -205,6 +205,8 @@ class UniverseMembership:
 
 @dataclass(frozen=True, slots=True)
 class CorporateAction:
+    """Cash is gross currency per old share; split ratio is total new shares per old share."""
+
     instrument: Instrument
     action_type: CorporateActionType
     effective_date: date
@@ -229,8 +231,8 @@ class CorporateAction:
             ("cash_amount", self.cash_amount),
             ("ratio", self.ratio),
         ):
-            if value is not None and value < 0:
-                raise ValueError(f"{name} cannot be negative")
+            if value is not None and (not value.is_finite() or value < 0):
+                raise ValueError(f"{name} must be finite and non-negative")
 
 
 @dataclass(frozen=True, slots=True)

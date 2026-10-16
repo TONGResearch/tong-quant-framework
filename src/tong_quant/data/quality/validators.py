@@ -33,6 +33,7 @@ RAW_REQUIRED_COLUMNS: dict[str, frozenset[str]] = {
 
 EMPTY_ALLOWED_DATASETS = frozenset(
     {
+        "corporate_actions",
         "security_lifecycle_suspension",
         "security_lifecycle_name_change_sz",
         "fundamental_publications_schedule",

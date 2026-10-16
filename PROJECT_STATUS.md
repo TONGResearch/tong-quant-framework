@@ -104,8 +104,13 @@ This is the canonical short handoff for developers and AI agents. Read it with
   backdated availability, fabricated fallback turnover and placeholder
   metadata replacement; new ingestion now fixes those behaviors and preserves
   old observations. Numeric facts no longer inherit earlier visibility/trust
-  from matched publication events. The bounded CLI reports zero normalized
-  actions from 26 raw rows as partial, not absence of actions. Seven runtime
+  from matched publication events. The subsequent
+  [corporate-action repair](docs/corporate-action-mapping-2026-10-16.md) now
+  maps those 26 source rows to 33 research events. Two fresh observations are
+  retained; replaying one cached snapshot inserts zero duplicates. Units,
+  provider-labelled implementation and ex-dates are checked, with rejected
+  rows preserved in audit warnings. All new actions remain LOW/RETRIEVAL_TIME.
+  Zero or partial normalization remains partial, not absence of actions. Seven runtime
   evidence requirements remain unresolved. Reviewed provenance, listing-phase,
   action-coverage and account-lot readers, intraday restrictions and the
   simulation boundary remain incomplete; this does not

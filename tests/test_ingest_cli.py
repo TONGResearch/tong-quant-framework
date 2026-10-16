@@ -2,9 +2,12 @@ import json
 import runpy
 import subprocess
 import sys
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
+
+from tong_quant.data.models import IngestionResult
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "ingest_data.py"
 
@@ -84,4 +87,32 @@ def test_empty_normalization_stays_partial_not_success(
         ),
     )
     assert namespace["main"]() == 2
+    assert json.loads(capsys.readouterr().out)["status"] == "partial"
+
+
+def test_partially_accepted_payload_is_not_a_completed_cli_run(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    namespace = runpy.run_path(str(SCRIPT))
+
+    class FakePipeline:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def initialize(self) -> None:
+            pass
+
+        def ingest_corporate_actions(self, symbol: str) -> IngestionResult:
+            return IngestionResult("corporate_actions", 2, 1, 1, False)
+
+    monkeypatch.setitem(namespace["run_worker"].__globals__, "DataIngestionPipeline", FakePipeline)
+    args = Namespace(
+        refresh=False,
+        database=tmp_path / "unused.sqlite3",
+        command="corporate-actions",
+        symbol="600000",
+    )
+    assert namespace["run_worker"](args) == 2
     assert json.loads(capsys.readouterr().out)["status"] == "partial"

@@ -13,10 +13,10 @@ from tong_quant.data.models import (
     RawDataset,
     SecurityLifecycleEvent,
 )
+from tong_quant.data.normalization.corporate_actions import normalize_corporate_action_batch
 from tong_quant.domain.enums import (
     AssetType,
     AvailabilityPrecision,
-    CorporateActionType,
     DataTrustLevel,
     LifecycleEventType,
     Market,
@@ -317,50 +317,8 @@ def normalize_corporate_actions(
     *,
     batch_id: str,
 ) -> list[CorporateAction]:
-    actions: list[CorporateAction] = []
-    raw_hash = dataset.content_hash()
-    for row in dataset.frame.to_dict(orient="records"):
-        effective_date = _optional_date(
-            row.get("除权除息日") or row.get("除息日") or row.get("股权登记日")
-        )
-        if effective_date is None:
-            continue
-        cash = _optional_decimal(row.get("现金分红") or row.get("派息"))
-        ratio = _optional_decimal(row.get("送转股份") or row.get("转增") or row.get("送股"))
-        if cash is not None:
-            actions.append(
-                CorporateAction(
-                    instrument=instrument,
-                    action_type=CorporateActionType.DIVIDEND,
-                    effective_date=effective_date,
-                    available_at=dataset.retrieved_at,
-                    cash_amount=cash,
-                    currency="CNY",
-                    source=dataset.source,
-                    raw_data_hash=raw_hash,
-                    batch_id=batch_id,
-                    provider_dataset=dataset.dataset,
-                    availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
-                    trust_level=DataTrustLevel.MEDIUM,
-                )
-            )
-        if ratio is not None:
-            actions.append(
-                CorporateAction(
-                    instrument=instrument,
-                    action_type=CorporateActionType.SPLIT,
-                    effective_date=effective_date,
-                    available_at=dataset.retrieved_at,
-                    ratio=ratio,
-                    source=dataset.source,
-                    raw_data_hash=raw_hash,
-                    batch_id=batch_id,
-                    provider_dataset=dataset.dataset,
-                    availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
-                    trust_level=DataTrustLevel.MEDIUM,
-                )
-            )
-    return actions
+    """Compatibility list API; ingestion uses the batch API to retain every rejection."""
+    return list(normalize_corporate_action_batch(dataset, instrument, batch_id=batch_id).actions)
 
 
 def normalize_suspension_lifecycle(

@@ -17,7 +17,10 @@ from tong_quant.data.models import (
     dataframe_sha256,
 )
 from tong_quant.domain.enums import Adjustment, AssetType
-from tong_quant.version import AKSHARE_MARKET_NORMALIZATION_VERSION
+from tong_quant.version import (
+    AKSHARE_CORPORATE_ACTION_VERSION,
+    AKSHARE_MARKET_NORMALIZATION_VERSION,
+)
 
 
 class AkShareClient(Protocol):
@@ -277,7 +280,7 @@ class AkShareAdapter:
 
         return self._fetch(
             "corporate_actions",
-            {"symbol": symbol},
+            {"symbol": symbol, "normalization_version": AKSHARE_CORPORATE_ACTION_VERSION},
             fetch,
         )
 

@@ -30,6 +30,12 @@ Status: `ready`
   unknown turnover, and rejects silent success when normalization accepts no
   rows. Matched publication metadata cannot backdate numeric values. Source
   corrections do not authenticate legacy rows; reviewed context remains open.
+- The [corporate-action repair](../corporate-action-mapping-2026-10-16.md)
+  now maps the 26-row real payload to 33 research events using corroborated
+  units, provider implementation labels and explicit ex-dates. Row rejections
+  and event counts are transactional audit data. Same-key conflicts reject
+  writes; cached replay inserts zero duplicates. Legacy units are not migrated
+  and all new actions stay LOW/RETRIEVAL_TIME; this is not coverage completion.
 - Portfolio candidates and proposals carry typed, persisted ResearchReport,
   InvestmentAssessment, InvestmentScore, and ValidationReport lineage.
 - Repository writes verify authoritative identity, status, value, timestamp,
@@ -76,10 +82,10 @@ Paper Trading misleading, while preserving the live-execution freeze.
 
 ## Next bounded implementation
 
-1. Extend the small real operational sample only after fixing corporate-action
-   field/unit/event semantics. Current 26 raw rows normalize to zero events;
-   retain the partial audit and never interpret it as no corporate actions.
-   Do not substitute monitor history or test fixtures for operational inputs.
+1. Retain and extend the corrected real corporate-action sample without
+   treating supported positive events as full coverage. Unsupported syntax,
+   legacy units and issuer confirmation remain explicit gaps. Do not
+   substitute monitor history or fixtures for operational inputs.
 2. Add independently reviewed exchange-calendar and price-source provenance
    through the existing provider-neutral evidence/artifact contracts. Current
    TradingSession and Bar rows have no trust/precision/raw-hash binding.

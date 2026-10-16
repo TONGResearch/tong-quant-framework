@@ -20,6 +20,7 @@ from tong_quant.data.normalization.akshare import (
     normalize_trading_calendar,
     normalize_universe,
 )
+from tong_quant.data.normalization.corporate_actions import normalize_corporate_action_batch
 
 __all__ = [
     "build_index_instrument",
@@ -27,6 +28,7 @@ __all__ = [
     "first_bar_available_at",
     "normalize_company_info",
     "normalize_corporate_actions",
+    "normalize_corporate_action_batch",
     "normalize_daily_bars",
     "normalize_current_status_snapshot",
     "normalize_delisted_statuses",

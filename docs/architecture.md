@@ -73,6 +73,12 @@ unknown when absent, and price/action writes preserve existing company
 metadata. The ingestion CLI isolates provider access behind a bounded worker
 and reports zero accepted rows as partial. These changes do not migrate old
 data, authenticate numeric revisions, or supply trusted calculation context.
+The [corporate-action batch parser](corporate-action-mapping-2026-10-16.md)
+now corroborates explicit per-basis descriptions with numeric components,
+counts accepted input rows separately from events, and persists every row
+rejection atomically. Existing PIT-key writes reject conflicting amounts or
+metadata; new observations preserve history. New actions are LOW trust,
+retrieval-time observations, never automatic price/holding adjustments.
 See [the pilot contract and recovery steps](sse-main-board-pilot.md).
 Availability precision is separate from trust: unknown, estimated and date-only
 timestamps remain incomplete until conservative visibility is established.

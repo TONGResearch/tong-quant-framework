@@ -1410,18 +1410,48 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
-            connection.executemany(
-                """
-                INSERT OR IGNORE INTO corporate_actions (
-                    action_id, instrument_id, action_type, effective_date,
-                    available_at, value, cash_amount, ratio, currency, source,
-                    raw_data_hash, batch_id, provider_dataset, availability_precision,
-                    trust_level, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
-        return len(rows)
+            before = connection.total_changes
+            for row in rows:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO corporate_actions (
+                        action_id, instrument_id, action_type, effective_date,
+                        available_at, value, cash_amount, ratio, currency, source,
+                        raw_data_hash, batch_id, provider_dataset, availability_precision,
+                        trust_level, ingested_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    row,
+                )
+                stored = connection.execute(
+                    """
+                    SELECT * FROM corporate_actions
+                    WHERE instrument_id = ? AND action_type = ? AND effective_date = ?
+                      AND available_at = ? AND raw_data_hash = ?
+                    """,
+                    (row[1], row[2], row[3], row[4], row[10]),
+                ).fetchone()
+                if stored is None:
+                    raise ValueError("corporate action was not persisted")
+                numeric_values = tuple(
+                    None if value is None else Decimal(str(value)) for value in row[5:8]
+                )
+                stored_values = tuple(
+                    None if stored[name] is None else Decimal(stored[name])
+                    for name in ("value", "cash_amount", "ratio")
+                )
+                if numeric_values != stored_values or any(
+                    stored[name] != expected
+                    for name, expected in (
+                        ("currency", row[8]), ("source", row[9]),
+                        ("provider_dataset", row[12]),
+                        ("availability_precision", row[13]), ("trust_level", row[14]),
+                    )
+                ):
+                    raise ValueError(
+                        "corporate action conflict requires a new available_at version"
+                    )
+            return connection.total_changes - before
 
     def save_ingestion_batch(self, batch: IngestionBatch) -> str:
         reject_sensitive_structure(batch.parameters, path="ingestion_batch.parameters")

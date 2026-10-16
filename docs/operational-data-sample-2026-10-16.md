@@ -1,5 +1,10 @@
 # Operational Research Sample: 2026-10-16
 
+Historical initial sample below. A later same-day
+[corporate-action repair](corporate-action-mapping-2026-10-16.md) resolves the
+26-row mapping defect for supported descriptions. Follow PROJECT_STATUS and
+the current work package for next work, not this initial gap list.
+
 Work package: `WP-LAUNCH-001`, partial implementation. Framework `0.8.0`,
 schema `0.8.2`, migration `0010_portfolio_evidence_lineage` unchanged.
 This records a real public-data ingestion exercise, not a strategy result,
