@@ -68,7 +68,7 @@ class FakeAkShareClient:
         return pd.DataFrame({"代码": ["600000"], "名称": ["*ST 测试"]})
 
     def stock_zh_a_stop_em(self) -> pd.DataFrame:
-        return pd.DataFrame({"代码": ["000001"], "名称": ["停牌测试"]})
+        raise AssertionError("Delisted-market quotes must never be used as suspension evidence")
 
     def stock_info_sh_delist(self, **kwargs: object) -> pd.DataFrame:
         del kwargs
@@ -358,7 +358,7 @@ def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
 
     financial = pipeline.ingest_financial_statement("600000", "income")
     st_status = pipeline.ingest_special_treatment_status()
-    suspended = pipeline.ingest_suspended_status()
+    suspended = pipeline.ingest_suspension_lifecycle("20240102")
     delisted = pipeline.ingest_delisted_statuses("sh")
     membership = pipeline.ingest_index_membership("000300")
     actions = pipeline.ingest_corporate_actions("600000")
@@ -366,19 +366,20 @@ def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
     assert financial.accepted == 2
     assert financial.batch_id
     assert "publication timestamps" in " ".join(financial.warnings)
+    assert "semantics remain unreviewed" in " ".join(financial.warnings)
     assert st_status.accepted == 1
     assert suspended.accepted == 1
     assert delisted.accepted == 1
     assert membership.accepted == 2
     assert actions.accepted >= 1
     assert store.table_count("fundamental_facts") == 2
-    assert store.table_count("instrument_status_history") == 3
+    assert store.table_count("instrument_status_history") == 2
     assert store.table_count("universe_memberships") == 2
     assert store.table_count("corporate_actions") >= 1
     assert store.table_count("ingestion_batches") == 6
     assert store.table_count("raw_dataset_fingerprints") == 6
     assert store.table_count("data_availability_warnings") >= 6
-    assert store.table_count("provider_limitations") == 7
+    assert store.table_count("provider_limitations") == 10
 
     visible = service.fundamental_facts(
         "600000",
@@ -389,6 +390,35 @@ def test_pit_population_records_batches_hashes_warnings_and_domain_tables(
     )
     assert visible
     assert visible[0].raw_data_hash
+
+
+@pytest.mark.integration
+def test_financial_numeric_conflict_rolls_back_all_domain_and_audit_writes(
+    data_foundation: tuple[
+        FakeAkShareClient, DataIngestionPipeline, MarketDataService, SQLiteStore,
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, pipeline, _, store = data_foundation
+    tables = (
+        "instruments", "fundamental_facts", "ingestion_batches",
+        "raw_dataset_fingerprints", "data_availability_warnings", "provider_limitations",
+    )
+    before = {table: store.table_count(table) for table in tables}
+
+    def conflicting_frame(**kwargs: object) -> pd.DataFrame:
+        del kwargs
+        return pd.DataFrame({
+            "report_date": ["2023-12-31", "2023-12-31"],
+            "metric_name": ["revenue", "profit"],
+            "value": [100, 0],
+            "金额": [100, 20],
+        })
+
+    monkeypatch.setattr(client, "stock_financial_benefit_new_ths", conflicting_frame)
+    with pytest.raises(ValueError, match="financial value aliases disagree"):
+        pipeline.ingest_financial_statement("600000", "income")
+    assert {table: store.table_count(table) for table in tables} == before
 
 
 @pytest.mark.integration
@@ -412,11 +442,11 @@ def test_pit_remediation_ingests_lifecycle_and_publication_evidence(
     )
     financial = pipeline.ingest_financial_statement("600000", "income")
 
-    assert suspension.accepted == 2
+    assert suspension.accepted == 1
     assert st_history.accepted == 2
     assert schedule.accepted == 1
     assert disclosures.accepted == 2
-    assert store.table_count("security_lifecycle_events") == 4
+    assert store.table_count("security_lifecycle_events") == 3
     assert store.table_count("fundamental_publication_events") == 3
 
     as_of = datetime(2024, 1, 6, tzinfo=UTC)
@@ -430,7 +460,6 @@ def test_pit_remediation_ingests_lifecycle_and_publication_evidence(
         "st_enter",
         "st_exit",
         "suspension_started",
-        "trading_resumed",
     }
     publications = store.fundamental_publication_events(
         "600000",

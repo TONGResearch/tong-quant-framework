@@ -28,7 +28,7 @@ from tong_quant.research.models import (
     ResearchValue,
     ThesisInvalidationCondition,
 )
-from tong_quant.validation.replay.hashing import stable_json
+from tong_quant.validation.replay.hashing import stable_hash, stable_json
 from tong_quant.validation.replay.models import (
     HistoricalReplayResult,
 )
@@ -111,10 +111,7 @@ class SQLiteHistoricalReplayRepository:
         assessments = [
             assessment
             for dataset in datasets
-            if (
-                assessment := self.store.latest_pit_readiness(dataset, as_of=as_of)
-            )
-            is not None
+            if (assessment := self.store.latest_pit_readiness(dataset, as_of=as_of)) is not None
         ]
         return tuple(assessments)
 
@@ -130,14 +127,13 @@ class SQLiteHistoricalReplayRepository:
             return None
         evidence_rows = self.store.research_evidence_for_run(row["run_id"])
         evidence = {
-            _row_text(item, "evidence_id"): _evidence_from_row(item)
-            for item in evidence_rows
+            _row_text(item, "evidence_id"): _evidence_from_row(item) for item in evidence_rows
         }
         assessments = tuple(
             _assessment_from_row(item, evidence)
             for item in self.store.research_assessments_for_report(row["report_id"])
         )
-        policy_assessment = _policy_assessment(row["policy_assessment_json"])
+        policy_assessment = _policy_assessment(row["policy_assessment_json"], evidence)
         return ResearchReport(
             report_id=row["report_id"],
             queue_id=row["queue_id"],
@@ -162,6 +158,10 @@ class SQLiteHistoricalReplayRepository:
         )
 
     def save_result(self, result: HistoricalReplayResult) -> None:
+        with self.store.transaction():
+            self._save_result(result)
+
+    def _save_result(self, result: HistoricalReplayResult) -> None:
         manifest = result.manifest
         self.store.save_historical_replay_manifest(
             manifest_id=manifest.manifest_id,
@@ -244,13 +244,27 @@ def _assessment_from_row(
     )
 
 
-def _policy_assessment(payload: str | None) -> PolicyAssessment | None:
+def _policy_assessment(
+    payload: str | None, evidence: dict[str, ResearchEvidence]
+) -> PolicyAssessment | None:
     if payload is None:
         return None
     record = json.loads(payload)
     if not isinstance(record, dict) or "assessment" not in record:
-        return None
+        raise ValueError("malformed policy research payload")
     assessment_record = cast(dict[str, object], record["assessment"])
+    embedded = tuple(
+        _embedded_evidence(item)
+        for item in cast(list[dict[str, object]], assessment_record.get("evidence", []))
+    )
+    evidence_ids = tuple(cast(list[str], assessment_record["evidence_ids"]))
+    policy_evidence = list(embedded)
+    for key in evidence_ids:
+        item = evidence.get(key)
+        if item is not None and not any(
+            stable_hash(item) == stable_hash(existing) for existing in policy_evidence
+        ):
+            policy_evidence.append(item)
     assessment = ResearchAssessment(
         module=ResearchModuleName(str(assessment_record["module"])),
         conclusion=ResearchConclusion(str(assessment_record["conclusion"])),
@@ -261,9 +275,10 @@ def _policy_assessment(payload: str | None) -> PolicyAssessment | None:
         findings=tuple(cast(list[str], assessment_record["findings"])),
         risks=tuple(cast(list[str], assessment_record["risks"])),
         limitations=tuple(cast(list[str], assessment_record["limitations"])),
-        evidence_ids=tuple(cast(list[str], assessment_record["evidence_ids"])),
+        evidence_ids=evidence_ids,
         model_version=str(assessment_record["model_version"]),
         features=_research_value_dict(cast(dict[str, object], assessment_record["features"])),
+        evidence=tuple(policy_evidence),
     )
     return PolicyAssessment(
         assessment=assessment,
@@ -272,6 +287,23 @@ def _policy_assessment(payload: str | None) -> PolicyAssessment | None:
         fiscal_policy=str(record["fiscal_policy"]),
         monetary_policy=str(record["monetary_policy"]),
         geopolitical_factors=str(record["geopolitical_factors"]),
+    )
+
+
+def _embedded_evidence(record: dict[str, object]) -> ResearchEvidence:
+    return ResearchEvidence(
+        evidence_id=str(record["evidence_id"]),
+        module=ResearchModuleName(str(record["module"])),
+        name=str(record["name"]),
+        value=_research_value(record["value"]),
+        observed_at=datetime.fromisoformat(str(record["observed_at"])),
+        available_at=datetime.fromisoformat(str(record["available_at"])),
+        source=str(record["source"]),
+        quality=EvidenceQuality(str(record["quality"])),
+        source_reference=str(record.get("source_reference", "")),
+        calculation_version=str(record.get("calculation_version", "raw")),
+        input_hash=str(record.get("input_hash", "")),
+        metadata=_research_value_dict(record.get("metadata", {})),
     )
 
 

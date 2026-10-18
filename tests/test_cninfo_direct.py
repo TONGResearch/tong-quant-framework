@@ -323,7 +323,7 @@ def test_ingestion_rejects_artifact_trust_promotion(tmp_path: Path) -> None:
     store = SQLiteStore(tmp_path / "evidence.sqlite3")
     store.initialize()
 
-    with pytest.raises(ValueError, match="promote artifacts"):
+    with pytest.raises(ValueError, match="above its capability trust"):
         ProviderNeutralIngestionService(
             store=store,
             artifact_store=FileSystemArtifactStore(tmp_path / "artifacts"),

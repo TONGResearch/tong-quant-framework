@@ -16,6 +16,9 @@ dependencies = [
   "tushare>=1.4,<2",
 ]
 
+[project.scripts]
+tong-quant = "tong_quant.__main__:main"
+
 [project.optional-dependencies]
 dev = [
   "mypy>=1.10",

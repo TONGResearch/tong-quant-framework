@@ -12,7 +12,7 @@ from tong_quant.domain.enums import (
 )
 from tong_quant.domain.models import Bar, FundamentalFact, Signal, require_timezone
 from tong_quant.market_regime.models import MarketRegime
-from tong_quant.screening.models import ResearchQueueEntry
+from tong_quant.screening.models import ResearchQueueEntry, screening_instrument_id
 
 ResearchValue = float | int | str | bool | Decimal | None
 
@@ -148,25 +148,72 @@ class ResearchContext:
     market_regime: MarketRegime | None = None
 
     def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
         require_timezone(self.as_of, "as_of")
         if not self.queue_id.strip():
             raise ValueError("research context requires queue_id")
         if self.queue_entry.status.value not in {"pending", "in_research"}:
             raise ValueError("research requires a pending or active queue entry")
+        entry = self.queue_entry
+        queue_times = (
+            entry.admitted_at, entry.candidate.available_at, entry.research_score.calculated_at,
+            *(result.available_at for result in entry.hard_screen_results),
+            *(result.evaluated_at for result in entry.hard_screen_results),
+        )
+        if any(timestamp > self.as_of for timestamp in queue_times):
+            raise ValueError("research context contains future queue data")
         future_evidence = [
             item.evidence_id for item in self.evidence if item.available_at > self.as_of
         ]
         future_bars = [
-            bar.timestamp.isoformat() for bar in self.bars if bar.available_at > self.as_of
+            bar.timestamp.isoformat() for bar in self.bars
+            if bar.available_at > self.as_of or bar.timestamp > self.as_of
         ]
         future_facts = [
             fact.metric
             for facts in self.fundamentals.values()
             for fact in facts
-            if fact.available_at > self.as_of
+            if fact.available_at > self.as_of or fact.period_end > self.as_of.date()
         ]
         if future_evidence or future_bars or future_facts:
             raise ValueError("research context contains future data")
+        expected_instrument = screening_instrument_id(entry.candidate.instrument)
+        instruments = (
+            entry.candidate.instrument,
+            *(bar.instrument for bar in self.bars),
+            *(fact.instrument for facts in self.fundamentals.values() for fact in facts),
+        )
+        if any(
+            instrument.available_at is not None and instrument.available_at > self.as_of
+            for instrument in instruments
+        ):
+            raise ValueError("research context contains future instrument metadata")
+        if any(
+            screening_instrument_id(bar.instrument) != expected_instrument for bar in self.bars
+        ):
+            raise ValueError("research context bar instrument mismatch")
+        versions: dict[tuple[object, ...], tuple[object, ...]] = {}
+        for metric, facts in self.fundamentals.items():
+            for fact in facts:
+                if screening_instrument_id(fact.instrument) != expected_instrument:
+                    raise ValueError("research context fundamental instrument mismatch")
+                if metric != fact.metric:
+                    raise ValueError("research context fundamental metric mismatch")
+                if not fact.value.is_finite():
+                    raise ValueError("research context fundamental value must be finite")
+                identity = (
+                    metric, fact.period_end, fact.available_at, fact.revision, fact.published_at,
+                )
+                content = (
+                    fact.period_start, fact.fiscal_period, fact.value, fact.currency, fact.unit,
+                    fact.source, fact.raw_data_hash, fact.provider_dataset,
+                    fact.availability_precision, fact.trust_level,
+                )
+                if identity in versions and versions[identity] != content:
+                    raise ValueError("research context contains conflicting fundamental versions")
+                versions[identity] = content
         if self.market_regime is not None and self.market_regime.as_of > self.as_of:
             raise ValueError("research context contains a future Market Regime")
 

@@ -138,7 +138,7 @@ Exit 2 means missing database, unresolved input requirements, or an inspection
 error. Errors report only their class, not possibly sensitive database values.
 JSON output is screened for credential-like fields/assignments. No report or
 database is written. The content hash covers the query/window, reconstructed
-input objects, gap codes and reader version (`sse-runtime-input-v1.1`); it is not
+input objects, gap codes and reader version (originally `sse-runtime-input-v1.1`); it is not
 a hash of the entire database. A changed visible input changes that hash.
 
 The default local `data/tong_quant.sqlite3` was absent at the October 16 check;
@@ -166,10 +166,46 @@ work package remains partial, not complete.
 
 The [subsequent real operational sample](operational-data-sample-2026-10-16.md)
 populated that initially absent database and fixed observed ingestion defects.
-The seven remaining input requirements still fail closed. Source normalization
+The remaining input requirements still fail closed. Source normalization
 now preserves retrieval-time visibility; it does not authenticate old rows.
 
 ## Remaining gates (unchanged)
+
+The [real pilot coverage manifest](sse-pilot-coverage-2026-10-16.md) adds
+`--pilot-coverage` to the same CLI for scoped research-input inventory. Optional
+`--output` creates a new protected JSON report only; the source database remains
+read-only. This supersedes the earlier no-report-write description only for
+that explicit mode. It cannot create calculation context or grant readiness.
+
+The [later notice-evidence slice](sse-calendar-notice-evidence-2026-10-16.md)
+adds raw official notice capture and typed evidence reads. Runtime version is
+v1.2 for that slice and includes scoped notice assertions, conflicts and review expiry in
+the input hash. It does not fill absent dates or remove the calendar-provenance
+requirement; the source remains MEDIUM/retrieval-time evidence.
+
+The [subsequent price-evidence slice](daily-price-evidence-2026-10-16.md)
+advances the runtime reader to v1.3. It includes raw-snapshot references and
+exact previous-close bindings in the same read snapshot. A LOW-trust match is
+not reviewed market-rule price authority and cannot create calculation context.
+
+The [ordinary-calendar slice](sse-calendar-plan-2026-10-16.md) advances the
+reader to v1.4. To include a separate plan, add an explicit verified
+`--rule-capture PATH` to the diagnostic. Defaults use the reviewed annual
+profile and separate rule/provider artifact roots; `--rule-profile`,
+`--calendar-profile`, `--rule-artifact-root` and `--artifact-root` override them.
+The source loader verifies the pinned reference bytes; no latest-capture
+discovery, network fetch or calendar write occurs. Missing raw dates stay
+missing. An ordinary schedule cannot prove emergency opening or settlement;
+the diagnostic still exits 2 for unresolved gaps. Never use an October capture
+as if it had been available during an earlier historical decision.
+
+The [suspension repair](suspension-evidence-repair-2026-10-16.md) advances the
+runtime inventory to v1.5. Lifecycle events and source evidence join the same
+read snapshot; legacy suspension snapshots and inferred resumptions are
+retained but explicitly flagged. A partial positive event does not establish
+current ST/suspension/phase status, and no event is not a normal-status proof.
+The dated `suspension-events YYYYMMDD` ingestion command returns partial/exit 2
+even after successful capture. It does not supply trusted evaluator context.
 
 1. Produce independently reviewed, PIT-visible runtime calendar, security,
    listing-phase, corporate-action, close, and account-lot inputs. Synthetic

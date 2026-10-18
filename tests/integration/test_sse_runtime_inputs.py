@@ -11,7 +11,9 @@ from pathlib import Path
 
 import pytest
 
+from tong_quant.application.sse_pilot_coverage import SSEPilotCoverageReader
 from tong_quant.application.sse_runtime_inputs import SSERuntimeInputReader
+from tong_quant.config.settings import load_settings
 from tong_quant.data.service import MarketDataService
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
@@ -26,6 +28,7 @@ from tong_quant.domain.enums import (
 from tong_quant.domain.models import (
     Bar,
     CorporateAction,
+    FundamentalFact,
     Instrument,
     InstrumentStatus,
     TradingSession,
@@ -97,6 +100,199 @@ def reader(store: SQLiteStore) -> SSERuntimeInputReader:
 
 def codes(store: SQLiteStore) -> set[str]:
     return {gap.code for gap in reader(store).read("600000", QUERY, calendar_start=START).gaps}
+
+
+def coverage(store: SQLiteStore, **kwargs):
+    return SSEPilotCoverageReader(store, load_settings(Path("config/default.toml"))).read(
+        "600000", QUERY, calendar_start=START, universe="china_a_all", **kwargs
+    )
+
+
+def test_pilot_manifest_distinguishes_counts_from_provenance_and_readiness(store: SQLiteStore):
+    manifest = coverage(store)
+    bars = manifest["datasets"]["daily_bars"]
+    assert bars["observations"] == 1
+    assert bars["configured_trend_minimum"] == 21
+    assert bars["minimum_count_deficit"] == 20
+    assert bars["exact_bound_dates"] == 0
+    assert bars["trust_levels"] == ["unknown"]
+    assert bars["authoritative_session_coverage_pct"] is None
+    assert manifest["datasets"]["status"]["trust_levels"] == ["low"]
+    assert manifest["datasets"]["universe"]["observations"] == 0
+    assert manifest["datasets"]["fundamentals"]["observations"] == 0
+    assert manifest["datasets"]["corporate_actions"]["observations"] == 0
+    assert "corporate_action_coverage_unverified" in manifest["blocking_requirements"]
+    assert "fundamental_metrics_missing" in manifest["blocking_requirements"]
+    assert "market_sentiment_confirmation_missing" in manifest["blocking_requirements"]
+    assert "industry_heat_confirmation_missing" in manifest["blocking_requirements"]
+    assert manifest["readiness_decision"] == "not_assessed_no_promotion"
+    assert manifest["strict_validation_authorized"] is False
+    assert coverage(store) == manifest
+
+
+def test_future_input_cannot_improve_or_change_a_pilot_manifest(store: SQLiteStore):
+    first = coverage(store)
+    instrument = MarketDataService(store).instrument(
+        "600000", Market.CHINA_A, AssetType.EQUITY, as_of=AS_OF
+    )
+    store.upsert_fundamental_facts(
+        (
+            FundamentalFact(
+                instrument,
+                "revenue",
+                date(2026, 6, 30),
+                AS_OF + timedelta(hours=1),
+                AS_OF + timedelta(hours=1),
+                Decimal("100"),
+                "fixture",
+                raw_data_hash="b" * 64,
+            ),
+        )
+    )
+    assert coverage(store) == first
+
+
+def test_pilot_manifest_changes_when_visible_content_or_configuration_changes(store: SQLiteStore):
+    settings = load_settings(Path("config/default.toml"))
+    first = coverage(store)
+    changed = replace(
+        settings,
+        research=replace(
+            settings.research, trend=replace(settings.research.trend, breakout_period=40)
+        ),
+    )
+    second = SSEPilotCoverageReader(store, changed).read(
+        "600000", QUERY, calendar_start=START, universe="china_a_all"
+    )
+    assert second["datasets"]["daily_bars"]["configured_trend_minimum"] == 41
+    assert first["manifest_hash"] != second["manifest_hash"]
+    assert first["research_configuration_hash"] != second["research_configuration_hash"]
+    instrument = MarketDataService(store).instrument(
+        "600000", Market.CHINA_A, AssetType.EQUITY, as_of=AS_OF
+    )
+    store.upsert_instrument_statuses(
+        (
+            InstrumentStatus(
+                instrument,
+                START,
+                SecurityStatus.SPECIAL_TREATMENT,
+                False,
+                AS_OF,
+                "fixture",
+                trust_level=DataTrustLevel.LOW,
+                raw_data_hash="b" * 64,
+            ),
+        )
+    )
+    third = coverage(store)
+    assert third["manifest_hash"] != first["manifest_hash"]
+    assert third["datasets"]["status"]["observations"] == 1
+    assert "status_not_ordinary" in third["blocking_requirements"]
+    assert third["strict_validation_authorized"] is False
+
+
+def test_pilot_reads_share_one_snapshot_across_runtime_and_research(
+    store: SQLiteStore, monkeypatch
+):
+    original = SSERuntimeInputReader.read
+    writer = SQLiteStore(store.path)
+    inserted = False
+
+    def concurrent_write(self, *args, **kwargs):
+        nonlocal inserted
+        snapshot = original(self, *args, **kwargs)
+        if not inserted:
+            writer.upsert_fundamental_facts(
+                (
+                    FundamentalFact(
+                        snapshot.instrument,
+                        "revenue",
+                        date(2026, 6, 30),
+                        VISIBLE,
+                        VISIBLE,
+                        Decimal("100"),
+                        "fixture",
+                        raw_data_hash="b" * 64,
+                    ),
+                )
+            )
+            inserted = True
+        return snapshot
+
+    monkeypatch.setattr(SSERuntimeInputReader, "read", concurrent_write)
+    assert coverage(store)["datasets"]["fundamentals"]["observations"] == 0
+    assert coverage(store)["datasets"]["fundamentals"]["observations"] == 1
+
+
+def test_pilot_reader_works_with_a_read_only_store_without_writes(store: SQLiteStore):
+    before = store.table_count("fundamental_facts")
+    manifest = coverage(SQLiteStore(store.path, read_only=True))
+    assert manifest["schema_version"] == store.schema_version()
+    assert store.table_count("fundamental_facts") == before
+
+
+@pytest.mark.parametrize("existing", (False, True))
+def test_pilot_cli_never_creates_database_and_only_writes_new_report(
+    tmp_path: Path, store: SQLiteStore, existing: bool
+):
+    database = store.path if existing else tmp_path / "missing.sqlite3"
+    output = tmp_path / "coverage.json"
+    command = [
+        sys.executable,
+        "scripts/inspect_sse_runtime_inputs.py",
+        "--pilot-coverage",
+        "--database",
+        str(database),
+        "--symbol",
+        "600000",
+        "--trade-date",
+        DAY.isoformat(),
+        "--as-of",
+        AS_OF.isoformat(),
+        "--calendar-start",
+        START.isoformat(),
+        "--output",
+        str(output),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 2
+    if not existing:
+        assert not database.exists()
+        assert not output.exists()
+        assert json.loads(result.stdout)["status"] == "database_missing"
+    else:
+        first = output.read_bytes()
+        assert output.stat().st_mode & 0o777 == 0o600
+        assert json.loads(first)["strict_validation_authorized"] is False
+        repeated = subprocess.run(command, capture_output=True, text=True, timeout=15)
+        assert repeated.returncode == 2
+        assert json.loads(repeated.stdout)["status"] == "input_inspection_failed"
+        assert output.read_bytes() == first
+
+
+def test_pilot_export_rejects_sensitive_metadata_without_persisting_it(store: SQLiteStore):
+    settings = load_settings(Path("config/default.toml"))
+    instrument = MarketDataService(store).instrument(
+        "600000", Market.CHINA_A, AssetType.EQUITY, as_of=AS_OF
+    )
+    store.upsert_fundamental_facts(
+        (
+            FundamentalFact(
+                instrument,
+                "revenue",
+                date(2026, 6, 30),
+                VISIBLE,
+                VISIBLE,
+                Decimal("100"),
+                "fixture api_key=fixture-only-not-a-real-credential",
+                raw_data_hash="b" * 64,
+            ),
+        )
+    )
+    with pytest.raises(ValueError):
+        SSEPilotCoverageReader(store, settings).read(
+            "600000", QUERY, calendar_start=START, universe="china_a_all"
+        )
 
 
 def test_snapshot_preserves_trust_and_does_not_infer_favorable_flags(store: SQLiteStore) -> None:

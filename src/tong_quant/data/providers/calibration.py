@@ -11,6 +11,7 @@ from tong_quant.data.calibration.models import (
     CalibrationRecord,
     ProviderCalibrationSnapshot,
 )
+from tong_quant.data.normalization import normalize_suspension_lifecycle
 from tong_quant.data.providers.akshare import AkShareAdapter
 
 
@@ -99,38 +100,23 @@ class AkShareCalibrationAdapter:
         self, query: CalibrationQuery
     ) -> tuple[tuple[CalibrationRecord, ...], tuple[str, ...]]:
         trade_date = _required(query, "trade_date")
-        frame = self._adapter.suspension_events(trade_date).dataset.frame
+        dataset = self._adapter.suspension_events(trade_date).dataset
         records = []
-        for row in _rows(frame):
-            symbol = _symbol(row, "代码", "股票代码", "证券代码")
-            start_date = _date_text(row.get("停牌时间"))
-            if symbol and start_date:
-                records.append(
-                    CalibrationRecord(
-                        key=f"{symbol}:{start_date}:suspension_started",
-                        fields={
-                            "event_type": "suspension_started",
-                            "effective_date": start_date,
-                            "timing": "",
-                        },
-                    )
-                )
-            resume_date = _date_text(
-                row.get("停牌截止时间") or row.get("预计复牌时间")
-            )
-            if symbol and resume_date:
-                records.append(
-                    CalibrationRecord(
-                        key=f"{symbol}:{resume_date}:trading_resumed",
-                        fields={
-                            "event_type": "trading_resumed",
-                            "effective_date": resume_date,
-                            "timing": "",
-                        },
-                    )
-                )
+        for event in normalize_suspension_lifecycle(dataset, batch_id=""):
+            start_date = event.effective_date.strftime("%Y%m%d")
+            records.append(CalibrationRecord(
+                key=f"{event.instrument.symbol}:{start_date}:suspension_started",
+                fields={
+                    "event_type": "suspension_started", "effective_date": start_date,
+                    "timing": "", "normalization_version": event.details["normalization_version"],
+                    "resumption_confirmation": "unverified",
+                    "available_at": event.available_at.isoformat(),
+                },
+            ))
         return tuple(records), (
             "AKShare suspension history is queried by date and retained at retrieval time",
+            "Reported end/expected dates never confirm resumption or current tradability; "
+            "legacy calibration results are not retroactively certified",
         )
 
     def _delisting_records(

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import date, datetime
 
 from tong_quant.data.models import FundamentalPublicationEvent, SecurityLifecycleEvent
+from tong_quant.data.providers.contracts import ProviderEvidenceRecord
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import Adjustment, AssetType, Market
 from tong_quant.domain.models import (
@@ -96,6 +97,21 @@ class MarketDataService:
             as_of=as_of,
         )
 
+    def provider_evidence(
+        self,
+        *,
+        provider: str,
+        dataset: str,
+        market: Market,
+        subject: str,
+        as_of: datetime,
+    ) -> tuple[ProviderEvidenceRecord, ...]:
+        return tuple(
+            self._store.provider_evidence(
+                provider=provider, dataset=dataset, market=market, subject=subject, as_of=as_of
+            )
+        )
+
     def fundamental_facts(
         self,
         symbol: str,
@@ -160,6 +176,7 @@ class MarketDataService:
         as_of: datetime,
         effective_on_or_before: date | None = None,
     ) -> list[SecurityLifecycleEvent]:
+        """Preserve original records; review_lifecycle_record is required before quality use."""
         return self._store.security_lifecycle_events(
             symbol,
             market,

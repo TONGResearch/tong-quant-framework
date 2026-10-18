@@ -29,6 +29,8 @@ class RawDataset:
     source: str
     parameters: dict[str, Any]
     raw_data_hash: str = ""
+    # Pandas can change schema metadata when rebuilding an otherwise identical frame.
+    raw_frame_json: str = field(default="", repr=False, compare=False)
 
     def __post_init__(self) -> None:
         require_timezone(self.retrieved_at, "retrieved_at")
@@ -257,9 +259,16 @@ class HistoricalCoverageAssessment:
 
 
 def dataframe_sha256(frame: pd.DataFrame, parameters: dict[str, Any]) -> str:
-    payload = {
-        "parameters": parameters,
-        "frame": frame.to_json(orient="table", date_format="iso", force_ascii=True),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return hashlib.sha256(
+        dataframe_snapshot_bytes(
+            frame.to_json(orient="table", date_format="iso", force_ascii=True), parameters
+        )
+    ).hexdigest()
+
+
+def dataframe_snapshot_bytes(frame_json: str, parameters: dict[str, Any]) -> bytes:
+    return json.dumps(
+        {"parameters": parameters, "frame": frame_json},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")

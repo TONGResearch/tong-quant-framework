@@ -1,0 +1,10 @@
+profile_version = "sse-calendar-notice-v1"
+source_url = "https://www.sse.com.cn/disclosure/announcement/general/c/c_20260915_10832273.shtml"
+content_sha256 = "ec3b2fa822161cd8852ed5255b002f40506ebd348f77a4b0c672dcd637387dec"
+source_publication_date = 2026-09-17
+reviewed_at = 2026-10-16T04:49:40Z
+review_expires_at = 2026-11-15T04:49:40Z
+year = 2026
+closed_intervals = [[2026-09-25, 2026-09-27], [2026-10-01, 2026-10-07]]
+closed_dates = [2026-09-20, 2026-10-10]
+open_dates = [2026-09-28, 2026-10-08]

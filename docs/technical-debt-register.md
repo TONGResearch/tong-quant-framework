@@ -1,5 +1,26 @@
 # Technical Debt Register
 
+Recovery-baseline follow-up (October 18): accumulated hardening is consolidated
+as one reviewed local checkpoint with an explicit handoff. Historical slice
+notes remain snapshots. Remote synchronization requires separate approval;
+ignored data and raw evidence still need approved encrypted recovery. Continue
+authoritative launch inputs and one real strategy chain before Paper acceptance.
+
+Research-bar follow-up (October 18): duplicate/revision warm-up, daily-series
+ambiguity, module entry checks, invalid lookbacks and Technical return indexing
+are repaired in versioned research modules. Complete authoritative session and
+action-aware semantics, extreme numeric stress and exact original-input binding
+before broader claims. Deep immutable snapshots/concurrent mutation handling
+and legacy report reassessment remain open; no automatic re-score is allowed.
+
+Artifact-portability follow-up (October 18): registered provider bytes now have
+an explicit-root deterministic read-only audit. The runbook's generic artifact
+path was corrected. Complete an approved encrypted DB-plus-files recovery drill,
+separately inventory unregistered rule/notice captures, and verify on another
+host. This slice does not implement encryption, copying, retention or a global
+atomic DB/filesystem snapshot. Existing backup audit hashes alone do not prove
+equality of all domain row contents.
+
 | ID | Priority | Debt | Current control | Exit condition |
 |---|---|---|---|---|
 | TD-001 | P0 | AKShare cannot reconstruct complete historical publication timing, status history, or universe membership. | Conservative trust levels and warnings. | Verified PIT provider coverage and reconciliation tests. |
@@ -35,6 +56,107 @@
 | TD-031 | P1 | Risk uses volatility/drawdown/correlation proxies; candidate max_drawdown and scenario targets are not consumed. | Proposal-only semantics, corrected classification routing, validated configuration/input contracts, and versioned outputs. | Define and calibrate portfolio risk estimands, covariance, FX and targeted stress scopes; represent missing data explicitly before authoritative simulation risk use. |
 | TD-032 | P1 | Same-version instrument upserts can alter security-master history. | Bar/calendar versions now reject conflicts; security-master snapshots retain available_at but still merge fields at a shared key. | Add per-field provenance and immutable correction semantics with migration and compatibility tests; do not treat generic lot_size as verified evidence. |
 | TD-033 | P1 | SQLiteStore exceeds 5,000 lines and owns many domains. | One tested transaction/snapshot manager and ordered, fingerprinted migrations remain authoritative. | Extract domain query/writer ownership in bounded steps while preserving public APIs, migration checksums and one unit of work. |
-| TD-034 | P2 | DataFrameCache publication is not atomic and corrupt cache files propagate read errors. | Cache is research infrastructure, not authoritative PIT storage. | Atomically publish bounded files and make corrupt entries observable cache misses; preserve raw-content verification and credentials restrictions. |
+| TD-034 | P2 | DataFrameCache publication is not atomic and corrupt cache files propagate read errors. | Original frame serialization, declared fingerprints and credential-like fields are now checked on cache reads/writes; exact price reconstruction fails closed. Cache is still research infrastructure, not authenticated PIT storage. | Atomically publish bounded files and make corrupt entries observable cache misses; preserve source timestamp/metadata integrity, raw-content verification and credential restrictions. |
 | TD-035 | P1 | Broader corporate-action formats, issuer confirmation and complete coverage remain unverified. | The 26-row mapping defect is fixed for supported gross per-basis descriptions, producing 33 events with LOW/RETRIEVAL_TIME semantics. Rejections are transactional; cache replay inserts zero duplicates and conflicting same-key writes roll back. | Extend only reviewed field/unit grammars, establish issuer/event identity and independent coverage/continuity, and distinguish repeated observations from cumulative adjustments before any adjustment use. |
 | TD-036 | P0 | Legacy backdated AKShare market/numeric rows, fabricated-zero turnover and ambiguous corporate-action units may exist in other databases. | New normalization uses retrieval visibility, LOW trust, versioned cache parameters and explicit new action units, without rewriting prior observations. Price/action ingestion stops placeholder company-metadata replacement. | Inventory retained databases and rebuild/mark legacy records ineligible using verified raw provenance; do not infer numeric revisions or canonical action units from old labels. Lost source history cannot be recreated by code. |
+| TD-037 | P1 | Previously persisted provider records/artifacts were admitted by a VERIFIED-only ceiling check; declared capability trust is not independently authenticated. | New neutral ingestion rejects every upward trust violation and mismatched capability identity before publication, without silently altering records. | Audit retained record/artifact provenance against the capability version applicable at ingestion. Where that version was not retained, report trust as unverified rather than inferring it from the current adapter; preserve original rows and require separate reviewed reassessment. |
+| TD-038 | P1, repaired for new writes | Replacement writes/query-only manifest ids could overwrite or relink replay results. | Replay v0.6.3.3 uses content-addressed run identities, manifest-owned sample ids, insert/compare conflict rejection and atomic repository publication. Exact retries are idempotent; sample content hashes exclude generation time. | Preserve legacy results; past overwrites cannot be recovered automatically. This does not make all upstream artifacts immutable; see TD-040. |
+| TD-039 | P0, partially repaired | Exact session alignment, full price-source authentication and corporate-action/cost semantics are not yet proved for historical outcomes. | Exact UTC calendar endpoints replace first/last fallbacks; horizon/lag, decision-visible baseline revisions, bound price content and independent request recomputation are tested. Missing/unsupported inputs remain blocked; PIT remains UNSUITABLE. | Add explicitly versioned exchange-session-aware metrics only with reviewed calendar/source/action coverage. Unadjusted price-only changes are not total investment returns or fills; no real historical strategy validation claim is supported yet. |
+| TD-040 | P1, content identity repaired; transitive provenance open | Report-id-only hashing omitted full research/evidence content and original input lineage. Report header writes already rejected duplicate ids; child evidence replacement and repeated module assessment appends were the actual mutable paths. | Replay v0.6.3.4 binds full report/evidence/policy and visible input-row inventories; requests recheck hashes/derived fields and block nested defects. Evidence conflicts require new identities; previous replay snapshots remain intact. | Prove exact original consumed inputs, request/config versions and provider artifact bytes. Reconstructed visible rows do not prove original consumption; hashes cannot authenticate a self-consistent forgery or recover pre-publication lost history. |
+
+October 16 TD-026 progress: the SSE notice adapter now captures 14 explicit
+dates and source bytes through neutral ingestion; typed runtime reads retain
+MEDIUM/retrieval-time evidence and flag conflict/expiry without changing the
+canonical calendar. This is partial source coverage, not resolution of TD-026.
+Complete calendar composition, ordinary/emergency-day provenance, price binding,
+phase/action coverage and account/settlement evidence are still required. The
+adapter is not part of the scheduled five-scope monitor; adding observations
+must not redefine or automatically satisfy its existing evidence horizon.
+
+Further TD-026 progress: a reviewed complete annual notice and verified
+effective weekday references now produce a separate ordinary SSE schedule.
+Every annual assertion and captured notice bytes are required; future,
+expired, missing or conflicting inputs stay unknown. This closes ordinary
+composition only within the reviewed 2026/July-6-onward scope, not actual
+emergency closure, settlement, security status or historical PIT coverage.
+The plan does not replace sessions or supply trusted calculation inputs.
+
+Subsequent TD-011/TD-026 progress: unadjusted AKShare equity/index daily bars
+now enter the neutral evidence transaction with canonical-row writes and
+source-bound frame artifacts. Other typed AKShare jobs remain legacy paths.
+The runtime inventory now exposes exact price bindings, but independent source
+review and current artifact verification are still open. It currently reads
+all visible evidence for a symbol before filtering the runtime window; add
+indexed observed-date selection before large historical/revision volumes are
+operationalized, without silently dropping incomplete or conflicting records.
+
+TD-019/TD-013 follow-up: artifact publication/rollback cleanup also needs
+concurrency-safe reference ownership before parallel writers share one root.
+A failed creator must not delete bytes another committed batch references.
+Current single-worker ingestion tests prove transaction rollback, not that
+cross-process filesystem/SQLite race is solved.
+
+TD-026/TD-036 follow-up: the suspension endpoint/forecast-inference defects are
+repaired for new captures and AKShare calibration; 13 real reported starts now
+have archived frame provenance, LOW trust and retrieval-time availability.
+Old `instrument_status_suspended` rows and unversioned suspension/resumption
+events/calibration reports remain unverified and must be audited before use.
+The SSE inventory flags them without deleting originals; other legacy read
+paths have not fully adopted shared eligibility/quarantine review. Complete
+ST, confirmed resumption, listing phase and temporal coverage remain open.
+
+Further TD-026/TD-036 progress: the reusable lifecycle review contract is now
+used by runtime v1.6 and lifecycle coverage. Original records are retained;
+invalid/wrong-period/wrong-security evidence cannot raise coverage and mixed
+trust uses the weakest retained record. Finish adoption at remaining raw-reader
+and historical-report boundaries, with reviewed artifact/issuer provenance;
+structural REVIEWABLE is not independent verification. Local broker UI data
+has not been captured/verified; screen observations must not become PIT history.
+
+Real-pilot coverage follow-up: the scoped manifest quantifies the current
+six-date history and configured 15-bar count deficit, retains absent financial/
+universe/status inputs, and separates exact bindings from source trust.
+These measurements do not resolve TD-026/TD-039/TD-040. Expand exploratory
+history and current financial observations through existing ingestion, then
+prove original-time availability, phase/action continuity, financial units,
+source authenticity and exact research consumption before eligibility claims.
+
+Financial-data follow-up: new neutral native snapshots avoid the legacy
+normalizer's assumptions. Before routing real native data into canonical
+facts, review currency/unit assumptions, metric/statement identity, consolidation/period
+basis and revision linkage. Native records are evidence for that review, not
+eligible growth/valuation inputs or proof that original historical revisions exist.
+The October 17 numeric repair preserves zero, handles nullable/blank values
+and rejects conflicting aliases with atomic rollback. It does not repair
+old stored facts or resolve the remaining semantic assumptions.
+The October 18 fact-writer repair rejects same-hash material disagreement,
+conflicting rows in one batch, nonfinite values and concurrent conflicts.
+Call-local savepoints prevent partial writes when callers catch an exception.
+An explicit later version preserves earlier PIT views, but the writer does
+not authenticate source timing or automatically correct old records. Separate
+legacy audits and a reviewed correction workflow remain open before reprocessing
+canonical facts; never repair them by overwrite.
+
+Research-boundary follow-up (October 18): context validation and financial
+latest-version selection now reject mixed subjects/metrics, future queue/
+metadata/periods and ambiguous fact content. Financial diagnostics expose
+units/trust/precision and include fact availability. This does not resolve
+source-evidenced accounting mappings or implement numerical fundamental scoring.
+Further hardening must review bar ordering/duplicate bars, direct module APIs,
+deep immutability and exact consumed-input provenance. A mutable nested context
+rechecked at run entry is not a concurrency-safe frozen research snapshot.
+
+Deployment follow-up (October 18): wheel/console smoke coverage and offline
+preflight now exist; source bytes must match the explicit commit and checkout.
+Dependency ranges are still not locked. Complete clean-host reproducibility,
+reviewed artifact retention/signing, verified encrypted DB/source-artifact
+portability and target-host recovery before a production release. The current
+local wheel is a temporary research test artifact, not a release candidate.
+
+Native dependency follow-up: runtime/dev/build pins, package hashes, manifest
+binding and actual version checks now exist for macOS arm64/Python 3.12.
+The fresh venv install and full suite close the borrowed-site-packages test
+gap. Linux/Windows/Intel profiles, signed release/wheelhouse retention and
+independent-machine recovery remain open. jsonpath source build is constrained
+but not claimed sandboxed or byte-reproducible. Linux CI does not consume the
+macOS lock; add native target verification before expanding supported hosts.

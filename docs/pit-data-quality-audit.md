@@ -14,8 +14,13 @@ not on assumptions about data that might exist elsewhere.
 
 ### Security Lifecycle
 
-- Daily suspension and expected/actual resumption evidence can be collected from
-  `stock_tfp_em`.
+- October 16 correction: `stock_tfp_em` supplies partial dated suspension
+  observations, not confirmed actual resumptions. Reported end and expected
+  resumption dates are metadata only. New events remain LOW/retrieval-time and
+  source-bound; legacy inferred resumptions require separate review.
+- `stock_zh_a_stop_em` is delisted-market quote data, not a suspension list;
+  the former current-suspension path is now disabled. See the
+  [repair and real capture](suspension-evidence-repair-2026-10-16.md).
 - Shenzhen dated short-name changes can identify ST entry and exit events.
 - Exchange delisting records produce explicit delisted events in addition to the
   existing status history.

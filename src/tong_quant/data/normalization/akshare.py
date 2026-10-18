@@ -1,7 +1,7 @@
 import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -31,6 +31,7 @@ from tong_quant.domain.models import (
     TradingSession,
     UniverseMembership,
 )
+from tong_quant.version import AKSHARE_SUSPENSION_VERSION
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 MARKET_CLOSE = time(hour=15)
@@ -137,7 +138,7 @@ def normalize_financial_statement(
         metric = _optional_text(row.get("metric_name") or row.get("指标名称"))
         if metric is None:
             continue
-        value = _optional_decimal(row.get("value") or row.get("金额"))
+        value = _financial_decimal(row)
         if value is None:
             continue
         period_end = _optional_date(
@@ -329,14 +330,32 @@ def normalize_suspension_lifecycle(
     events: list[SecurityLifecycleEvent] = []
     raw_hash = dataset.content_hash()
     for row in dataset.frame.to_dict(orient="records"):
-        symbol = _row_symbol(row)
-        start_date = _optional_date(row.get("停牌时间"))
-        if symbol is None or start_date is None:
+        symbol = _optional_text(row.get("代码"))
+        try:
+            start_date = _optional_date(row.get("停牌时间"))
+        except ValueError:
+            start_date = None
+        if (
+            symbol is None or len(symbol) != 6 or not symbol.isascii() or not symbol.isdigit()
+            or start_date is None
+            or start_date > dataset.retrieved_at.astimezone(SHANGHAI).date()
+        ):
             continue
         instrument = _snapshot_instrument(dataset, row, symbol)
+        metadata_dates: dict[str, str] = {}
+        for key, field_name in (("reported_end_date", "停牌截止时间"),
+                                ("expected_resumption_date", "预计复牌时间")):
+            try:
+                parsed = _optional_date(row.get(field_name))
+            except ValueError:
+                parsed = None
+            metadata_dates[key] = "" if parsed is None else parsed.isoformat()
         details = {
-            "reason": str(row.get("停牌原因") or ""),
-            "duration": str(row.get("停牌期限") or ""),
+            "reason": _optional_text(row.get("停牌原因")) or "",
+            "duration": _optional_text(row.get("停牌期限")) or "",
+            **metadata_dates,
+            "normalization_version": AKSHARE_SUSPENSION_VERSION,
+            "resumption_confirmation": "unverified",
         }
         events.append(
             SecurityLifecycleEvent(
@@ -350,28 +369,9 @@ def normalize_suspension_lifecycle(
                 batch_id=batch_id,
                 provider_dataset=dataset.dataset,
                 availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
-                trust_level=DataTrustLevel.MEDIUM,
+                trust_level=DataTrustLevel.LOW,
             )
         )
-        resumed_on = _optional_date(
-            row.get("停牌截止时间") or row.get("预计复牌时间")
-        )
-        if resumed_on is not None:
-            events.append(
-                SecurityLifecycleEvent(
-                    instrument=instrument,
-                    event_type=LifecycleEventType.TRADING_RESUMED,
-                    effective_date=resumed_on,
-                    available_at=dataset.retrieved_at,
-                    source=dataset.source,
-                    details=details,
-                    raw_data_hash=raw_hash,
-                    batch_id=batch_id,
-                    provider_dataset=dataset.dataset,
-                    availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
-                    trust_level=DataTrustLevel.MEDIUM,
-                )
-            )
     return events
 
 
@@ -645,6 +645,26 @@ def _optional_decimal(value: Any) -> Decimal | None:
     if value is None or pd.isna(value):
         return None
     return _decimal(value)
+
+
+def _financial_decimal(row: Mapping[object, Any]) -> Decimal | None:
+    values: list[Decimal] = []
+    for key in ("value", "金额"):
+        raw = row.get(key)
+        if raw is None or pd.isna(raw):
+            continue
+        if isinstance(raw, str) and not raw.strip():
+            continue
+        try:
+            value = Decimal(str(raw).strip())
+        except InvalidOperation:
+            raise ValueError("financial value must be a finite decimal") from None
+        if not value.is_finite():
+            raise ValueError("financial value must be a finite decimal")
+        values.append(value)
+    if values and any(value != values[0] for value in values[1:]):
+        raise ValueError("financial value aliases disagree")
+    return values[0] if values else None
 
 
 def _row_symbol(row: Mapping[object, Any]) -> str | None:

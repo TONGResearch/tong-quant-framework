@@ -10,6 +10,10 @@ from tong_quant.version import (
     REPLAY_CONFIDENCE_VERSION,
 )
 
+STATUS_REVIEW_BLOCKED = "instrument_status_review_blocked"
+OUTCOME_REVIEW_BLOCKED = "outcome_review_blocked"
+RESEARCH_REVIEW_BLOCKED = "research_review_blocked"
+
 
 def _require_percentage(name: str, value: float) -> None:
     if not 0 <= value <= 100:
@@ -87,6 +91,12 @@ class ReplayQuery:
             raise ValueError("Historical Replay requires at least medium data trust")
         if not self.outcome_definitions:
             raise ValueError("ReplayQuery requires outcome_definitions")
+        if len({item.outcome_id for item in self.outcome_definitions}) != len(
+            self.outcome_definitions
+        ):
+            raise ValueError("ReplayQuery outcome ids must be unique")
+        if len(set(self.symbols)) != len(self.symbols):
+            raise ValueError("ReplayQuery symbols must be unique")
         if not self.include_incomplete_samples:
             raise ValueError("Historical Replay must preserve incomplete samples")
 
@@ -148,7 +158,10 @@ class ReplayValidationSample:
     @property
     def is_complete(self) -> bool:
         blocking_flags = tuple(
-            flag for flag in self.missing_data_flags if flag.endswith("_missing")
+            flag
+            for flag in self.missing_data_flags
+            if flag.endswith("_missing")
+            or flag in {STATUS_REVIEW_BLOCKED, OUTCOME_REVIEW_BLOCKED, RESEARCH_REVIEW_BLOCKED}
         )
         return self.validation_sample is not None and not blocking_flags
 

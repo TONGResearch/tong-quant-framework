@@ -1,14 +1,17 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from math import isfinite
 
 from tong_quant.domain.enums import EvidenceQuality, ResearchModuleName
 from tong_quant.domain.models import Bar
+from tong_quant.research.bar_inputs import require_period, research_daily_bars
 from tong_quant.research.base import assessment_from_scores, insufficient_assessment
 from tong_quant.research.models import (
     ResearchAssessment,
     ResearchContext,
     ResearchEvidence,
 )
+from tong_quant.version import TREND_RESEARCH_VERSION
 
 TREND_FIELDS = frozenset(
     {
@@ -30,11 +33,21 @@ class TrendResearchModule:
             ResearchModuleName.TECHNICAL,
         }
     )
-    model_version: str = "trend-v0.5"
+    model_version: str = TREND_RESEARCH_VERSION
     breakout_period: int = 20
     volume_period: int = 20
     atr_period: int = 14
     confirmation_threshold: float = 60.0
+
+    def __post_init__(self) -> None:
+        for name in ("breakout_period", "volume_period", "atr_period"):
+            require_period(name, getattr(self, name))
+        if (
+            type(self.confirmation_threshold) not in {float, int}
+            or not isfinite(self.confirmation_threshold)
+            or not 0 <= self.confirmation_threshold <= 100
+        ):
+            raise ValueError("confirmation threshold must be finite and between 0 and 100")
 
     def evaluate(
         self,
@@ -42,16 +55,7 @@ class TrendResearchModule:
         dependencies: Mapping[ResearchModuleName, ResearchAssessment],
     ) -> ResearchAssessment:
         required_bars = max(self.breakout_period, self.volume_period, self.atr_period) + 1
-        bars = tuple(
-            sorted(
-                (
-                    bar
-                    for bar in context.bars
-                    if bar.available_at <= context.as_of and not bar.is_suspended
-                ),
-                key=lambda bar: bar.timestamp,
-            )
-        )
+        bars = research_daily_bars(context)
         supplied = {
             name: context.evidence_named(self.module, name)
             for name in (
@@ -123,6 +127,7 @@ class TrendResearchModule:
             ),
             limitations=(
                 "No order, entry decision, or live position sizing is produced",
+                "Observed dates are not verified sessions or authenticated PIT price coverage",
             ),
             model_version=self.model_version,
             features={

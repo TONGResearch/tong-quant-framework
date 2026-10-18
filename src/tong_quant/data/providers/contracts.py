@@ -9,6 +9,14 @@ from tong_quant.domain.enums import AvailabilityPrecision, DataTrustLevel, Marke
 from tong_quant.domain.models import require_timezone
 from tong_quant.version import PROVIDER_EVIDENCE_VERSION
 
+# Evidence identities shared by ingestion and read-only consumers, not transport clients.
+SSE_CALENDAR_PROVIDER = "sse_calendar_notice"
+SSE_CALENDAR_DATASET = "exchange_calendar_notice"
+AKSHARE_PRICE_PROVIDER = "akshare"
+ASHARE_DAILY_DATASET = "a_share_daily"
+FINANCIAL_SNAPSHOT_DATASET = "financial_statement_snapshot"
+CNINFO_DISCLOSURES_DATASET = "china_disclosures"
+
 
 class ProviderCapabilityStatus(StrEnum):
     AVAILABLE = "available"
@@ -442,6 +450,12 @@ def _stable_identifier(document: dict[str, object]) -> str:
 
 
 __all__ = [
+    "AKSHARE_PRICE_PROVIDER",
+    "ASHARE_DAILY_DATASET",
+    "FINANCIAL_SNAPSHOT_DATASET",
+    "CNINFO_DISCLOSURES_DATASET",
+    "SSE_CALENDAR_PROVIDER",
+    "SSE_CALENDAR_DATASET",
     "EvidenceLimitation",
     "ProviderCapabilityStatus",
     "ProviderArtifact",

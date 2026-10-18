@@ -4,12 +4,14 @@ from datetime import datetime
 
 from tong_quant.domain.enums import EvidenceQuality, ResearchModuleName
 from tong_quant.domain.models import Bar
+from tong_quant.research.bar_inputs import require_period, research_daily_bars
 from tong_quant.research.base import assessment_from_scores, insufficient_assessment
 from tong_quant.research.models import (
     ResearchAssessment,
     ResearchContext,
     ResearchEvidence,
 )
+from tong_quant.version import TECHNICAL_RESEARCH_VERSION
 
 TECHNICAL_FIELDS = frozenset(
     {
@@ -26,10 +28,14 @@ TECHNICAL_FIELDS = frozenset(
 class TechnicalResearchModule:
     module: ResearchModuleName = ResearchModuleName.TECHNICAL
     dependencies: frozenset[ResearchModuleName] = frozenset()
-    model_version: str = "technical-v0.5"
+    model_version: str = TECHNICAL_RESEARCH_VERSION
     short_ma_period: int = 50
     long_ma_period: int = 200
     position_period: int = 252
+
+    def __post_init__(self) -> None:
+        for name in ("short_ma_period", "long_ma_period", "position_period"):
+            require_period(name, getattr(self, name))
 
     def evaluate(
         self,
@@ -37,8 +43,8 @@ class TechnicalResearchModule:
         dependencies: Mapping[ResearchModuleName, ResearchAssessment],
     ) -> ResearchAssessment:
         del dependencies
-        minimum = max(self.long_ma_period, self.position_period)
-        bars = _usable_bars(context.bars, context.as_of)
+        minimum = max(self.short_ma_period, self.long_ma_period + 1, self.position_period, 22)
+        bars = research_daily_bars(context)
         if len(bars) < minimum:
             return insufficient_assessment(
                 module=self.module,
@@ -88,7 +94,8 @@ class TechnicalResearchModule:
                 "Technical relationships can reverse and do not establish business value",
             ),
             limitations=(
-                "Daily bars approximate weekly and monthly trend; no intraday evidence is used",
+                "Daily observations approximate weekly/monthly trend, not verified sessions",
+                "Structural input checks do not authenticate price sources or PIT coverage",
             ),
             model_version=self.model_version,
             features={
@@ -105,25 +112,12 @@ class TechnicalResearchModule:
         )
 
 
-def _usable_bars(bars: Sequence[Bar], as_of: datetime) -> tuple[Bar, ...]:
-    return tuple(
-        sorted(
-            (
-                bar
-                for bar in bars
-                if bar.available_at <= as_of and not bar.is_suspended
-            ),
-            key=lambda bar: bar.timestamp,
-        )
-    )
-
-
 def _mean_close(bars: Sequence[Bar]) -> float:
     return sum(float(bar.close) for bar in bars) / len(bars)
 
 
 def _return(bars: Sequence[Bar], period: int) -> float:
-    earlier = float(bars[-period].close)
+    earlier = float(bars[-period - 1].close)
     return 0.0 if earlier == 0 else float(bars[-1].close) / earlier - 1
 
 

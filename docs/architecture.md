@@ -1,10 +1,23 @@
 # Tong Quant Architecture Overview
 
+Registered provider-byte portability is checked read-only by
+`data.storage.artifact_audit`, exposed through `scripts/audit_provider_artifacts.py`.
+It reads one registry snapshot and verifies explicit-root files with bounded
+streaming hashes. It neither copies data nor substitutes for database integrity,
+encrypted restore drills, provider trust or PIT qualification. See
+[artifact portability audit](artifact-portability-2026-10-18.md).
+
 This is the canonical current architecture for the V0.8 research platform and
 its engineering-stabilization work. Milestone documents provide detail but must
 not override the boundaries in this document.
 
 ## Design Decision
+
+Technical, Trend and Pattern share `research.bar_inputs` for visible daily
+observation selection and structural validation. Model versions distinguish
+corrected N-interval return semantics and duplicate/revision warm-up handling.
+This boundary does not infer sessions, source trust or trading authority. See
+[research bar integrity and progress](research-bar-integrity-2026-10-18.md).
 
 China A, US, Hong Kong, and Malaysia share the same workflow and domain
 contracts. They do not share every market policy or trading rule.
@@ -90,6 +103,126 @@ Retrieval-time evidence can be used only after capture and keeps that warning.
 
 Provider adapters fetch external data. Normalizers convert it into canonical
 models. Strategies never call AKShare, Tushare, or brokers directly.
+
+`ProviderNeutralIngestionService` checks capability ownership before fetching
+and enforces the full `UNKNOWN < LOW < MEDIUM < HIGH < VERIFIED` ceiling for
+records and artifacts before filesystem or database publication. Equal or lower
+trust is preserved, not promoted or silently clamped. Relaxing PIT timestamp
+checks cannot relax trust checks. Availability precision is independent and
+does not raise trust. This structural ceiling is not independent provider
+verification; new calendar/price evidence still needs reviewed provenance.
+The correction does not rewrite or certify previously persisted evidence.
+
+The SSE calendar-notice adapter binds explicit date assertions to a reviewed
+source hash, archives raw bytes through the same neutral transaction, and
+retains MEDIUM/retrieval-time limitations. A typed MarketDataService read
+includes these records in the SSE inventory's existing SQLite snapshot, without
+silently changing canonical sessions or constructing trusted context. Conflicts,
+malformed assertions and review expiry are visible. See
+[the real capture and remaining limits](sse-calendar-notice-evidence-2026-10-16.md).
+
+The transport-free calendar profile and application-level
+`SSECalendarPlanBuilder` combine a complete reviewed annual notice with verified
+effective weekday rules. This yields a separate deterministic **ordinary
+schedule**, not actual exchange operation or settlement. All annual assertions
+and current artifact bytes are required; incomplete, expired, future, tampered
+or conflicting sources cannot yield favorable inferred dates. The runtime
+reader keeps canonical sessions and raw gaps unchanged, includes plan hashes,
+and requires an explicit rule capture. No Paper/market-rule calculation consumes
+this plan. See [scope, evidence and remaining gates](sse-calendar-plan-2026-10-16.md).
+
+Unadjusted AKShare daily rows now use the same neutral ingestion unit of work
+for canonical rows and source-bound frame artifacts. Cache serialization is
+preserved, fingerprints are verified, and reconstruction must match normalized
+prices exactly. Read-side inventory exposes exact row/source/time/artifact
+bindings while preserving LOW trust and unresolved artifact/source review.
+See [the price capture and contract](daily-price-evidence-2026-10-16.md).
+Other legacy AKShare datasets remain on their existing typed pipeline; this
+does not complete the provider migration or independently authenticate prices.
+
+Dated suspension captures now share this neutral ingestion unit of work:
+raw delivered-frame artifact + provider evidence + LOW/retrieval-time reported
+start events. The current-suspension snapshot API rejects calls because its
+former endpoint returned delisted-market quotes. Reported end and expected
+resumption dates remain metadata, never confirmed resumptions; AKShare
+calibration uses the same normalizer. Runtime v1.5 reads lifecycle/evidence in
+the existing SQLite snapshot and preserves legacy/missing-coverage warnings.
+Neither event presence nor absence establishes current ST, suspension, normal
+listing phase or tradability. See [repair and real capture](suspension-evidence-repair-2026-10-16.md).
+
+`data.lifecycle_review` now owns structural usability review for lifecycle
+events/status records. It retains deterministic original-record hashes,
+as-of bounds, dispositions and reason codes. Runtime v1.6 includes these
+reviews; lifecycle coverage excludes quarantined/out-of-scope records and
+cannot average weak trust into a stronger label. This is logical quarantine,
+not database deletion, artifact-byte verification or a current-status clearance.
+Raw service reads remain preservation APIs and historical calibration reports
+are not silently recertified. See [scope and remaining enforcement boundaries](lifecycle-usability-review-2026-10-16.md).
+
+Replay v0.6.3.4 carries original status/review metadata in decision hashes,
+preserves unusable diagnostic samples, and blocks formal validation on invalid
+status even when declared trust/readiness looks favorable. The request factory
+rechecks current policy, content/instrument/time binding and usability.
+Reconstruction uses one SQLite read snapshot; persistence happens afterwards
+in one manifest/sample transaction. These structural safeguards do not prove
+source truth or real strategy reliability. Exact UTC calendar endpoint prices
+now honor horizon/lag and separate visibility cutoffs; missing endpoints do not
+shift the window. The request factory recomputes the bound price-only outcome.
+Content-addressed manifests and manifest-owned samples reject replacement and
+relinking; repository publication is atomic. Full research/evidence/policy
+snapshots and visible input inventories now enter sample identity; the request
+factory checks nested eligibility, content hashes and derived fields. Evidence
+writes reject conflicting identity reuse. Exact original-run context and raw
+source attestation, and corporate-action/session-aware outcomes, remain open. See
+[the research-content binding repair](replay-research-binding-2026-10-16.md),
+[the outcome/immutability repair](replay-outcome-integrity-2026-10-16.md),
+[the status-boundary repair](replay-status-review-2026-10-16.md) and
+[remaining deployment groups](deployment-gap-plan-2026-10-16.md).
+
+The [SSE pilot coverage manifest](sse-pilot-coverage-2026-10-16.md) composes
+existing runtime/data/research readers in one snapshot. It distinguishes
+counts, exact price bindings, original trust and unknown session denominators,
+lists configured input deficits and preserves missing evidence without
+promoting PIT or enabling a strategy. Protected optional exports are new local
+metadata files, not another domain persistence path or a backup of source bytes.
+
+Native AKShare financial snapshots now use the same neutral evidence/artifact
+transaction, with exact serialized-row binding, LOW/retrieval-time semantics
+and unknown canonical metric/accounting unit. They do not populate financial
+facts or research scores. The [isolated real expansion](exploratory-data-expansion-2026-10-16.md)
+and pilot inventory v1.1 distinguish raw observations, canonical data and
+validated research; larger row counts cannot silently advance readiness.
+The legacy normalizer now preserves numeric zero and rejects conflicting
+value aliases transactionally. Its remaining currency/unit/period assumptions
+are explicitly warned, not certified; see the
+[reviewed-mapping checklist](financial-numeric-hardening-2026-10-17.md).
+Canonical fact persistence now checks all material content under a reserved
+writer transaction and call-local savepoint. Same-hash disagreements and
+within-call conflicts fail explicitly; retries preserve original content and
+audit metadata. See [fact integrity](fundamental-fact-integrity-2026-10-18.md).
+This storage guarantee is not source verification or approval of legacy facts.
+ResearchContext now revalidates candidate identity, metric binding, visible
+queue/metadata/periods and fact consistency before a run starts. Financial
+diagnostics select the latest period/visible version deterministically and
+retain unit/trust/precision metadata; see
+[research input integrity](research-input-integrity-2026-10-18.md).
+Caller-owned nested data is not deep-frozen, and accounting/source eligibility
+remains a separate gate.
+
+Offline research operations now expose an installed `tong-quant` command and
+`application.deployment_preflight`. Preflight composes settings, governance,
+installed dependency/source checks and the read-only SQLite integrity service;
+it imports no provider SDK, broker, Paper, Portfolio, Notification or Execution
+module. Runtime/checkout/commit source hashes and explicit nonauthorization
+flags keep host diagnostics distinct from research and trading-readiness gates.
+See the [deployment runbook](research-deployment-runbook.md). No service process,
+schema migration or automatic recovery is introduced by this command.
+Preflight v1.1 additionally composes `application.dependency_lock`: structured
+native manifests bind exact requirement text, root specs and build inputs;
+installed package versions are checked without SDK imports. Runtime manifest
+hashes enter the diagnostic. The resolver-report compiler is an operator tool,
+not a runtime dependency resolver or a new persistence path. See the
+[native baseline](dependency-baseline-2026-10-18.md) for platform/source-build limits.
 
 Comparable global daily bars use an explicit unadjusted contract:
 

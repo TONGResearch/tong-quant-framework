@@ -1,6 +1,9 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from tong_quant.data.artifacts import FileSystemArtifactStore, ProviderArtifactStore
+from tong_quant.data.ingestion import ProviderNeutralIngestionService
 from tong_quant.data.models import (
     DailyBarRequest,
     DataAvailabilityWarning,
@@ -30,6 +33,9 @@ from tong_quant.data.normalization import (
     normalize_universe,
 )
 from tong_quant.data.providers.akshare import AkShareAdapter
+from tong_quant.data.providers.akshare_prices import AkShareDailyBarEvidenceAdapter
+from tong_quant.data.providers.akshare_suspensions import AkShareSuspensionEvidenceAdapter
+from tong_quant.data.providers.contracts import FINANCIAL_SNAPSHOT_DATASET, ProviderDatasetRequest
 from tong_quant.data.quality import DataQualityError, validate_bars, validate_raw_dataset
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
@@ -49,10 +55,16 @@ class DataIngestionPipeline:
         store: SQLiteStore,
         *,
         strict_point_in_time: bool = True,
+        artifact_store: ProviderArtifactStore | None = None,
     ) -> None:
         self._provider = provider
         self._store = store
         self._strict_point_in_time = strict_point_in_time
+        self._price_artifacts = (
+            artifact_store
+            if artifact_store is not None
+            else FileSystemArtifactStore(store.path.parent / "raw/provider-artifacts")
+        )
 
     def initialize(self) -> None:
         self._store.initialize()
@@ -60,10 +72,7 @@ class DataIngestionPipeline:
             self._document_provider_limitations()
 
     def ingest_daily_bars(self, request: DailyBarRequest) -> IngestionResult:
-        if (
-            self._strict_point_in_time
-            and request.adjustment is not Adjustment.NONE
-        ):
+        if self._strict_point_in_time and request.adjustment is not Adjustment.NONE:
             raise ValueError(
                 "strict point-in-time mode rejects provider-adjusted bars; "
                 "ingest unadjusted prices until dated corporate-action factors exist"
@@ -73,14 +82,21 @@ class DataIngestionPipeline:
         if not raw_report.is_valid:
             raise DataQualityError(raw_report)
 
+        if request.adjustment is Adjustment.NONE:
+            return self._ingest_unadjusted_price_evidence(response, request)
+
         with self._store.transaction():
             instrument = self._store.get_instrument(
-                request.symbol, request.market, request.asset_type,
+                request.symbol,
+                request.market,
+                request.asset_type,
                 as_of=response.dataset.retrieved_at,
             )
             if instrument is None:
                 instrument = build_bar_instrument(
-                    request.symbol, request.asset_type, first_bar_available_at(response.dataset),
+                    request.symbol,
+                    request.asset_type,
+                    first_bar_available_at(response.dataset),
                 )
                 self._store.upsert_instruments([instrument])
             bars = normalize_daily_bars(response.dataset, request, instrument)
@@ -89,7 +105,8 @@ class DataIngestionPipeline:
                 raise DataQualityError(normalized_report)
             accepted = self._store.upsert_daily_bars(bars)
             batch_id, warnings = self._record_dataset_audit(
-                response, accepted,
+                response,
+                accepted,
                 warning_code="retrieval_time_price_snapshot",
                 warning_message=(
                     "Historical price values are visible only from retrieval time; "
@@ -108,6 +125,50 @@ class DataIngestionPipeline:
             warnings=warnings,
         )
 
+    def _ingest_unadjusted_price_evidence(
+        self, response: ProviderResponse, request: DailyBarRequest
+    ) -> IngestionResult:
+        dataset = response.dataset
+        instrument = self._store.get_instrument(
+            request.symbol,
+            request.market,
+            request.asset_type,
+            as_of=dataset.retrieved_at,
+        ) or build_bar_instrument(request.symbol, request.asset_type, dataset.retrieved_at)
+        bars = normalize_daily_bars(dataset, request, instrument)
+        report = validate_bars(bars)
+        if not report.is_valid:
+            raise DataQualityError(report)
+
+        def write_canonical(batch_id: str) -> None:
+            del batch_id
+            existing = self._store.get_instrument(
+                request.symbol,
+                request.market,
+                request.asset_type,
+                as_of=dataset.retrieved_at,
+            )
+            if existing is None:
+                self._store.upsert_instruments((instrument,))
+            elif existing.currency != instrument.currency:
+                raise ValueError("security currency changed while preparing price evidence")
+            self._store.upsert_daily_bars(
+                replace(bar, instrument=existing or instrument) for bar in bars
+            )
+
+        result = ProviderNeutralIngestionService(
+            self._store,
+            strict_point_in_time=self._strict_point_in_time,
+            artifact_store=self._price_artifacts,
+        ).ingest(
+            AkShareDailyBarEvidenceAdapter(dataset, request, tuple(bars)),
+            ProviderDatasetRequest(
+                dataset.dataset, request.market, request.symbol, dataset.retrieved_at
+            ),
+            write_canonical=write_canonical,
+        )
+        return replace(result, cached=response.cache_hit)
+
     def ingest_trading_calendar(self) -> IngestionResult:
         response = self._provider.trading_calendar()
         report = validate_raw_dataset(response.dataset)
@@ -117,7 +178,8 @@ class DataIngestionPipeline:
         with self._store.transaction():
             accepted = self._store.upsert_trading_sessions(sessions)
             batch_id, warnings = self._record_dataset_audit(
-                response, accepted,
+                response,
+                accepted,
                 warning_code="retrieval_time_open_calendar_snapshot",
                 warning_message=(
                     "Calendar dates are visible only from retrieval time; absent dates "
@@ -148,8 +210,7 @@ class DataIngestionPipeline:
                 accepted,
                 warning_code="current_snapshot_only",
                 warning_message=(
-                    "Company information is a retrieval-time snapshot, not "
-                    "historical fundamentals"
+                    "Company information is a retrieval-time snapshot, not historical fundamentals"
                 ),
                 trust_level=DataTrustLevel.LOW,
             )
@@ -198,7 +259,38 @@ class DataIngestionPipeline:
             warnings=warnings,
         )
 
+    def capture_financial_statement(self, symbol: str, statement: str) -> IngestionResult:
+        from tong_quant.data.providers.akshare_financials import (
+            AkShareFinancialSnapshotAdapter,
+        )
+
+        response = self._provider.financial_statement(symbol, statement)
+        result = ProviderNeutralIngestionService(
+            self._store,
+            strict_point_in_time=self._strict_point_in_time,
+            artifact_store=self._price_artifacts,
+        ).ingest(
+            AkShareFinancialSnapshotAdapter(response.dataset),
+            ProviderDatasetRequest(
+                FINANCIAL_SNAPSHOT_DATASET,
+                Market.CHINA_A,
+                symbol,
+                response.dataset.retrieved_at,
+                {"statement": statement},
+            ),
+        )
+        return IngestionResult(
+            result.dataset,
+            result.received,
+            result.accepted,
+            result.rejected,
+            response.cache_hit,
+            result.batch_id,
+            result.warnings,
+        )
+
     def ingest_financial_statement(self, symbol: str, statement: str) -> IngestionResult:
+        """Legacy mapping; use native capture until real field/unit semantics are reviewed."""
         response = self._provider.financial_statement(symbol, statement)
         report = validate_raw_dataset(response.dataset)
         if not report.is_valid:
@@ -239,7 +331,9 @@ class DataIngestionPipeline:
                     "AKShare financial statement payload does not provide reliable "
                     "issuer publication timestamps or authenticated numeric revision history; "
                     "matching publication events cannot backdate values; "
-                    "records are retrieval-time safe"
+                    "records are retrieval-time safe only; legacy metric, currency, unit "
+                    "and accounting-period semantics remain unreviewed; use native capture "
+                    "for real provider payloads pending reviewed mappings"
                 ),
                 trust_level=DataTrustLevel.LOW,
             )
@@ -260,8 +354,7 @@ class DataIngestionPipeline:
             is_tradable=True,
             warning_code="st_snapshot_only",
             warning_message=(
-                "ST data is a retrieval-time snapshot without full historical "
-                "status intervals"
+                "ST data is a retrieval-time snapshot without full historical status intervals"
             ),
         )
 
@@ -295,8 +388,7 @@ class DataIngestionPipeline:
                 batch_id=batch_id,
                 warning_code="delisting_history_partial",
                 warning_message=(
-                    "Delisting data may not include the full warning or "
-                    "delisting-risk period"
+                    "Delisting data may not include the full warning or delisting-risk period"
                 ),
                 trust_level=DataTrustLevel.MEDIUM,
             )
@@ -315,34 +407,41 @@ class DataIngestionPipeline:
         report = validate_raw_dataset(response.dataset)
         if not report.is_valid:
             raise DataQualityError(report)
-        batch_id = str(uuid4())
         events = normalize_suspension_lifecycle(
             response.dataset,
-            batch_id=batch_id,
+            batch_id="",
         )
-        with self._store.transaction():
-            self._store.upsert_instruments([event.instrument for event in events])
-            accepted = self._store.upsert_security_lifecycle_events(events)
-            recorded_batch_id, warnings = self._record_dataset_audit(
-                response,
-                accepted,
-                batch_id=batch_id,
-                warning_code="suspension_event_retrieval_time",
-                warning_message=(
-                    "Suspension effective dates are retained, but historical "
-                    "availability is known only from retrieval time"
-                ),
-                trust_level=DataTrustLevel.MEDIUM,
-            )
-        return IngestionResult(
-            dataset=response.dataset.dataset,
-            received=len(response.dataset.frame),
-            accepted=accepted,
-            rejected=max(len(response.dataset.frame) - accepted, 0),
-            cached=response.cache_hit,
-            batch_id=recorded_batch_id,
-            warnings=warnings,
+
+        def write_canonical(batch_id: str) -> None:
+            retained = []
+            for event in events:
+                instrument = self._store.get_instrument(
+                    event.instrument.symbol,
+                    Market.CHINA_A,
+                    AssetType.EQUITY,
+                    as_of=response.dataset.retrieved_at,
+                )
+                if instrument is None:
+                    instrument = event.instrument
+                    self._store.upsert_instruments((instrument,))
+                retained.append(replace(event, instrument=instrument, batch_id=batch_id))
+            self._store.upsert_security_lifecycle_events(retained)
+
+        result = ProviderNeutralIngestionService(
+            self._store,
+            strict_point_in_time=self._strict_point_in_time,
+            artifact_store=self._price_artifacts,
+        ).ingest(
+            AkShareSuspensionEvidenceAdapter(response.dataset),
+            ProviderDatasetRequest(
+                response.dataset.dataset,
+                Market.CHINA_A,
+                f"ALL:{on_date}",
+                response.dataset.retrieved_at,
+            ),
+            write_canonical=write_canonical,
         )
+        return replace(result, cached=response.cache_hit)
 
     def ingest_shenzhen_st_history(self) -> IngestionResult:
         response = self._provider.shenzhen_name_changes()
@@ -472,9 +571,7 @@ class DataIngestionPipeline:
             batch_id=batch_id,
         )
         with self._store.transaction():
-            self._store.upsert_instruments(
-                [membership.instrument for membership in memberships]
-            )
+            self._store.upsert_instruments([membership.instrument for membership in memberships])
             accepted = self._store.upsert_universe_memberships(memberships)
             recorded_batch_id, warnings = self._record_dataset_audit(
                 response,
@@ -505,15 +602,22 @@ class DataIngestionPipeline:
         batch_id = str(uuid4())
         with self._store.transaction():
             instrument = self._store.get_instrument(
-                symbol, Market.CHINA_A, AssetType.EQUITY, as_of=response.dataset.retrieved_at,
+                symbol,
+                Market.CHINA_A,
+                AssetType.EQUITY,
+                as_of=response.dataset.retrieved_at,
             )
             if instrument is None:
                 instrument = build_bar_instrument(
-                    symbol, AssetType.EQUITY, response.dataset.retrieved_at,
+                    symbol,
+                    AssetType.EQUITY,
+                    response.dataset.retrieved_at,
                 )
                 self._store.upsert_instruments([instrument])
             normalization = normalize_corporate_action_batch(
-                response.dataset, instrument, batch_id=batch_id,
+                response.dataset,
+                instrument,
+                batch_id=batch_id,
             )
             inserted = self._store.upsert_corporate_actions(normalization.actions)
             accepted = normalization.accepted_rows
@@ -534,19 +638,25 @@ class DataIngestionPipeline:
                 f"rejected_rows={normalization.rejected_rows}; cash is gross per old share, "
                 "split ratio is total new shares per old share; missing components are unknown"
             )
-            messages = [summary, *(
-                f"row={issue.row}: {issue.code}" for issue in normalization.issues
-            )]
+            messages = [
+                summary,
+                *(f"row={issue.row}: {issue.code}" for issue in normalization.issues),
+            ]
             for index, message in enumerate(messages):
-                self._store.save_data_availability_warning(DataAvailabilityWarning(
-                    dataset=response.dataset.dataset,
-                    warning_code=(
-                        "corporate_action_normalization" if index == 0
-                        else "corporate_action_row_rejected"
-                    ),
-                    message=message, trust_level=DataTrustLevel.LOW,
-                    created_at=datetime.now(UTC), batch_id=recorded_batch_id,
-                ))
+                self._store.save_data_availability_warning(
+                    DataAvailabilityWarning(
+                        dataset=response.dataset.dataset,
+                        warning_code=(
+                            "corporate_action_normalization"
+                            if index == 0
+                            else "corporate_action_row_rejected"
+                        ),
+                        message=message,
+                        trust_level=DataTrustLevel.LOW,
+                        created_at=datetime.now(UTC),
+                        batch_id=recorded_batch_id,
+                    )
+                )
             warnings = (*warnings, *messages)
         return IngestionResult(
             dataset=response.dataset.dataset,

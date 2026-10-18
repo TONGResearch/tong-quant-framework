@@ -18,6 +18,7 @@ class ReplayConfidenceInput:
     missing_data_count: int
     expected_input_count: int
     provider_limitations: tuple[ProviderLimitation, ...]
+    integrity_blockers: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.missing_data_count < 0 or self.expected_input_count <= 0:
@@ -34,8 +35,7 @@ class ReplayConfidenceEvaluator:
 
     def evaluate(self, confidence_input: ReplayConfidenceInput) -> ReplayConfidence:
         readiness_trust = tuple(
-            assessment.trust_level
-            for assessment in confidence_input.readiness_assessments
+            assessment.trust_level for assessment in confidence_input.readiness_assessments
         )
         observed_trust = confidence_input.trust_levels + readiness_trust
         data_trust_score = _data_trust_score(observed_trust)
@@ -88,10 +88,9 @@ def _blocking_reasons(
     *,
     observed_trust: tuple[DataTrustLevel, ...],
 ) -> tuple[str, ...]:
-    blockers: list[str] = []
+    blockers: list[str] = list(confidence_input.integrity_blockers)
     assessment_by_dataset = {
-        assessment.dataset: assessment
-        for assessment in confidence_input.readiness_assessments
+        assessment.dataset: assessment for assessment in confidence_input.readiness_assessments
     }
     for dataset in confidence_input.required_datasets:
         assessment = assessment_by_dataset.get(dataset)
@@ -102,9 +101,7 @@ def _blocking_reasons(
             assessment.classification is not PITReadinessClassification.USABLE
             or not assessment.ready_for_historical_replay
         ):
-            blockers.append(
-                f"PIT readiness for {dataset} is {assessment.classification.value}"
-            )
+            blockers.append(f"PIT readiness for {dataset} is {assessment.classification.value}")
         if assessment.missing_critical_fields:
             blockers.append(f"critical PIT fields are missing for {dataset}")
 
@@ -113,13 +110,10 @@ def _blocking_reasons(
         blockers.append("no data trust evidence is available")
     elif min(trust_rank(level) for level in observed_trust) < minimum_rank:
         blockers.append(
-            "observed data trust is below required "
-            f"{confidence_input.minimum_trust_level.value}"
+            f"observed data trust is below required {confidence_input.minimum_trust_level.value}"
         )
     if confidence_input.missing_data_count:
-        blockers.append(
-            f"{confidence_input.missing_data_count} required replay inputs are missing"
-        )
+        blockers.append(f"{confidence_input.missing_data_count} required replay inputs are missing")
     return tuple(dict.fromkeys(blockers))
 
 

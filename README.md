@@ -115,6 +115,18 @@ pytest
 python -m tong_quant
 ```
 
+Offline installation diagnostics, including from another working directory:
+
+```bash
+python -m tong_quant status --project-root /absolute/path/to/TongQuant_v1
+python -m tong_quant preflight --project-root /absolute/path/to/TongQuant_v1
+```
+
+The installed wheel also exposes `tong-quant`. Preflight never enables trading
+or promotes data readiness; an uncommitted checkout fails closed. See the
+[research deployment runbook](docs/research-deployment-runbook.md) for package,
+data portability and rollback boundaries.
+
 Example ingestion:
 
 ```bash

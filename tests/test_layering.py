@@ -39,6 +39,35 @@ def test_order_models_exist_only_in_execution_package() -> None:
     assert offenders == []
 
 
+def test_sse_input_inventory_is_transport_free_and_notice_adapter_is_data_only() -> None:
+    for path in ("application/sse_runtime_inputs.py", "application/sse_calendar_plan.py",
+                 "application/sse_pilot_coverage.py",
+                 "application/deployment_preflight.py",
+                 "application/dependency_lock.py",
+                 "data/storage/artifact_audit.py",
+                 "research/bar_inputs.py",
+                 "data/calendar_evidence.py"):
+        reader_imports = _imported_modules(PACKAGE_ROOT / path)
+        assert "requests" not in reader_imports
+        assert not any(
+            module.startswith("tong_quant.data.providers.")
+            and module != "tong_quant.data.providers.contracts"
+            for module in reader_imports
+        )
+    forbidden = {"execution", "paper", "brokers", "portfolio", "notifications"}
+    for path in ("data/providers/sse_calendar.py", "data/providers/akshare_prices.py",
+                 "data/providers/akshare_suspensions.py", "data/price_evidence.py",
+                 "data/providers/akshare_financials.py",
+                 "data/storage/artifact_audit.py",
+                 "research/bar_inputs.py",
+                 "application/sse_pilot_coverage.py",
+                 "data/lifecycle_review.py"):
+        assert not any(
+            module.startswith("tong_quant.") and module.split(".")[1] in forbidden
+            for module in _imported_modules(PACKAGE_ROOT / path)
+        )
+
+
 def test_validation_has_no_execution_or_order_dependency() -> None:
     validation_root = Path("src/tong_quant/validation")
     offenders = sorted(

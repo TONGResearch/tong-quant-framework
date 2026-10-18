@@ -4,21 +4,36 @@ import math
 import subprocess
 import sys
 from dataclasses import asdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from tong_quant.config.settings import load_settings
 from tong_quant.core.security import reject_sensitive_structure
+from tong_quant.data.artifacts import FileSystemArtifactStore
 from tong_quant.data.cache import DataFrameCache
+from tong_quant.data.ingestion import ProviderNeutralIngestionService
 from tong_quant.data.models import DailyBarRequest
 from tong_quant.data.pipeline import DataIngestionPipeline
 from tong_quant.data.providers import AkShareAdapter
+from tong_quant.data.providers.contracts import (
+    SSE_CALENDAR_DATASET,
+    ProviderDatasetCapability,
+    ProviderDatasetRequest,
+    ProviderEvidenceBatch,
+)
+from tong_quant.data.providers.sse_calendar import (
+    SSECalendarNoticeAdapter,
+    SSECalendarNoticeProfile,
+)
 from tong_quant.data.storage import SQLiteStore
-from tong_quant.domain.enums import Adjustment, AssetType
+from tong_quant.domain.enums import Adjustment, AssetType, Market
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ingest AKShare data into Tong Quant SQLite")
+    parser = argparse.ArgumentParser(
+        description="Ingest market data and provider evidence into SQLite"
+    )
     parser.add_argument("--database", type=Path)
     parser.add_argument("--timeout-seconds", type=float, default=60)
     parser.add_argument("--refresh", action="store_true", help="Bypass cached payloads")
@@ -37,10 +52,24 @@ def parse_args() -> argparse.Namespace:
     )
 
     subparsers.add_parser("calendar")
+    notice = subparsers.add_parser("sse-calendar-notice")
+    notice.add_argument(
+        "--profile",
+        type=Path,
+        default=Path("config/markets/sse-calendar-notice-2026-09.toml"),
+    )
+    notice.add_argument("--artifact-root", type=Path, default=Path("data/raw/provider-artifacts"))
     company = subparsers.add_parser("company")
     company.add_argument("symbol")
     actions = subparsers.add_parser("corporate-actions")
     actions.add_argument("symbol")
+    financial = subparsers.add_parser(
+        "financial-snapshot", help="Capture native data; no canonical facts"
+    )
+    financial.add_argument("symbol")
+    financial.add_argument("statement", choices=("income", "balance", "cash_flow"))
+    suspension = subparsers.add_parser("suspension-events")
+    suspension.add_argument("date", help="Explicit YYYYMMDD date; partial event evidence only")
     subparsers.add_parser("universe")
     args = parser.parse_args()
     if not math.isfinite(args.timeout_seconds) or not 0 < args.timeout_seconds <= 300:
@@ -49,6 +78,15 @@ def parse_args() -> argparse.Namespace:
         len(args.symbol) != 6 or not args.symbol.isascii() or not args.symbol.isdigit()
     ):
         parser.error("symbol must contain six ASCII digits")
+    if args.command == "suspension-events":
+        try:
+            if len(args.date) != 8 or not args.date.isascii() or not args.date.isdigit():
+                raise ValueError("expected YYYYMMDD")
+            query_date = datetime.strptime(args.date, "%Y%m%d").date()
+        except ValueError:
+            parser.error("suspension date must be a valid YYYYMMDD date")
+        if query_date > datetime.now(ZoneInfo("Asia/Shanghai")).date():
+            parser.error("suspension date cannot be in the future")
     if args.command == "daily-bars":
         try:
             start = datetime.strptime(args.start_date, "%Y%m%d").date()
@@ -64,6 +102,34 @@ def parse_args() -> argparse.Namespace:
 
 def run_worker(args: argparse.Namespace) -> int:
     settings = load_settings(Path("config/default.toml"))
+    if args.command == "sse-calendar-notice":
+        # Verify before touching SQLite; the common parent bounds network runtime.
+        adapter = SSECalendarNoticeAdapter(SSECalendarNoticeProfile.load(args.profile))
+        request = ProviderDatasetRequest(
+            SSE_CALENDAR_DATASET, Market.CHINA_A, "SSE", datetime.now(UTC)
+        )
+        batch = adapter.fetch(request)
+        request = ProviderDatasetRequest(
+            SSE_CALENDAR_DATASET, Market.CHINA_A, "SSE", batch.retrieved_at
+        )
+        store = SQLiteStore(args.database or settings.data.database_path)
+        store.initialize()
+
+        class CapturedAdapter:
+            provider_id = adapter.provider_id
+
+            def capabilities(self) -> tuple[ProviderDatasetCapability, ...]:
+                return adapter.capabilities()
+
+            def fetch(self, request: ProviderDatasetRequest) -> ProviderEvidenceBatch:
+                del request
+                return batch
+
+        result = ProviderNeutralIngestionService(
+            store, artifact_store=FileSystemArtifactStore(args.artifact_root)
+        ).ingest(CapturedAdapter(), request)
+        print(json.dumps({"status": "partial", **asdict(result)}, sort_keys=True))
+        return 2  # Complete capture is still an explicitly incomplete calendar.
     cache = DataFrameCache(
         settings.data.cache_root,
         timedelta(seconds=settings.data.cache_ttl_seconds),
@@ -91,10 +157,18 @@ def run_worker(args: argparse.Namespace) -> int:
         result = pipeline.ingest_company_info(args.symbol)
     elif args.command == "corporate-actions":
         result = pipeline.ingest_corporate_actions(args.symbol)
+    elif args.command == "suspension-events":
+        result = pipeline.ingest_suspension_lifecycle(args.date)
+    elif args.command == "financial-snapshot":
+        result = pipeline.capture_financial_statement(args.symbol, args.statement)
     else:
         result = pipeline.ingest_a_share_universe()
 
-    complete = result.accepted > 0 and result.rejected == 0
+    complete = (
+        result.accepted > 0
+        and result.rejected == 0
+        and args.command not in {"suspension-events", "financial-snapshot"}
+    )
     record = {"status": "completed" if complete else "partial", **asdict(result)}
     reject_sensitive_structure(record, path="ingestion_result")
     print(json.dumps(record, sort_keys=True))

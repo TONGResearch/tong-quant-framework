@@ -19,6 +19,12 @@ No currently integrated AKShare dataset qualifies as universally PIT-safe.
 Individual records backed by exact CNInfo announcement timestamps may be usable
 when runtime coverage passes, but that does not upgrade the entire dataset.
 
+October 16 usability follow-up: runtime and lifecycle coverage now share
+record review. Quarantined records remain visible but cannot improve coverage;
+observation-only data stays weak. REVIEWABLE is a structural result, not an
+independent trust upgrade. MooMoo/Guojin screen data has not been verified or
+integrated and cannot substitute for PIT history or an authorized API source.
+
 ## Matrix
 
 | Dataset | AKShare endpoint | Classification | Trust | Historical-validation rule |
@@ -33,8 +39,8 @@ when runtime coverage passes, but that does not upgrade the entire dataset.
 | Actual disclosure schedule | `stock_yysj_em` | Partially reliable | MEDIUM | Date-only evidence is available for supported periods and becomes visible conservatively at end of day. |
 | Financial disclosure announcements | `stock_zh_a_disclosure_report_cninfo` | PIT-usable per covered record | HIGH | Exact announcement timestamps are retained; title parsing, report coverage, and numeric revision values still require warnings. |
 | Current ST status | `stock_zh_a_st_em` | Retrieval-time snapshot only | LOW | Preserves observed current ST membership only; cannot infer earlier ST intervals. |
-| Current suspension status | `stock_zh_a_stop_em` | Retrieval-time snapshot only | LOW | Preserves observed current suspension only; cannot reconstruct full suspension history. |
-| Suspension/resumption events | `stock_tfp_em` | Partially reliable | MEDIUM | Effective dates are retained, but historical knowledge is limited to retrieval time unless stronger provenance exists. |
+| Legacy current suspension status | `stock_zh_a_stop_em` | Unsuitable for suspension research | UNKNOWN for suspension claims | Endpoint returns delisted-market quotes, not a suspension list. New calls fail closed. Old rows are retained but unverified, not automatically repaired. |
+| Dated suspension observations | `stock_tfp_em` | Partially reliable / retrieval-time observation only | LOW for new observations | Date-filtered reported starts have archived delivered-frame provenance; not full current status/history. Reported end and expected resumption dates are not confirmed resumptions. Legacy inferred events and prior MEDIUM labels require a separate audit. |
 | Shenzhen ST name changes | `stock_info_sz_change_name` | Partially reliable | MEDIUM | Supports dated ST entry/exit evidence for Shenzhen only; Shanghai and Beijing remain incomplete. |
 | Delisted securities | Shanghai and Shenzhen delisting endpoints | Partially reliable | MEDIUM | Effective delisting dates may be useful, but announcement availability and complete exchange coverage require verification. |
 | CSI300/500/1000 membership | `index_stock_cons_csindex` | Retrieval-time snapshot only | LOW-MEDIUM | Stored as dated current snapshots. Missing entries/exits prevent backward survivorship-safe reconstruction. |
@@ -63,6 +69,9 @@ successful provider response is not a normalization/readiness pass.
 
 | Provider evidence | Current trust | Availability precision | Permitted use | Explicit limitation |
 |---|---|---|---|---|
+| AKShare unadjusted equity/index daily bars with source-bound frame artifacts | LOW | RETRIEVAL_TIME | Exact normalized-row/source/availability binding and research from actual capture onward | Snapshot is a delivered DataFrame, not upstream wire/official exchange verification. Activity units, corrections, legacy provenance and current artifact-file integrity remain unverified. |
+| SSE reviewed calendar notice | MEDIUM | RETRIEVAL_TIME | Explicit dated assertions and captured source bytes from actual capture onward | Partial notice only; no inferred ordinary days, emergency closures or settlement. Review expiry and conflicts remain visible; this is not full calendar provenance. |
+| SSE derived ordinary calendar plan | MEDIUM, UNKNOWN when required sources fail | RETRIEVAL_TIME | Separate ordinary schedule using the complete reviewed 2026 annual notice and verified weekday references, only within their effective/reviewed scope | Not actual opening, exceptional-closure history, settlement or stock status. Raw gaps remain. All annual claims and artifact bytes are checked; no historical backdating, readiness upgrade or simulation authorization. |
 | CNInfo disclosures via AKShare transport | MEDIUM | EXACT per parsed announcement timestamp | Filing-timing evidence from the record's `available_at` | Direct CNInfo parity, coverage, correction continuity, and raw filing capture are unverified. |
 | Direct CNInfo disclosures and artifacts | MEDIUM | EXACT per official announcement timestamp | Direct filing metadata and content-hash evidence from `available_at`; artifact bytes are research evidence only | Public web contract, representative parity, historical coverage, URL-change behavior, and correction continuity remain unverified. |
 | Yahoo Finance unadjusted daily bars | LOW | RETRIEVAL_TIME | Global exploratory research and provider comparison from ingestion time | Unofficial API, no authoritative historical availability, and unverified delisting/symbol/correction continuity. |

@@ -30,6 +30,23 @@ class ProviderArtifactStore(Protocol):
 class FileSystemArtifactStore:
     root: Path
 
+    def read_content(self, content_hash: str, media_type: str, *, max_bytes: int) -> bytes:
+        if len(content_hash) != 64 or any(c not in "0123456789abcdef" for c in content_hash):
+            raise ValueError("artifact read requires a lowercase SHA-256 digest")
+        if type(max_bytes) is not int or not 0 < max_bytes <= 50 * 1024 * 1024:
+            raise ValueError("artifact read requires a bounded size limit")
+        root = self.root.expanduser()
+        destination = root / "sha256" / content_hash[:2] / (content_hash + _extension(media_type))
+        if root.is_symlink() or destination.is_symlink():
+            raise ValueError("artifact read refuses symbolic links")
+        if not destination.resolve().is_relative_to(root.resolve()):
+            raise ValueError("artifact read escapes storage root")
+        with destination.open("rb") as handle:
+            content = handle.read(max_bytes + 1)
+        if len(content) > max_bytes or sha256(content).hexdigest() != content_hash:
+            raise ValueError("artifact read failed size or content-hash verification")
+        return content
+
     def put(self, artifact: ProviderArtifact) -> StoredProviderArtifact:
         root = self.root.expanduser()
         if root.is_symlink():

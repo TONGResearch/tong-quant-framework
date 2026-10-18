@@ -212,7 +212,8 @@ def _lifecycle_event(
         event_type=event_type,
         effective_date=effective_date,
         available_at=NOW,
-        source="akshare",
+        source="synthetic-reviewed",
+        raw_data_hash="a" * 64,
         availability_precision=AvailabilityPrecision.RETRIEVAL_TIME,
         trust_level=DataTrustLevel.MEDIUM,
     )

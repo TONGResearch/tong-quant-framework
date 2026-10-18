@@ -42,6 +42,15 @@ validation, risk management, and controlled execution.
   An empty corporate-action query is not proof of action-free status. Keep
   raw-data inventory separate from independently reviewed calculation inputs.
 - Use point-in-time timestamps and reject future data.
+- The SSE calendar-notice adapter emits only hash-pinned, explicitly reviewed
+  dates with MEDIUM/RETRIEVAL_TIME evidence. Never infer a full calendar,
+  weekends or settlement from a partial notice. Preserve conflicting and
+  expired observations; a notice capture cannot complete runtime provenance.
+- A complete reviewed annual notice plus verified effective weekday rules may
+  derive a separate ordinary SSE schedule, never actual emergency opening,
+  security status or settlement. Keep raw missing dates visible; expired,
+  incomplete, conflicting or tampered evidence must remain unknown. Use an
+  explicit rule capture, not an automatically selected latest file.
 - Treat availability precision and data trust as separate concepts.
 - Research, Validation, and future HistoricalReplay consumers must inspect
   both `AvailabilityPrecision` and `DataTrustLevel`.
@@ -76,6 +85,15 @@ validation, risk management, and controlled execution.
 - Priority, urgency, and confidence are separate Research Queue concepts.
 - Every Research Report requires a thesis, counter thesis, and explicit
   falsifiable invalidation conditions.
+- Revalidate ResearchContext before starting a persisted run. Candidate identity,
+  metric binding, queue/metadata cutoffs and fundamental version consistency
+  must hold. Latest financial diagnostics use report period and visible version,
+  never caller tuple order. Exposing unit/trust labels is not source approval or
+  permission to turn unreviewed native observations into canonical facts.
+- Technical, Trend and Pattern research must share the checked daily-bar
+  selector. Duplicate rows/revisions cannot inflate warm-up; conflicting
+  versions, intraday-shaped series, adjusted inputs and future contexts fail
+  closed. Observed dates are not verified exchange sessions or PIT approval.
 - Research confidence must consider evidence quality, data completeness,
   module agreement, and point-in-time integrity; do not use simple averaging.
 - Policy Research covers regulatory, industrial, fiscal, monetary, and
@@ -109,6 +127,13 @@ time; do not infer project state from chat history or historical milestone docs.
 When state changes, update governance, status, package, risk, and debt records
 in the same commit.
 
+The October 18 reviewed research checkpoint is documented in
+`docs/reviewed-baseline-2026-10-18.md`. Historical slice notes describe their
+original dirty checkout; consult current Git state and the canonical status
+before claiming changes remain uncommitted or that a local checkpoint is
+available on another device. Never confuse a clean research-host preflight
+with acceptance of WP-LAUNCH-001, Paper, PIT or live operation.
+
 - Prefer Python standard library and typed, immutable domain models.
 - Use `Protocol` or abstract interfaces at external boundaries.
 - Add dependencies only when they solve a current requirement.
@@ -120,12 +145,23 @@ in the same commit.
 - Never overwrite point-in-time facts, security-status history, universe
   membership, or corporate actions silently. Use revisions, raw hashes, and
   ingestion batches to preserve auditability.
+- Fundamental fact retries must compare material content, not raw hashes alone.
+  Reject conflicting values, semantics or trust labels under one version;
+  preserve first-capture audit metadata on identical retries. Keep each write
+  call atomic even if an outer transaction catches its exception. Invalid
+  legacy rows remain visible and require separate review, never silent repair.
 - New AKShare bars, calendars and numeric statement values must not be
   backdated before actual retrieval. A matching disclosure event cannot prove
   numeric revision provenance. Missing fallback turnover is unknown, not zero;
   price/action ingestion must not replace company snapshots with placeholders.
   Legacy backdated records require separate audit/reconstruction, not automatic
   acceptance after a code upgrade.
+- New unadjusted AKShare daily bars must commit through neutral ingestion with
+  source-bound frame artifacts and exact canonical-row evidence in one unit
+  of work. Keep original cached serialization, verify fingerprints and exact
+  price reconstruction; never silently round a mismatch away. Bind full rows
+  and availability, not close alone. A binding remains LOW/retrieval-time until
+  independently reviewed and cannot manufacture trusted calculation context.
 - New corporate-action cash amounts are gross currency per old share; split
   ratios are total new shares per old share. Require explicit corroborated
   units, provider implementation label and ex-date; never substitute the
@@ -149,6 +185,54 @@ in the same commit.
   entry/exit ledgers. Repeated ingestion improves forward coverage only.
 - Never infer relisting from trading resumption, or infer a complete ST interval
   from a current name/status snapshot.
+- Never use `stock_zh_a_stop_em` as suspension evidence: it is delisted-market
+  quote data. The old current-suspension method deliberately fails closed.
+  Dated `stock_tfp_em` rows are partial LOW/retrieval-time observations, not
+  current-status clearance. Expected resumption and reported end dates must
+  never emit confirmed resumption events. New suspension captures archive
+  original frame evidence with canonical events in one neutral transaction;
+  preserve and flag old records rather than silently certifying/deleting them.
+- Use `data.lifecycle_review.review_lifecycle_record` for record usability in
+  runtime/coverage consumers. QUARANTINED is logical exclusion, not deletion;
+  OBSERVATION_ONLY preserves weak evidence. REVIEWABLE means structural review
+  only, never independent source verification, full timeline coverage or
+  trading approval. UI-visible broker data is a retrieval-time observation,
+  not historical/PIT authority or permission to connect/submit orders.
+- Replay must preserve original status provenance and shared review results.
+  Unusable status blocks sample/manifest eligibility even when present and
+  highly labeled; adverse but reviewable status is not a missing input.
+  ValidationRequest creation must recheck version, record hash, instrument and
+  decision-time binding. Build replay reads in one snapshot and persist each
+  manifest/sample set atomically; old results require explicit reconstruction.
+- Replay outcomes use the versioned exact UTC calendar-day contract, not
+  nearest available bars or assumed exchange sessions. Bind exact price rows,
+  enforce horizon/lag and separate decision/outcome visibility; missing or
+  unsupported inputs remain blocked diagnostic samples. Unadjusted price
+  changes are not total returns or executable prices. Persist replay results
+  without replacement, with manifest-owned sample ids and atomic repository
+  writes; preserve content hashes across distinct generation times.
+- Bind the complete reconstructed ResearchReport/evidence and visible input
+  row inventories into replay identity. Recheck content and derived validation
+  fields before use; missing references, conflicting evidence, duplicate modules
+  and future child data block eligibility without dropping diagnostic samples.
+  Preserve policy evidence during reconstruction. Research evidence ids are
+  immutable within a run; changed content requires a new identity. Reconstructed
+  visible inputs are not proof of the original run's exact consumed context,
+  and hashes are not independent source verification or trading approval.
+- Use the scoped SSE pilot manifest to distinguish observed date counts,
+  exact source bindings, configured warm-up deficits and trusted historical
+  coverage. Versions are not extra dates; no session percentage is valid
+  without a verified denominator. Scoped empty action/lifecycle queries do
+  not prove absence. Inventory cannot promote PIT or authorize validation/
+  simulation; optional credential-screened exports must be new files only.
+- Capture real AKShare native statements through financial-snapshot and the
+  neutral evidence/artifact transaction until accounting units, native metrics,
+  periods and revisions are reviewed. Native snapshot rows are not qualified
+  FundamentalFacts. Preserve zero/blank/null separately, retain retrieval-time
+  availability and do not use disclosure dates to backdate numeric values.
+  Keep exploratory and operational databases distinct; cross-scope gap counts
+  cannot be subtracted as a readiness percentage. New captures do not satisfy
+  the scheduled five-scope provider horizon automatically.
 - Fundamental publication dates and reported numeric values are independent
   evidence. Never copy a current revised value backward into an earlier
   publication event when the earlier value is unavailable.
@@ -300,12 +384,26 @@ in the same commit.
 - Restore drills must use a separate new path. Never overwrite or migrate an
   active source database during recovery testing, and keep backups on an
   approved encrypted volume with no credentials in command arguments.
+- Audit registered provider artifact bytes with the database's explicit storage
+  root before and after migration to another device. A registry/file hash match
+  is not a full backup, source authentication or PIT approval; unregistered rule
+  captures and metadata-only disclosures need separate recovery inventories.
 - Multi-step final Research and Validation writes must use one transaction
   boundary.
 - `docs/data-trust-matrix.md` is authoritative for AKShare PIT suitability. Do
   not promote a dataset without new provenance and coverage evidence.
 - Store secrets in environment variables or untracked local configuration.
 - Preserve PyCharm as the primary development workflow.
+- Deployment preflight is offline host diagnostics only. Keep its explicit
+  project root, committed/runtime/checkout source binding, clean-Git check,
+  safe configuration and read-only database audit fail-closed. Never turn a
+  passing host report into PIT, strategy, Paper or live authorization. Installed
+  wheel smoke checks must run outside checkout and verify package origin.
+- Native dependency locks are target-specific and hash checked. Keep runtime,
+  dev and bootstrap/build scopes separate; preserve the reviewed source-build
+  exception and fail closed on lock/spec/version/target drift. Generate from
+  pip resolver reports using standard packaging APIs, not inferred transitive
+  dependencies. A matching lock does not approve provider data or trading.
 - V1.0 remains equity-focused. Reserve naming and interfaces for future funds,
   ETFs, REITs, money-market funds, bond funds, and allocation research, but do
   not implement fund research, portfolio allocation, or execution before an

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
+from tong_quant.data.lifecycle_review import LifecycleRecordDisposition, review_lifecycle_record
 from tong_quant.data.models import (
     FundamentalPublicationEvent,
     HistoricalCoverageAssessment,
@@ -59,14 +60,35 @@ class HistoricalCoverageEvaluator:
         *,
         assessed_at: datetime | None = None,
     ) -> HistoricalCoverageAssessment:
+        checked_at = assessed_at or datetime.now(UTC)
+        if quality_input.period_start > quality_input.period_end:
+            raise ValueError("lifecycle coverage period is reversed")
+        if not quality_input.expected_event_types or quality_input.expected_provider_count <= 0:
+            raise ValueError("lifecycle coverage requires explicit event types and provider count")
+        if quality_input.contradiction_count < 0:
+            raise ValueError("lifecycle contradiction count cannot be negative")
+        reviews = tuple(
+            review_lifecycle_record(event, as_of=checked_at,
+                                    effective_on_or_before=quality_input.period_end)
+            for event in quality_input.events
+        )
+        events = tuple(
+            event
+            for event, review in zip(quality_input.events, reviews, strict=True)
+            if review.disposition is not LifecycleRecordDisposition.QUARANTINED
+            and event.effective_date >= quality_input.period_start
+            and (f"{event.instrument.market.value}:{event.instrument.asset_type.value}:"
+                 f"{event.instrument.symbol}") == quality_input.instrument_id
+        )
+        excluded = len(quality_input.events) - len(events)
         expected_types = set(quality_input.expected_event_types)
-        observed_types = {event.event_type for event in quality_input.events}
+        observed_types = {event.event_type for event in events}
         event_coverage = _ratio(len(expected_types & observed_types), len(expected_types))
         temporal = _average_precision(
-            tuple(event.availability_precision for event in quality_input.events)
+            tuple(event.availability_precision for event in events)
         )
         source_diversity = _source_diversity(
-            tuple(event.source for event in quality_input.events),
+            tuple(event.source for event in events),
             quality_input.expected_provider_count,
         )
         consistency = max(0.0, 100.0 - quality_input.contradiction_count * 25.0)
@@ -75,6 +97,9 @@ class HistoricalCoverageEvaluator:
             "temporal_precision": temporal,
             "source_diversity": source_diversity,
             "consistency": consistency,
+            "in_scope_nonquarantined_pct": (
+                100.0 * len(events) / len(quality_input.events) if quality_input.events else 0.0
+            ),
         }
         score = (
             event_coverage * 0.40
@@ -83,6 +108,12 @@ class HistoricalCoverageEvaluator:
             + consistency * 0.15
         )
         warnings: list[str] = []
+        if excluded:
+            warnings.append("Excluded records remain preserved; invalid/out-of-period evidence "
+                            "cannot improve lifecycle coverage")
+            warnings.append(f"excluded_lifecycle_records:{excluded}/{len(quality_input.events)}")
+        for review in reviews:
+            warnings.extend(f"lifecycle_review:{reason}" for reason in review.reasons)
         missing = sorted(event.value for event in expected_types - observed_types)
         if missing:
             warnings.append(f"missing lifecycle event types: {', '.join(missing)}")
@@ -94,13 +125,12 @@ class HistoricalCoverageEvaluator:
             dataset="security_lifecycle_events",
             period_start=quality_input.period_start,
             period_end=quality_input.period_end,
-            assessed_at=assessed_at,
-            score=score,
+            assessed_at=checked_at,
+            score=(0.0 if not events else min(score, 49.0) if excluded else score),
             components=components,
-            trust_level=_aggregate_trust(
-                tuple(event.trust_level for event in quality_input.events)
-            ),
-            warnings=tuple(warnings),
+            trust_level=min((event.trust_level for event in events), key=_trust_rank,
+                            default=DataTrustLevel.UNKNOWN),
+            warnings=tuple(sorted(set(warnings))),
             assumptions=(
                 "Absence of a lifecycle event is not proof that no event occurred",
             ),
@@ -316,6 +346,11 @@ def _aggregate_trust(levels: tuple[DataTrustLevel, ...]) -> DataTrustLevel:
     if average >= 0.5:
         return DataTrustLevel.LOW
     return DataTrustLevel.UNKNOWN
+
+
+def _trust_rank(level: DataTrustLevel) -> int:
+    return (DataTrustLevel.UNKNOWN, DataTrustLevel.LOW, DataTrustLevel.MEDIUM,
+            DataTrustLevel.HIGH, DataTrustLevel.VERIFIED).index(level)
 
 
 __all__ = [

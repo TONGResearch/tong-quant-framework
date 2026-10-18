@@ -38,6 +38,8 @@ class ProviderNeutralIngestionService:
         self,
         adapter: ProviderEvidenceAdapter,
         request: ProviderDatasetRequest,
+        *,
+        write_canonical: Callable[[str], None] | None = None,
     ) -> IngestionResult:
         capability = _resolve_capability(adapter, request)
         if capability.status is ProviderCapabilityStatus.UNAVAILABLE:
@@ -93,6 +95,9 @@ class ProviderNeutralIngestionService:
                     batch.artifact_observations,
                     batch_id=batch_id,
                 )
+                if write_canonical is not None:
+                    # Canonical rows and their evidence must commit or roll back together.
+                    write_canonical(batch_id)
                 for limitation in batch.limitations:
                     self.store.save_provider_limitation(
                         ProviderLimitation(
@@ -162,15 +167,10 @@ class ProviderNeutralIngestionService:
                     for evidence_time in evidence_times
                 ):
                     raise ValueError("provider evidence contains future event data")
-        if capability.trust_level is not DataTrustLevel.VERIFIED and any(
-            record.trust_level is DataTrustLevel.VERIFIED for record in batch.records
-        ):
-            raise ValueError("adapter cannot promote evidence above its capability trust")
-        if capability.trust_level is not DataTrustLevel.VERIFIED and any(
-            artifact.trust_level is DataTrustLevel.VERIFIED
-            for artifact in batch.artifacts
-        ):
-            raise ValueError("adapter cannot promote artifacts above capability trust")
+        for record in batch.records:
+            _require_trust_ceiling(record.trust_level, capability.trust_level)
+        for artifact in batch.artifacts:
+            _require_trust_ceiling(artifact.trust_level, capability.trust_level)
         if self.strict_point_in_time and any(
             artifact.published_at > request.as_of for artifact in batch.artifacts
         ):
@@ -223,6 +223,8 @@ def _resolve_capability(
             f"{request.dataset}/{request.market.value}"
         )
     capability = matches[0]
+    if capability.provider != adapter.provider_id:
+        raise ValueError("provider capability has the wrong provider identity")
     missing = tuple(
         parameter
         for parameter in capability.required_parameters
@@ -231,6 +233,19 @@ def _resolve_capability(
     if missing:
         raise ValueError(f"provider request is missing parameters: {', '.join(missing)}")
     return capability
+
+
+def _require_trust_ceiling(level: DataTrustLevel, ceiling: DataTrustLevel) -> None:
+    # Trust is ordered; availability precision is a separate, non-ranked concept.
+    levels = (
+        DataTrustLevel.UNKNOWN,
+        DataTrustLevel.LOW,
+        DataTrustLevel.MEDIUM,
+        DataTrustLevel.HIGH,
+        DataTrustLevel.VERIFIED,
+    )
+    if levels.index(level) > levels.index(ceiling):
+        raise ValueError("adapter cannot promote evidence above its capability trust")
 
 
 __all__ = ["ProviderNeutralIngestionService"]

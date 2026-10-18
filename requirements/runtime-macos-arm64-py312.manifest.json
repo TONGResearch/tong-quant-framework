@@ -1,0 +1,230 @@
+{
+  "model_version": "native-dependency-lock-v1",
+  "profile": "runtime",
+  "framework_version": "0.8.0",
+  "target": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "python": "3.12",
+    "minimum_macos": [
+      14,
+      0
+    ]
+  },
+  "dependency_specification_hash": "32dc8d6918b3b1e5d533f32b6463eedbfbbadffcc12fcaf0c8ff4cd7e57e9d55",
+  "build_lock_sha256": "5ea95414fb37865806f7235faff108123be972a6fa63e5afe79e85eb148ed7d8",
+  "build_input_sha256": "fed6f1e5749d2876405df854f1593e68460e7c6d1c76424cb5c78c078b97d37e",
+  "lock_sha256": "7a4e1ebf929af4850e5176cd7bfb54bc4edfa26d7419360c1e4ca56a7d7b3daf",
+  "packages": [
+    {
+      "name": "akshare",
+      "version": "1.18.64",
+      "sha256": "27792ca5b3dd4bee47fe83f212da7d3a9d0f43f327eef3beee5f2399e58eb390",
+      "kind": "wheel"
+    },
+    {
+      "name": "beautifulsoup4",
+      "version": "4.15.0",
+      "sha256": "d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9",
+      "kind": "wheel"
+    },
+    {
+      "name": "bs4",
+      "version": "0.0.2",
+      "sha256": "abf8742c0805ef7f662dce4b51cca104cffe52b835238afc169142ab9b3fbccc",
+      "kind": "wheel"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.5.20",
+      "sha256": "3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897",
+      "kind": "wheel"
+    },
+    {
+      "name": "cffi",
+      "version": "2.0.0",
+      "sha256": "8eca2a813c1cb7ad4fb74d368c2ffbbb4789d377ee5bb8df98373c2cc0dee76c",
+      "kind": "wheel"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.4.7",
+      "sha256": "eca9705049ad3c7345d574e3510665cb2cf844c2f2dcfe675332677f081cbd46",
+      "kind": "wheel"
+    },
+    {
+      "name": "curl-cffi",
+      "version": "0.15.0",
+      "sha256": "a25620d9bf989c9c029a7d1642999c4c265abb0bad811deb2f77b0b5b2b12e5b",
+      "kind": "wheel"
+    },
+    {
+      "name": "decorator",
+      "version": "5.3.1",
+      "sha256": "f47fe6fdbd2edd623ecfe36875d37aba411624e2670dd395dddae1358689bb3c",
+      "kind": "wheel"
+    },
+    {
+      "name": "et-xmlfile",
+      "version": "2.0.0",
+      "sha256": "7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa",
+      "kind": "wheel"
+    },
+    {
+      "name": "html5lib",
+      "version": "1.1",
+      "sha256": "0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d",
+      "kind": "wheel"
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "sha256": "7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2",
+      "kind": "wheel"
+    },
+    {
+      "name": "jsonpath",
+      "version": "0.82.2",
+      "sha256": "d87ef2bcbcded68ee96bc34c1809b69457ecec9b0c4dd471658a12bd391002d1",
+      "kind": "sdist"
+    },
+    {
+      "name": "lxml",
+      "version": "6.1.1",
+      "sha256": "104c09bda8d2a562824c0e319d0768ce26a779b7601e0931d33b09b53c392ef7",
+      "kind": "wheel"
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "sha256": "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a",
+      "kind": "wheel"
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "sha256": "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8",
+      "kind": "wheel"
+    },
+    {
+      "name": "mini-racer",
+      "version": "0.14.1",
+      "sha256": "56cc6965a1665a50d8d613bc43aa83b4cec6b1f09acc69dc4c2845dacb201463",
+      "kind": "wheel"
+    },
+    {
+      "name": "numpy",
+      "version": "2.4.6",
+      "sha256": "3213d622a0283a39a93d188f3cf72b26862df52fbb4ca3697f51705016523d41",
+      "kind": "wheel"
+    },
+    {
+      "name": "openpyxl",
+      "version": "3.1.5",
+      "sha256": "5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2",
+      "kind": "wheel"
+    },
+    {
+      "name": "pandas",
+      "version": "3.0.3",
+      "sha256": "b168fc218fd80a6cbdbdbc1a97ddc7889ed057d7eb45f50d866ceab5f39904c4",
+      "kind": "wheel"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0",
+      "sha256": "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992",
+      "kind": "wheel"
+    },
+    {
+      "name": "pygments",
+      "version": "2.20.0",
+      "sha256": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176",
+      "kind": "wheel"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427",
+      "kind": "wheel"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+      "kind": "wheel"
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "sha256": "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb",
+      "kind": "wheel"
+    },
+    {
+      "name": "simplejson",
+      "version": "4.1.1",
+      "sha256": "67341c95c0a168ab4a6d1e807e50463f1c8da932c3286d81e201266c427061fa",
+      "kind": "wheel"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+      "kind": "wheel"
+    },
+    {
+      "name": "soupsieve",
+      "version": "2.8.4",
+      "sha256": "e7e6b0769c8f51ed59acab6e994b00621096cfb1c640a7509295987388fbaf65",
+      "kind": "wheel"
+    },
+    {
+      "name": "tabulate",
+      "version": "0.10.0",
+      "sha256": "f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3",
+      "kind": "wheel"
+    },
+    {
+      "name": "tqdm",
+      "version": "4.68.1",
+      "sha256": "fea4a90e4023f764914569f7802a297277c5ab1a66be5144143e142e1a4031d8",
+      "kind": "wheel"
+    },
+    {
+      "name": "tushare",
+      "version": "1.4.29",
+      "sha256": "82554af953ea5ac3d8771d42330493181031c7e68dccce03a491c7356e9ba4b2",
+      "kind": "wheel"
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.15.0",
+      "sha256": "f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548",
+      "kind": "wheel"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.7.0",
+      "sha256": "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897",
+      "kind": "wheel"
+    },
+    {
+      "name": "webencodings",
+      "version": "0.5.1",
+      "sha256": "a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78",
+      "kind": "wheel"
+    },
+    {
+      "name": "websocket-client",
+      "version": "1.9.0",
+      "sha256": "af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef",
+      "kind": "wheel"
+    },
+    {
+      "name": "xlrd",
+      "version": "2.0.2",
+      "sha256": "ea762c3d29f4cca48d82df517b6d89fbce4db3107f9d78713e48cd321d5c9aa9",
+      "kind": "wheel"
+    }
+  ]
+}

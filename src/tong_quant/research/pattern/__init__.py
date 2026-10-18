@@ -7,6 +7,7 @@ from tong_quant.domain.enums import (
     ResearchModuleName,
 )
 from tong_quant.domain.models import Bar
+from tong_quant.research.bar_inputs import require_period, research_daily_bars
 from tong_quant.research.base import (
     assessment_from_scores,
     insufficient_assessment,
@@ -17,6 +18,7 @@ from tong_quant.research.models import (
     ResearchContext,
     ResearchEvidence,
 )
+from tong_quant.version import PATTERN_RESEARCH_VERSION
 
 PATTERN_FIELDS = frozenset(
     {
@@ -37,15 +39,20 @@ class PatternResearchModule:
     dependencies: frozenset[ResearchModuleName] = frozenset(
         {ResearchModuleName.INDUSTRY, ResearchModuleName.TECHNICAL}
     )
-    model_version: str = "pattern-china-a-v0.5"
+    model_version: str = PATTERN_RESEARCH_VERSION
     rising_stocks_threshold: int = 3000
     volume_period: int = 20
+
+    def __post_init__(self) -> None:
+        require_period("volume_period", self.volume_period)
+        require_period("rising_stocks_threshold", self.rising_stocks_threshold)
 
     def evaluate(
         self,
         context: ResearchContext,
         dependencies: Mapping[ResearchModuleName, ResearchAssessment],
     ) -> ResearchAssessment:
+        context.validate()
         instrument = context.queue_entry.candidate.instrument
         if instrument.market is not Market.CHINA_A:
             return not_applicable_assessment(
@@ -55,16 +62,7 @@ class PatternResearchModule:
                 model_version=self.model_version,
             )
 
-        bars = tuple(
-            sorted(
-                (
-                    bar
-                    for bar in context.bars
-                    if bar.available_at <= context.as_of and not bar.is_suspended
-                ),
-                key=lambda bar: bar.timestamp,
-            )
-        )
+        bars = research_daily_bars(context)
         supplied_names = PATTERN_FIELDS - {"high_volume_long_upper_shadow"}
         supplied = tuple(
             item
@@ -114,6 +112,7 @@ class PatternResearchModule:
             ),
             limitations=(
                 "Entry timing windows remain research annotations, not execution rules",
+                "Observed dates are not verified sessions or authenticated PIT price coverage",
             ),
             model_version=self.model_version,
             features={

@@ -1,0 +1,5 @@
+# Controlled bootstrap/build tools, separate from runtime dependencies.
+pip==26.0.1
+setuptools==84.0.0
+wheel==0.48.0
+packaging==26.3

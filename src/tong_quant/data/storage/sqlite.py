@@ -4,7 +4,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from contextvars import ContextVar
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from enum import Enum
 from pathlib import Path
 from types import TracebackType
@@ -1126,6 +1126,9 @@ class SQLiteStore:
         return len(rows)
 
     def upsert_fundamental_facts(self, facts: Iterable[FundamentalFact]) -> int:
+        facts = tuple(facts)
+        if any(not fact.value.is_finite() for fact in facts):
+            raise ValueError("fundamental fact value must be finite")
         ingested_at = _datetime_text(datetime.now(UTC))
         rows = [
             (
@@ -1153,37 +1156,65 @@ class SQLiteStore:
         if not rows:
             return 0
         with self._connect() as connection:
-            for row in rows:
-                conflict = connection.execute(
-                    """
-                    SELECT raw_data_hash
-                    FROM fundamental_facts
-                    WHERE instrument_id = ?
-                      AND metric = ?
-                      AND period_end = ?
-                      AND published_at = ?
-                      AND revision = ?
-                      AND available_at = ?
-                      AND raw_data_hash <> ?
-                    LIMIT 1
-                    """,
-                    (row[0], row[1], row[3], row[5], row[10], row[6], row[12]),
-                ).fetchone()
-                if conflict is not None:
-                    raise ValueError(
-                        "fundamental fact raw hash conflict requires a new revision"
-                    )
-            connection.executemany(
-                """
-                INSERT OR IGNORE INTO fundamental_facts (
-                    instrument_id, metric, period_start, period_end,
-                    fiscal_period, published_at, available_at, value,
-                    currency, unit, revision, source, raw_data_hash, batch_id,
-                    provider_dataset, availability_precision, trust_level, ingested_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
+            if not connection.in_transaction:
+                connection.execute("BEGIN IMMEDIATE")
+            # Keep the call atomic even if its caller catches a conflict in an outer transaction.
+            connection.execute("SAVEPOINT fundamental_facts_write")
+            try:
+                for row in rows:
+                    stored_rows = connection.execute(
+                        """
+                        SELECT * FROM fundamental_facts
+                        WHERE instrument_id = ? AND metric = ? AND period_end = ?
+                          AND published_at = ? AND revision = ? AND available_at = ?
+                        """,
+                        (row[0], row[1], row[3], row[5], row[10], row[6]),
+                    ).fetchall()
+                    for stored in stored_rows:
+                        if stored["raw_data_hash"] != row[12]:
+                            raise ValueError(
+                                "fundamental fact raw hash conflict requires a new revision"
+                            )
+                        expected = {
+                            "period_start": row[2],
+                            "fiscal_period": row[4],
+                            "currency": row[8],
+                            "unit": row[9],
+                            "source": row[11],
+                            "provider_dataset": row[14],
+                            "availability_precision": row[15],
+                            "trust_level": row[16],
+                        }
+                        try:
+                            stored_value = Decimal(stored["value"])
+                        except InvalidOperation:
+                            raise ValueError("fundamental fact stored value is invalid") from None
+                        if not stored_value.is_finite():
+                            raise ValueError("fundamental fact stored value is invalid")
+                        if stored_value != Decimal(row[7]) or any(
+                            stored[field] != value for field, value in expected.items()
+                        ):
+                            raise ValueError(
+                                "fundamental fact content conflict requires a new version"
+                            )
+                    if not stored_rows:
+                        connection.execute(
+                            """
+                            INSERT INTO fundamental_facts (
+                                instrument_id, metric, period_start, period_end,
+                                fiscal_period, published_at, available_at, value,
+                                currency, unit, revision, source, raw_data_hash, batch_id,
+                                provider_dataset, availability_precision, trust_level, ingested_at
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            row,
+                        )
+            except Exception:
+                connection.execute("ROLLBACK TO fundamental_facts_write")
+                connection.execute("RELEASE fundamental_facts_write")
+                raise
+            else:
+                connection.execute("RELEASE fundamental_facts_write")
         return len(rows)
 
     def upsert_instrument_statuses(
@@ -1736,6 +1767,47 @@ class SQLiteStore:
                 (provider, dataset, market.value, subject, _datetime_text(as_of)),
             ).fetchall()
         return list(rows)
+
+    def provider_evidence(
+        self,
+        *,
+        provider: str,
+        dataset: str,
+        market: Market,
+        subject: str,
+        as_of: datetime,
+    ) -> list[ProviderEvidenceRecord]:
+        """Typed read path; retain the row-based API for existing audit consumers."""
+        return [
+            ProviderEvidenceRecord(
+                evidence_id=row["evidence_id"],
+                provider=row["provider"],
+                dataset=row["dataset"],
+                market=Market(row["market"]),
+                subject=row["subject"],
+                available_at=datetime.fromisoformat(row["available_at"]),
+                retrieved_at=datetime.fromisoformat(row["retrieved_at"]),
+                source_reference=row["source_reference"],
+                payload=json.loads(row["payload_json"]),
+                raw_data_hash=row["raw_data_hash"],
+                availability_precision=AvailabilityPrecision(row["availability_precision"]),
+                trust_level=DataTrustLevel(row["trust_level"]),
+                limitations=tuple(json.loads(row["limitations_json"])),
+                observed_at=(
+                    None
+                    if row["observed_at"] is None
+                    else datetime.fromisoformat(row["observed_at"])
+                ),
+                published_at=(
+                    None
+                    if row["published_at"] is None
+                    else datetime.fromisoformat(row["published_at"])
+                ),
+            )
+            for row in self.provider_evidence_as_of(
+                provider=provider, dataset=dataset, market=market, subject=subject, as_of=as_of
+            )
+        ]
 
     def save_provider_contract_run(self, run: ProviderContractRun) -> str:
         for check in run.checks:
@@ -2498,10 +2570,26 @@ class SQLiteStore:
         model_version: str,
     ) -> None:
         self._require_aware(generated_at)
+        values = (
+            manifest_id,
+            query_hash,
+            _json_dumps(input_hashes),
+            _json_dumps(dataset_versions),
+            schema_version,
+            framework_version,
+            configuration_hash,
+            git_commit,
+            _json_dumps(data_trust_summary),
+            json.dumps(provider_limitations),
+            json.dumps(missing_data_warnings),
+            _json_dumps(replay_confidence),
+            _datetime_text(generated_at),
+            model_version,
+        )
         with self._connect() as connection:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO historical_replay_manifests (
+                INSERT OR IGNORE INTO historical_replay_manifests (
                     manifest_id, query_hash, input_hashes_json,
                     dataset_versions_json, schema_version, framework_version,
                     configuration_hash, git_commit, data_trust_summary_json,
@@ -2510,24 +2598,16 @@ class SQLiteStore:
                     ingested_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    manifest_id,
-                    query_hash,
-                    _json_dumps(input_hashes),
-                    _json_dumps(dataset_versions),
-                    schema_version,
-                    framework_version,
-                    configuration_hash,
-                    git_commit,
-                    _json_dumps(data_trust_summary),
-                    json.dumps(provider_limitations),
-                    json.dumps(missing_data_warnings),
-                    _json_dumps(replay_confidence),
-                    _datetime_text(generated_at),
-                    model_version,
-                    _datetime_text(datetime.now(UTC)),
-                ),
+                (*values, _datetime_text(datetime.now(UTC))),
             )
+            stored = connection.execute(
+                "SELECT * FROM historical_replay_manifests WHERE manifest_id = ?",
+                (manifest_id,),
+            ).fetchone()
+            if stored is None or tuple(stored)[:-1] != values:
+                raise ValueError(
+                    "replay manifest identity conflict; historical records are immutable"
+                )
 
     def save_historical_replay_sample(
         self,
@@ -2551,10 +2631,34 @@ class SQLiteStore:
     ) -> None:
         self._require_aware(decision_as_of)
         self._require_aware(outcome_as_of)
+        values = (
+            sample_id,
+            manifest_id,
+            instrument_id_value,
+            _datetime_text(decision_as_of),
+            _datetime_text(outcome_as_of),
+            replay_hash,
+            _json_dumps(replay_confidence),
+            _json_dumps(decision_context),
+            _json_dumps(outcome_context),
+            json.dumps(evidence_references),
+            json.dumps(missing_data_flags),
+            json.dumps(provider_limitations),
+            _json_dumps(data_trust_summary),
+            None if validation_sample is None else _json_dumps(validation_sample),
+            int(is_complete),
+            model_version,
+        )
         with self._connect() as connection:
+            manifest = connection.execute(
+                "SELECT input_hashes_json FROM historical_replay_manifests WHERE manifest_id = ?",
+                (manifest_id,),
+            ).fetchone()
+            if manifest is None or json.loads(manifest[0]).get(sample_id) != replay_hash:
+                raise ValueError("replay sample is not bound to its manifest")
             connection.execute(
                 """
-                INSERT OR REPLACE INTO historical_replay_samples (
+                INSERT OR IGNORE INTO historical_replay_samples (
                     sample_id, manifest_id, instrument_id, decision_as_of,
                     outcome_as_of, replay_hash, replay_confidence_json,
                     decision_context_json, outcome_context_json,
@@ -2563,26 +2667,16 @@ class SQLiteStore:
                     validation_sample_json, is_complete, model_version, ingested_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    sample_id,
-                    manifest_id,
-                    instrument_id_value,
-                    _datetime_text(decision_as_of),
-                    _datetime_text(outcome_as_of),
-                    replay_hash,
-                    _json_dumps(replay_confidence),
-                    _json_dumps(decision_context),
-                    _json_dumps(outcome_context),
-                    json.dumps(evidence_references),
-                    json.dumps(missing_data_flags),
-                    json.dumps(provider_limitations),
-                    _json_dumps(data_trust_summary),
-                    None if validation_sample is None else _json_dumps(validation_sample),
-                    int(is_complete),
-                    model_version,
-                    _datetime_text(datetime.now(UTC)),
-                ),
+                (*values, _datetime_text(datetime.now(UTC))),
             )
+            stored = connection.execute(
+                "SELECT * FROM historical_replay_samples WHERE sample_id = ?",
+                (sample_id,),
+            ).fetchone()
+            if stored is None or tuple(stored)[:-1] != values:
+                raise ValueError(
+                    "replay sample identity conflict; historical records are immutable"
+                )
 
     def get_instrument(
         self,
@@ -3278,32 +3372,43 @@ class SQLiteStore:
     ) -> None:
         self._require_aware(observed_at)
         self._require_aware(available_at)
+        values = (
+            run_id,
+            evidence_id,
+            module,
+            name,
+            _json_dumps(value),
+            _datetime_text(observed_at),
+            _datetime_text(available_at),
+            source,
+            quality,
+            source_reference,
+            calculation_version,
+            input_hash,
+            _json_dumps(metadata),
+        )
         with self._connect() as connection:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO research_evidence (
+                INSERT OR IGNORE INTO research_evidence (
                     run_id, evidence_id, module, name, value_json, observed_at,
                     available_at, source, quality, source_reference,
                     calculation_version, input_hash, metadata_json, ingested_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    run_id,
-                    evidence_id,
-                    module,
-                    name,
-                    _json_dumps(value),
-                    _datetime_text(observed_at),
-                    _datetime_text(available_at),
-                    source,
-                    quality,
-                    source_reference,
-                    calculation_version,
-                    input_hash,
-                    _json_dumps(metadata),
-                    _datetime_text(datetime.now(UTC)),
-                ),
+                (*values, _datetime_text(datetime.now(UTC))),
             )
+            stored = connection.execute(
+                """
+                SELECT run_id, evidence_id, module, name, value_json, observed_at,
+                       available_at, source, quality, source_reference,
+                       calculation_version, input_hash, metadata_json
+                FROM research_evidence WHERE run_id = ? AND evidence_id = ?
+                """,
+                (run_id, evidence_id),
+            ).fetchone()
+            if stored is None or tuple(stored) != values:
+                raise ValueError("research evidence conflict requires a new evidence identity")
 
     def save_research_assessment(
         self,

@@ -4,6 +4,7 @@ from io import BytesIO
 from time import sleep
 from typing import Any, Protocol
 from urllib.request import urlopen
+from zoneinfo import ZoneInfo
 
 import akshare as ak
 import pandas as pd
@@ -20,6 +21,7 @@ from tong_quant.domain.enums import Adjustment, AssetType
 from tong_quant.version import (
     AKSHARE_CORPORATE_ACTION_VERSION,
     AKSHARE_MARKET_NORMALIZATION_VERSION,
+    AKSHARE_SUSPENSION_VERSION,
 )
 
 
@@ -47,8 +49,6 @@ class AkShareClient(Protocol):
     def stock_financial_cash_new_ths(self, **kwargs: Any) -> pd.DataFrame: ...
 
     def stock_zh_a_st_em(self) -> pd.DataFrame: ...
-
-    def stock_zh_a_stop_em(self) -> pd.DataFrame: ...
 
     def stock_info_sh_delist(self, **kwargs: Any) -> pd.DataFrame: ...
 
@@ -196,17 +196,18 @@ class AkShareAdapter:
 
     def financial_statement(self, symbol: str, statement: str) -> ProviderResponse:
         fetchers = {
-            "income": self._client.stock_financial_benefit_new_ths,
-            "balance": self._client.stock_financial_debt_new_ths,
-            "cash_flow": self._client.stock_financial_cash_new_ths,
+            "income": "stock_financial_benefit_new_ths",
+            "balance": "stock_financial_debt_new_ths",
+            "cash_flow": "stock_financial_cash_new_ths",
         }
         try:
-            fetcher = fetchers[statement]
+            endpoint = fetchers[statement]
         except KeyError as error:
             raise ValueError(f"unsupported financial statement: {statement}") from error
 
         def fetch() -> pd.DataFrame:
-            frame = fetcher(symbol=symbol, indicator="按报告期")
+            fetcher = getattr(self._client, endpoint)
+            frame: pd.DataFrame = fetcher(symbol=symbol, indicator="按报告期")
             frame.attrs["tong_quant_source"] = f"akshare:financial:{statement}"
             return frame
 
@@ -224,10 +225,10 @@ class AkShareAdapter:
         )
 
     def suspended_stocks(self) -> ProviderResponse:
-        return self._fetch(
-            "instrument_status_suspended",
-            {},
-            self._client.stock_zh_a_stop_em,
+        raise DataProviderError(
+            "Current suspension snapshot is unavailable: stock_zh_a_stop_em is "
+            "a delisted-market quote endpoint, not a suspension list; use "
+            "suspension_events with an explicit date as partial event evidence only"
         )
 
     def delisted_stocks(self, exchange: str) -> ProviderResponse:
@@ -285,6 +286,11 @@ class AkShareAdapter:
         )
 
     def suspension_events(self, on_date: str) -> ProviderResponse:
+        if len(on_date) != 8 or not on_date.isascii() or not on_date.isdigit():
+            raise ValueError("suspension query requires YYYYMMDD")
+        query_date = datetime.strptime(on_date, "%Y%m%d").date()
+        if query_date > self._clock().astimezone(ZoneInfo("Asia/Shanghai")).date():
+            raise ValueError("suspension query cannot request a future date")
         def fetch() -> pd.DataFrame:
             frame = self._client.stock_tfp_em(date=on_date)
             frame.attrs["tong_quant_source"] = "akshare:stock_tfp_em"
@@ -292,7 +298,7 @@ class AkShareAdapter:
 
         return self._fetch(
             "security_lifecycle_suspension",
-            {"date": on_date},
+            {"date": on_date, "normalization_version": AKSHARE_SUSPENSION_VERSION},
             fetch,
         )
 

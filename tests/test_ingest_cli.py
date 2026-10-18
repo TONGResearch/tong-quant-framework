@@ -116,3 +116,30 @@ def test_partially_accepted_payload_is_not_a_completed_cli_run(
     )
     assert namespace["run_worker"](args) == 2
     assert json.loads(capsys.readouterr().out)["status"] == "partial"
+
+
+def test_financial_capture_never_claims_canonical_data_completion(monkeypatch, capsys, tmp_path):
+    namespace = runpy.run_path(str(SCRIPT))
+
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def initialize(self):
+            pass
+
+        def capture_financial_statement(self, symbol, statement):
+            assert (symbol, statement) == ("600000", "income")
+            return IngestionResult("financial_statement_snapshot", 5, 5, 0, True)
+
+    monkeypatch.setitem(namespace["run_worker"].__globals__, "DataIngestionPipeline", FakePipeline)
+    args = Namespace(
+        refresh=False,
+        database=tmp_path / "unused.sqlite3",
+        command="financial-snapshot",
+        symbol="600000",
+        statement="income",
+    )
+    assert namespace["run_worker"](args) == 2
+    record = json.loads(capsys.readouterr().out)
+    assert record["accepted"] == 5 and record["status"] == "partial"

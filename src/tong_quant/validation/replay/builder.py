@@ -1,26 +1,44 @@
+import json
+import sqlite3
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
-from decimal import Decimal
+from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime, timedelta
 
+from tong_quant.data.lifecycle_review import LifecycleRecordDisposition, review_lifecycle_record
 from tong_quant.data.models import PITReadinessAssessment, ProviderLimitation
-from tong_quant.domain.enums import DataTrustLevel, ResearchRunStatus, ThesisOutcomeStatus
-from tong_quant.domain.models import Instrument
+from tong_quant.domain.enums import DataTrustLevel
+from tong_quant.domain.models import Instrument, require_timezone
 from tong_quant.research.models import ResearchReport
 from tong_quant.validation.models import OutcomeDefinition, ValidationOutcome, ValidationSample
 from tong_quant.validation.replay.confidence import (
     ReplayConfidenceEvaluator,
     ReplayConfidenceInput,
 )
-from tong_quant.validation.replay.hashing import stable_hash
-from tong_quant.validation.replay.integrity import validate_replay_sample
+from tong_quant.validation.replay.hashing import stable_hash, stable_json
+from tong_quant.validation.replay.integrity import replay_query_hash, validate_replay_sample
 from tong_quant.validation.replay.models import (
+    OUTCOME_REVIEW_BLOCKED,
+    RESEARCH_REVIEW_BLOCKED,
+    STATUS_REVIEW_BLOCKED,
     HistoricalReplayResult,
     ReplayManifest,
     ReplayQuery,
     ReplayValidationSample,
 )
+from tong_quant.validation.replay.outcomes import evaluate_outcome
 from tong_quant.validation.replay.repository import SQLiteHistoricalReplayRepository
+from tong_quant.validation.replay.research_binding import (
+    research_evidence_ids,
+    research_expected_success,
+    research_factor_scores,
+    research_snapshot,
+)
+from tong_quant.version import (
+    HISTORICAL_REPLAY_VERSION,
+    LIFECYCLE_REVIEW_VERSION,
+    REPLAY_OUTCOME_VERSION,
+    REPLAY_RESEARCH_BINDING_VERSION,
+)
 
 
 @dataclass(slots=True)
@@ -36,9 +54,17 @@ class HistoricalReplayBuilder:
         generated_at: datetime | None = None,
     ) -> HistoricalReplayResult:
         generated = generated_at or datetime.now(UTC)
+        require_timezone(generated, "replay generated_at")
         if generated < query.outcome_as_of:
             raise ValueError("replay cannot be generated before outcome_as_of")
-        query_hash = stable_hash(query)
+        with self.repository.store.read_snapshot():
+            result = self._reconstruct(query, generated=generated)
+        if self.persist:
+            self.repository.save_result(result)
+        return result
+
+    def _reconstruct(self, query: ReplayQuery, *, generated: datetime) -> HistoricalReplayResult:
+        query_hash = replay_query_hash(query)
         provider_limitations = tuple(
             limitation
             for limitation in self.repository.provider_limitations(
@@ -64,13 +90,7 @@ class HistoricalReplayBuilder:
         )
         trust_summary = _merge_trust_summaries(sample.data_trust_summary for sample in samples)
         missing_warnings = tuple(
-            sorted(
-                {
-                    flag
-                    for sample in samples
-                    for flag in sample.missing_data_flags
-                }
-            )
+            sorted({flag for sample in samples for flag in sample.missing_data_flags})
         )
         manifest_confidence = self.confidence_evaluator.evaluate(
             ReplayConfidenceInput(
@@ -79,25 +99,54 @@ class HistoricalReplayBuilder:
                 required_datasets=query.readiness_datasets,
                 minimum_trust_level=query.minimum_trust_level,
                 missing_data_count=sum(
-                    _blocking_missing_data_count(sample.missing_data_flags)
-                    for sample in samples
+                    _blocking_missing_data_count(sample.missing_data_flags) for sample in samples
                 ),
                 expected_input_count=max(1, len(samples) * len(query.required_inputs)),
                 provider_limitations=provider_limitations,
+                integrity_blockers=tuple(
+                    sorted(
+                        {
+                            flag
+                            for sample in samples
+                            for flag in sample.missing_data_flags
+                            if flag
+                            in {
+                                STATUS_REVIEW_BLOCKED,
+                                OUTCOME_REVIEW_BLOCKED,
+                                RESEARCH_REVIEW_BLOCKED,
+                            }
+                        }
+                    )
+                ),
             )
         )
+        dataset_versions = {
+            "schema": self.repository.store.schema_version(),
+            "lifecycle_review": LIFECYCLE_REVIEW_VERSION,
+            "replay": HISTORICAL_REPLAY_VERSION,
+            "outcome_contract": REPLAY_OUTCOME_VERSION,
+            "research_binding": REPLAY_RESEARCH_BINDING_VERSION,
+            **{item.dataset: item.model_version for item in readiness},
+            **{f"readiness_hash:{item.dataset}": stable_hash(item) for item in readiness},
+        }
+        manifest_hash = stable_hash(
+            {
+                "query_hash": query_hash,
+                "sample_hashes": tuple(sample.replay_hash for sample in samples),
+                "dataset_versions": dataset_versions,
+                "confidence": manifest_confidence,
+                "provider_limitations": provider_limitations,
+                "generated_at": generated,
+            }
+        )
+        manifest_id = f"manifest-{manifest_hash}"
+        # Samples belong to one manifest, even when their economic content is identical.
+        samples = tuple(_bind_sample(sample, manifest_id) for sample in samples)
         manifest = ReplayManifest(
-            manifest_id=f"manifest-{query_hash[:24]}",
+            manifest_id=manifest_id,
             query_hash=query_hash,
             input_hashes={sample.sample_id: sample.replay_hash for sample in samples},
-            dataset_versions={
-                "schema": self.repository.store.schema_version(),
-                **{item.dataset: item.model_version for item in readiness},
-                **{
-                    f"readiness_hash:{item.dataset}": stable_hash(item)
-                    for item in readiness
-                },
-            },
+            dataset_versions=dataset_versions,
             schema_version=self.repository.store.schema_version(),
             framework_version=query.framework_version,
             configuration_hash=query.configuration_hash,
@@ -109,8 +158,6 @@ class HistoricalReplayBuilder:
             generated_at=generated,
         )
         result = HistoricalReplayResult(query=query, manifest=manifest, samples=samples)
-        if self.persist:
-            self.repository.save_result(result)
         return result
 
     def _subjects(self, query: ReplayQuery) -> tuple[Instrument, ...]:
@@ -143,6 +190,13 @@ class HistoricalReplayBuilder:
     ) -> tuple[ReplayValidationSample, ...]:
         decision_context = self._decision_context(query, instrument)
         report = self.repository.research_report(instrument, query.decision_as_of)
+        snapshot = research_snapshot(
+            report, decision_at=query.decision_as_of, instrument_id=_instrument_key(instrument)
+        )
+        decision_context["research_snapshot"] = snapshot
+        # Invalid nested evidence remains diagnosable without entering ValidationSample.
+        if snapshot["blocking_reasons"]:
+            report = None
         samples = tuple(
             self._sample_for_definition(
                 query,
@@ -172,15 +226,34 @@ class HistoricalReplayBuilder:
         )
         fundamental_rows = self.repository.fundamental_rows(instrument, query.decision_as_of)
         screening_rows = self.repository.screening_rows(instrument, query.decision_as_of)
+        fundamental_inputs = _input_rows(fundamental_rows)
+        screening_inputs = _input_rows(screening_rows)
+        status_review = (
+            None
+            if status is None
+            else review_lifecycle_record(
+                status,
+                as_of=query.decision_as_of,
+                effective_on_or_before=query.decision_as_of.date(),
+            )
+        )
         return {
             "instrument_id": _instrument_key(instrument),
             "status": None if status is None else status.status.value,
             "status_trust_level": None if status is None else status.trust_level.value,
             "status_tradable": None if status is None else status.is_tradable,
+            "status_record": (
+                None if status is None else json.loads(json.dumps(asdict(status), default=str))
+            ),
+            "status_review": None if status_review is None else stable_json(status_review),
             "fundamental_count": len(fundamental_rows),
+            "fundamental_inputs": fundamental_inputs,
+            "fundamental_inputs_hash": stable_hash(fundamental_inputs),
             "fundamental_trust_levels": tuple(row["trust_level"] for row in fundamental_rows),
             "screening_dimensions": tuple(row["dimension"] for row in screening_rows),
             "screening_count": len(screening_rows),
+            "screening_inputs": screening_inputs,
+            "screening_inputs_hash": stable_hash(screening_inputs),
         }
 
     def _sample_for_definition(
@@ -197,6 +270,11 @@ class HistoricalReplayBuilder:
     ) -> ReplayValidationSample:
         outcome, outcome_context = self._outcome(query, instrument, definition)
         missing_flags = _missing_flags(query, decision_context, report, outcome.value)
+        if outcome_context["blocking_reasons"]:
+            missing_flags += (OUTCOME_REVIEW_BLOCKED,)
+        snapshot = decision_context["research_snapshot"]
+        if isinstance(snapshot, dict) and snapshot["blocking_reasons"]:
+            missing_flags += (RESEARCH_REVIEW_BLOCKED,)
         trust_summary = _trust_summary(decision_context)
         replay_confidence = self.confidence_evaluator.evaluate(
             ReplayConfidenceInput(
@@ -207,6 +285,12 @@ class HistoricalReplayBuilder:
                 missing_data_count=_blocking_missing_data_count(missing_flags),
                 expected_input_count=len(query.required_inputs),
                 provider_limitations=provider_limitations,
+                integrity_blockers=tuple(
+                    flag
+                    for flag in missing_flags
+                    if flag
+                    in {STATUS_REVIEW_BLOCKED, OUTCOME_REVIEW_BLOCKED, RESEARCH_REVIEW_BLOCKED}
+                ),
             )
         )
         sample_hash_payload = {
@@ -228,9 +312,9 @@ class HistoricalReplayBuilder:
                 instrument=instrument,
                 research_report=report,
                 decision_at=query.decision_as_of,
-                research_expected_success=_expected_success(report),
+                research_expected_success=research_expected_success(report),
                 outcome=outcome,
-                factor_scores=_factor_scores(report, decision_context),
+                factor_scores=research_factor_scores(report, decision_context),
                 market_regime=(
                     None if report.market_regime is None else report.market_regime.state
                 ),
@@ -242,7 +326,7 @@ class HistoricalReplayBuilder:
             outcome_as_of=query.outcome_as_of,
             decision_context=decision_context,
             outcome_context=outcome_context,
-            evidence_references=() if report is None else _evidence_references(report),
+            evidence_references=() if report is None else research_evidence_ids(report),
             missing_data_flags=missing_flags,
             replay_hash=replay_hash,
             replay_confidence=replay_confidence,
@@ -257,57 +341,40 @@ class HistoricalReplayBuilder:
         instrument: Instrument,
         definition: OutcomeDefinition,
     ) -> tuple[ValidationOutcome, dict[str, object]]:
-        bars = self.repository.daily_bars(
+        start = query.decision_as_of.astimezone(UTC).date()
+        end = start + timedelta(days=definition.observation_horizon_days)
+        decision_bars = self.repository.daily_bars(
             instrument,
-            start=query.decision_as_of.date(),
-            end=query.outcome_as_of.date(),
+            start=start,
+            end=start,
+            as_of=query.decision_as_of,
+        )
+        outcome_bars = self.repository.daily_bars(
+            instrument,
+            start=end,
+            end=end,
             as_of=query.outcome_as_of,
         )
-        decision_bar = bars[0] if bars else None
-        outcome_bar = bars[-1] if bars else None
-        value = None
-        benchmark_value = None
-        succeeded = None
-        if (
-            definition.target_metric == "close_return_pct"
-            and decision_bar is not None
-            and outcome_bar is not None
-            and decision_bar.close != 0
-        ):
-            value = float((outcome_bar.close / decision_bar.close - Decimal("1")) * 100)
-            succeeded = _compare(value, definition.success_operator, definition.success_threshold)
-        outcome = ValidationOutcome(
-            outcome_id=f"{definition.outcome_id}:{_instrument_key(instrument)}",
-            definition_id=definition.outcome_id,
-            subject_id=_instrument_key(instrument),
-            observed_at=query.outcome_as_of,
-            available_at=(
-                query.outcome_as_of
-                if outcome_bar is None
-                else max(outcome_bar.available_at, query.outcome_as_of)
-            ),
-            value=value,
-            benchmark_value=benchmark_value,
-            succeeded=succeeded,
-            thesis_status=(
-                ThesisOutcomeStatus.NOT_OBSERVABLE
-                if value is None
-                else (
-                    ThesisOutcomeStatus.SUPPORTED
-                    if succeeded
-                    else ThesisOutcomeStatus.INVALIDATED
-                )
-            ),
-            invalidation_triggered=None if value is None else not bool(succeeded),
-            metadata={"target_metric": definition.target_metric},
+        return evaluate_outcome(
+            query,
+            instrument,
+            definition,
+            decision_bars[0] if len(decision_bars) == 1 else None,
+            outcome_bars[0] if len(outcome_bars) == 1 else None,
         )
-        context = {
-            "bar_count": len(bars),
-            "target_metric": definition.target_metric,
-            "value": value,
-            "outcome_available_at": outcome.available_at.isoformat(),
-        }
-        return outcome, context
+
+
+def _bind_sample(sample: ReplayValidationSample, manifest_id: str) -> ReplayValidationSample:
+    sample_id = f"replay-{stable_hash((manifest_id, sample.replay_hash))}"
+    return replace(
+        sample,
+        sample_id=sample_id,
+        validation_sample=(
+            None
+            if sample.validation_sample is None
+            else replace(sample.validation_sample, sample_id=sample_id)
+        ),
+    )
 
 
 def _missing_flags(
@@ -320,6 +387,12 @@ def _missing_flags(
     required = set(query.required_inputs)
     if "instrument_status" in required and decision_context["status"] is None:
         flags.append("instrument_status_missing")
+    review = decision_context["status_review"]
+    if decision_context["status"] is not None and (
+        not isinstance(review, dict)
+        or review.get("disposition") != LifecycleRecordDisposition.REVIEWABLE.value
+    ):
+        flags.append(STATUS_REVIEW_BLOCKED)
     if "fundamentals" in required and decision_context["fundamental_count"] == 0:
         flags.append("fundamentals_missing")
     if "screening_results" in required and decision_context["screening_count"] == 0:
@@ -370,30 +443,16 @@ def _trust_levels_from_summary(summary: dict[str, int]) -> tuple[DataTrustLevel,
     return tuple(levels)
 
 
-def _expected_success(report: ResearchReport) -> bool:
-    return report.status is ResearchRunStatus.COMPLETED and report.confidence.confidence >= 50
-
-
-def _factor_scores(
-    report: ResearchReport,
-    decision_context: dict[str, object],
-) -> dict[str, float]:
-    scores: dict[str, float] = {}
-    for assessment in report.assessments:
-        if assessment.score is not None:
-            scores[assessment.module.value] = assessment.score
-    screening_count = decision_context.get("screening_count")
-    if isinstance(screening_count, int | float):
-        scores["screening_coverage"] = min(100.0, float(screening_count) * 10)
-    return scores
-
-
-def _evidence_references(report: ResearchReport) -> tuple[str, ...]:
-    return tuple(
-        evidence_id
-        for assessment in report.assessments
-        for evidence_id in assessment.evidence_ids
-    )
+def _input_rows(rows: Iterable[sqlite3.Row]) -> list[dict[str, object]]:
+    # Ignore ingestion bookkeeping, but retain all material fields and original JSON.
+    return [
+        {
+            key: value
+            for key, value in dict(row).items()
+            if key not in {"ingested_at", "version_rank"}
+        }
+        for row in rows
+    ]
 
 
 def _instrument_key(instrument: Instrument) -> str:
@@ -402,22 +461,6 @@ def _instrument_key(instrument: Instrument) -> str:
 
 def _limitation_code(limitation: ProviderLimitation) -> str:
     return f"{limitation.provider}:{limitation.dataset}:{limitation.limitation_code}"
-
-
-def _compare(value: float, operator: str, threshold: float) -> bool:
-    if operator == ">":
-        return value > threshold
-    if operator == ">=":
-        return value >= threshold
-    if operator == "<":
-        return value < threshold
-    if operator == "<=":
-        return value <= threshold
-    if operator == "==":
-        return value == threshold
-    if operator == "!=":
-        return value != threshold
-    raise ValueError(f"unsupported outcome operator: {operator}")
 
 
 __all__ = ["HistoricalReplayBuilder"]

@@ -1,5 +1,27 @@
 # Engineering Risk Register
 
+Recovery-baseline follow-up (October 18): the eighteen local hardening slices
+have a user-approved reviewed Git checkpoint with isolated package/source and
+quality checks. Unpushed local history is not an off-device backup. Remote CI,
+encrypted data/artifact retention, independent host recovery and source/data/
+strategy acceptance remain explicit risks; no trading readiness is promoted.
+
+Research-bar follow-up (October 18): three research modules now share checked
+visible observation selection. Duplicate rows/revisions cannot inflate warm-up,
+latest suspended versions cannot resurrect older prices and invalid/conflicting
+series fail closed. Technical returns now span N full observation intervals.
+Legacy reports are not repaired in place. Missing authoritative sessions,
+source trust, action coverage, concurrent context immutability and original-run
+input provenance remain separate risks; this is not strategy validation.
+
+Artifact-portability follow-up (October 18): a bounded read-only registry/file
+audit detects wrong roots, missing/corrupt files, unsafe paths and size/hash
+drift without exposing raw metadata. The operational and exploratory roots are
+different; both local registries pass 4/4. Passing does not cover unregistered
+rule captures, metadata-only disclosures, cross-store concurrent changes,
+encrypted retention or independent-host restore. These remain recovery risks;
+the audit cannot upgrade PIT, release or trading readiness.
+
 | ID | Severity | Risk | Mitigation | Residual risk |
 |---|---|---|---|---|
 | R-001 | Critical | Survivorship or future-data leakage creates false validation results. | Strict `available_at`, replay warnings, trust matrix, adjusted-bar rejection. | Historical provider coverage remains incomplete. |
@@ -37,3 +59,73 @@
 | R-033 | High | A later ingestion silently changes the historical bar or calendar used by research. | Same-version bar/calendar writes are now immutable and idempotent; conflicts require a new available_at version with PIT regression tests. | Prior overwrites are not recoverable from code; security-master same-version correction provenance remains incomplete. |
 | R-034 | High | Missing/partially normalized corporate actions or duplicated observations are mistaken for no risk or cumulative adjustments. | Supported descriptions now corroborate units, numeric components, provider implementation labels and ex-dates; real 26-row samples produce 33 events. Row rejections, exact-key idempotence and conflicts are audited, and the CLI returns partial/exit 2 for incomplete acceptance. | Provider labels are not issuer verification; unsupported formats, authoritative coverage, legacy units and independent continuity remain unresolved. All new observations are LOW/RETRIEVAL_TIME; adjustment and no-action inference remain disabled. |
 | R-035 | Critical | An assumed historical availability time, matched disclosure date or fabricated fallback turnover contaminates research. | New AKShare market/fact ingestion uses retrieval-time visibility; numeric facts remain LOW/RETRIEVAL_TIME, optional turnover is null, cache parameters are versioned and real sample corrections retain separate versions. | Legacy backdated facts/bars/calendar and fabricated-zero rows are not repaired by the code upgrade. Raw-evidence audit/reconstruction and provider calibration remain mandatory; PIT is UNSUITABLE. |
+| R-036 | High | Provider evidence or raw artifacts acquire a trust label above their declared capability, or borrow another provider's capability. | The neutral ingestion gate now checks provider identity and all five trust levels before fetch/publication as applicable. Fifty record/artifact trust-matrix cases and identity/relaxed-PIT regressions cover rejection before side effects. | Capability ceilings themselves still need independent review. Previously stored evidence is not retroactively certified or rewritten, and the legacy typed AKShare pipeline remains a separate boundary. |
+| R-037 | High | A captured holiday notice or derived ordinary schedule is mistaken for verified actual trading/settlement history. | Explicit hash-pinned assertions and a separate reviewed annual/weekday-rule plan retain MEDIUM/retrieval-time limits. All annual claims and current notice bytes are required; expiry/conflicts remain visible and raw calendar rows are unchanged. | Manual source mapping, exceptional closures, raw-artifact recovery and scheduled review remain open; ordinary coverage does not establish actual opening, settlement, stock status or calculation/simulation authority. |
+| R-038 | High | A matching price/hash is mistaken for independent market-data authority, or source/cache serialization changes silently sever its provenance. | Unadjusted rows and source-bound snapshot evidence commit atomically; original cache serialization and fingerprints are checked, exact price reconstruction is required, and row/source/time/artifact substitutions fail binding. | LOW trust, unknown historical corrections/activity units, unsigned capture metadata, current artifact integrity and independent calibration remain unresolved. A match is research provenance only, not market-rule or simulation approval. |
+| R-039 | Critical | Delisted-market quotes are mislabeled suspension status, or forecast/end dates become confirmed resumptions and false tradability/calibration agreement. | The misrouted current-status API now fails closed; one normalizer supplies LOW/retrieval-time suspension starts to ingestion and AKShare calibration. New source frames/events commit atomically; runtime v1.5 preserves and flags old rows and incomplete coverage. | Other retained databases/reports may contain legacy false status/resumption or MEDIUM labels. They need explicit provenance review, not deletion or automatic upgrade. Neither partial events nor empty responses prove current status, normal phase, resumption or historical continuity. |
+
+R-039 follow-up: shared lifecycle review now supplies runtime v1.6 and timeline
+coverage. It excludes logically quarantined and wrong-scope records from
+coverage, caps incomplete-input classifications at UNSUITABLE, and preserves
+weakest-trust semantics. Raw readers and historical calibration reports are
+not universally governed by this helper yet. A REVIEWABLE result cannot
+authenticate source bytes, establish full continuity or authorize trading.
+
+R-026/R-039 replay follow-up: original status and review metadata are now hash-
+bound and rechecked at formal validation entry. Present but unusable status
+blocks replay eligibility, including when the required-input list omits it.
+One snapshot/transaction protects reconstruction/publication. This is not a
+global source-authentication boundary. The subsequent outcome slice repairs
+new replay-row replacement/ownership and exact UTC calendar alignment, with
+separate visibility cutoffs and request-time recomputation. Session-aware,
+source-authenticated and corporate-action/cost-aware returns remain open
+(TD-039). Research/evidence/policy snapshots and visible input inventories now
+bind full reconstructed content and reject nested defects and evidence overwrite.
+Exact original-run input and authenticated source lineage remain open (TD-040).
+Successful synthetic validation is not operational approval.
+
+Real-pilot follow-up: the Oct 16 coverage manifest separates six observed price
+dates from eighteen stored versions, and exact source binding from LOW/
+retrieval-time trust. Session coverage stays unknown without an authoritative
+denominator. Scoped empty action/lifecycle results cannot clear the subject;
+a warm-up count or descriptive inventory cannot promote historical readiness.
+
+Exploratory-data follow-up: 187 price dates meet the configured numerical
+trend minimum but do not prove executable or historically available prices.
+Native financial snapshots deliberately retain unknown units and no canonical
+metric mapping. Direct disclosure metadata is pagination-truncated and lacks
+filing bytes; source timestamps/precision are not independent verification.
+The original baseline and new exploratory database must not be conflated.
+
+Financial normalization follow-up (October 17): zero/alias corruption and
+nullable-value failures are repaired for new legacy calls; disagreements now
+abort the transaction. Historic facts are not retrospectively verified.
+Legacy CNY/absolute assumptions remain a known semantic risk: real observations
+must stay on native capture until metric/unit/period and industry applicability
+are reviewed. Numeric parsing success cannot promote trust or research eligibility.
+
+Fact-write follow-up (October 18): same-hash content disagreements and batch/
+concurrent conflicts now fail closed; savepoints prevent partial failed calls.
+This repairs a silent-idempotency defect, not provider trust or accounting
+semantics. Existing invalid/contradictory facts require independent audit and
+explicit new versions, not automatic cleanup or retrospective eligibility.
+
+Research-input follow-up (October 18): mixed subjects/metrics, future queue/
+instrument metadata/periods, nonfinite and same-version contradictory facts
+now fail pre-run validation. Latest financial diagnostics no longer depend
+on tuple order. These are structural safeguards, not source/unit verification;
+caller-owned nested data and exact consumed-input provenance remain open.
+
+Deployment follow-up (October 18): explicit-root installed commands, safe
+offline checks and runtime/checkout/commit Python-byte comparison reduce
+wrong-environment/version drift. The development checkout remains dirty and
+cannot pass release preflight. Dependency locking, signed release provenance,
+target-host restore/portability and real strategy/data qualification remain
+open. A host check is neither a live enablement gate nor an ongoing guarantee.
+
+Dependency follow-up (October 18): native hash locks and clean-venv tests reduce
+environment drift and catch compatible-but-unpinned versions. This profile is
+macOS arm64/Python 3.12/macOS 14+ only. Other hosts, upstream code security,
+source-build byte reproducibility, signed release provenance and encrypted
+target-host recovery remain separate risks. Hashes do not authenticate the
+trustworthiness of upstream code or resolve research/data readiness.

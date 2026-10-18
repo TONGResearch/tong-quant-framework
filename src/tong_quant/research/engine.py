@@ -44,6 +44,7 @@ class ResearchEngine:
             raise ValueError(f"research module dependencies are missing: {joined}")
 
     def run(self, request: ResearchRequest) -> ResearchRun:
+        request.context.validate()
         run_id = (
             self.repository.start_run(request)
             if self.repository is not None
