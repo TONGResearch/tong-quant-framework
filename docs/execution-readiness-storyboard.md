@@ -3,6 +3,14 @@
 For the owner-facing Chinese storyboard, see
 [Tong Quant trading storyboard](owner-trading-storyboard.zh-CN.md).
 
+October 27 planning baseline: the
+[first decision-release plan](decision-delivery-plan-2026-10-27.zh-CN.md) defines
+six research-decision acceptance groups, separately from Paper/live. Tong has
+confirmed read-only four-market financial/nonfinancial equity scope; detailed
+rubrics and strategy admission remain unapproved. The earlier narrow-pilot effort
+estimate is superseded. See the [coverage matrix](four-market-readonly-release-2026-10-27.zh-CN.md).
+PROJECT_STATUS.md and governance remain the source of current state.
+
 ## Current State
 
 Execution is fail-closed. The repository contains disabled guard contracts and
@@ -18,32 +26,46 @@ not satisfy any readiness gate and does not authorize integration work.
 
 ## Remaining Gates
 
-The following gates are sequential. Passing a later engineering test cannot
-waive an earlier evidence gate.
+Promotion follows the existing dependency/acceptance gates. Approved engineering,
+data collection and validation design can proceed in parallel; passing a later
+engineering test cannot waive an earlier evidence gate. Documented placeholders
+and elapsed observation time are not completed capabilities.
 
 1. **PIT data gate**
-   - Complete the representative 84-day provider evidence horizon.
+   - Complete the representative 84-day provider horizon before claiming that
+     longitudinal evidence milestone; keep collecting it in parallel with
+     approved controlled-launch engineering, not as a blanket software freeze.
    - Reassess lifecycle, universe, fundamentals, corporate actions, and market
      inputs with reviewed trust, precision, continuity, and consistency.
-   - Reviewed `CAUTION` with verified consistency is a minimum to reconsider
-     the development freeze, not permission to create ValidationRequests or
-     enable execution. The current replay gate requires every declared dataset
+   - Reviewed `CAUTION` with verified consistency is not permission to create
+     ValidationRequests or enable execution. Approved development can continue
+     without falsely promoting data. The current replay gate requires every declared dataset
      to be `USABLE` and ready for historical replay. Future execution needs a
      separately approved, stricter dataset-by-dataset policy.
 2. **Research-definition gate**
    - Freeze every indicator formula, warm-up, market rule, parameter, setup
      state, invalidation rule, and evidence hash.
-   - Complete `WP-RESEARCH-001` without emitting execution actions.
+   - Distinguish implemented `WP-RESEARCH-002` technical diagnostics and
+     `WP-RESEARCH-003` condition integration from the still-planned
+     `WP-RESEARCH-001` data-qualified confluence/Style milestone. The confirmed
+     first-release matrix retains Style as an explicit uncompleted requirement;
+     missing inputs cannot silently remove it. Completed indicator software is
+     not admitted strategy validation.
+   - Review/admit sector/source financial definitions and rubric; current
+     Financial assessments remain deliberately unscored. Value's four field
+     names and numerical annotations are not implemented source-qualified logic.
 3. **Historical validation gate**
    - Build PIT replay samples including delisted, ST, suspended, and missing
      observations.
    - Complete walk-forward, final out-of-sample, robustness, factor-ablation,
      regime, thesis, and decision-journal reviews.
 4. **Portfolio and risk gate**
-   - Require an authenticated, current, acceptable Validation status, not only
-     a report identifier. The current PortfolioCandidate stores a free-form
-     `validation_status` but does not enforce it.
-   - Convert risk budgets into actual weight constraints.
+   - Require authenticated, current, acceptable Validation status, not only a
+     report identifier. Portfolio writes and read-side evidence checks now
+     enforce typed authoritative lineage; source/policy qualification remains
+     separate and older string-status design notes are not the current contract.
+   - Validate actual proposal risk-budget/weight constraints with accepted
+     inputs; existing heuristic proposals are not executable capital sizing.
    - Add covariance, capacity, turnover, currency, fees, tax assumptions,
      round-lot rules, and gap/limit-down stress.
 5. **Paper Trading architecture and implementation gate**

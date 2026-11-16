@@ -1,10 +1,18 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
+from tong_quant.data.financial_inputs import FinancialInputSnapshot
+from tong_quant.data.market_value_inputs import MarketValueInputSnapshot
+from tong_quant.data.native_financial_inputs import NativeFinancialResearchInput
+from tong_quant.data.reviewed_document_inputs import ReviewedDocumentResearchInput
+from tong_quant.data.reviewed_ratio_inputs import ReviewedRatioResearchInput
+from tong_quant.data.sec_period_inputs import SECPeriodResearchInput
 from tong_quant.domain.enums import (
+    AssetType,
     EvidenceQuality,
     InvestmentAssessmentStatus,
+    Market,
     ResearchConclusion,
     ResearchModuleName,
     ResearchRunStatus,
@@ -13,6 +21,7 @@ from tong_quant.domain.enums import (
 from tong_quant.domain.models import Bar, FundamentalFact, Signal, require_timezone
 from tong_quant.market_regime.models import MarketRegime
 from tong_quant.screening.models import ResearchQueueEntry, screening_instrument_id
+from tong_quant.version import RESEARCH_CONFIDENCE_VERSION
 
 ResearchValue = float | int | str | bool | Decimal | None
 
@@ -46,7 +55,7 @@ class ResearchEvidence:
             raise ValueError("evidence name must not be empty")
         if not self.source.strip():
             raise ValueError("evidence source must not be empty")
-        if self.available_at < self.observed_at:
+        if self.available_at.astimezone(UTC) < self.observed_at.astimezone(UTC):
             raise ValueError("evidence available_at cannot precede observed_at")
 
 
@@ -78,7 +87,7 @@ class ConfidenceBreakdown:
     module_agreement: float
     point_in_time_integrity: float
     confidence: float
-    method: str = "weighted_geometric_with_weakest_link_cap"
+    method: str = f"weighted_geometric_with_weakest_link_cap:{RESEARCH_CONFIDENCE_VERSION}"
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -110,7 +119,7 @@ class ResearchAssessment:
     def __post_init__(self) -> None:
         require_timezone(self.evaluated_at, "evaluated_at")
         require_timezone(self.available_at, "available_at")
-        if self.available_at > self.evaluated_at:
+        if self.available_at.astimezone(UTC) > self.evaluated_at.astimezone(UTC):
             raise ValueError("research assessment cannot use future data")
         if self.score is not None:
             _require_percentage("research assessment score", self.score)
@@ -146,12 +155,20 @@ class ResearchContext:
     fundamentals: dict[str, tuple[FundamentalFact, ...]]
     evidence: tuple[ResearchEvidence, ...]
     market_regime: MarketRegime | None = None
+    financial_inputs: FinancialInputSnapshot | None = None
+    market_value_inputs: MarketValueInputSnapshot | None = None
+    native_financial_inputs: NativeFinancialResearchInput | None = None
+    reviewed_document_inputs: ReviewedDocumentResearchInput | None = None
+    reviewed_ratio_inputs: ReviewedRatioResearchInput | None = None
+    supplemental_ratio_inputs: tuple[ReviewedRatioResearchInput, ...] = ()
+    sec_period_inputs: SECPeriodResearchInput | None = None
 
     def __post_init__(self) -> None:
         self.validate()
 
     def validate(self) -> None:
         require_timezone(self.as_of, "as_of")
+        cutoff = self.as_of.astimezone(UTC)
         if not self.queue_id.strip():
             raise ValueError("research context requires queue_id")
         if self.queue_entry.status.value not in {"pending", "in_research"}:
@@ -159,23 +176,27 @@ class ResearchContext:
         entry = self.queue_entry
         queue_times = (
             entry.admitted_at, entry.candidate.available_at, entry.research_score.calculated_at,
+            entry.candidate.discovered_at,
             *(result.available_at for result in entry.hard_screen_results),
             *(result.evaluated_at for result in entry.hard_screen_results),
         )
-        if any(timestamp > self.as_of for timestamp in queue_times):
+        if any(timestamp.astimezone(UTC) > cutoff for timestamp in queue_times):
             raise ValueError("research context contains future queue data")
         future_evidence = [
-            item.evidence_id for item in self.evidence if item.available_at > self.as_of
+            item.evidence_id for item in self.evidence
+            if item.available_at.astimezone(UTC) > cutoff
+            or item.observed_at.astimezone(UTC) > cutoff
         ]
         future_bars = [
             bar.timestamp.isoformat() for bar in self.bars
-            if bar.available_at > self.as_of or bar.timestamp > self.as_of
+            if bar.available_at.astimezone(UTC) > cutoff or bar.timestamp.astimezone(UTC) > cutoff
         ]
         future_facts = [
             fact.metric
             for facts in self.fundamentals.values()
             for fact in facts
-            if fact.available_at > self.as_of or fact.period_end > self.as_of.date()
+            if fact.available_at.astimezone(UTC) > cutoff
+            or fact.published_at.astimezone(UTC) > cutoff or fact.period_end > cutoff.date()
         ]
         if future_evidence or future_bars or future_facts:
             raise ValueError("research context contains future data")
@@ -186,7 +207,8 @@ class ResearchContext:
             *(fact.instrument for facts in self.fundamentals.values() for fact in facts),
         )
         if any(
-            instrument.available_at is not None and instrument.available_at > self.as_of
+            instrument.available_at is not None
+            and instrument.available_at.astimezone(UTC) > cutoff
             for instrument in instruments
         ):
             raise ValueError("research context contains future instrument metadata")
@@ -204,7 +226,8 @@ class ResearchContext:
                 if not fact.value.is_finite():
                     raise ValueError("research context fundamental value must be finite")
                 identity = (
-                    metric, fact.period_end, fact.available_at, fact.revision, fact.published_at,
+                    metric, fact.period_end, fact.available_at.astimezone(UTC), fact.revision,
+                    fact.published_at.astimezone(UTC),
                 )
                 content = (
                     fact.period_start, fact.fiscal_period, fact.value, fact.currency, fact.unit,
@@ -214,8 +237,84 @@ class ResearchContext:
                 if identity in versions and versions[identity] != content:
                     raise ValueError("research context contains conflicting fundamental versions")
                 versions[identity] = content
-        if self.market_regime is not None and self.market_regime.as_of > self.as_of:
+        if self.market_regime is not None and self.market_regime.as_of.astimezone(UTC) > cutoff:
             raise ValueError("research context contains a future Market Regime")
+        if self.financial_inputs is not None:
+            self.financial_inputs.validate_context(
+                tuple(fact for facts in self.fundamentals.values() for fact in facts),
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of,
+            )
+        if self.market_value_inputs is not None:
+            if entry.candidate.instrument.asset_type is not AssetType.EQUITY:
+                raise ValueError("current market-value research inputs require equity instruments")
+            self.market_value_inputs.validate_context(
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of,
+            )
+        if self.native_financial_inputs is not None:
+            if (entry.candidate.instrument.asset_type is not AssetType.EQUITY
+                    or self.financial_inputs is not None):
+                raise ValueError("native financial inputs require equities and no parallel receipt")
+            self.native_financial_inputs.validate_context(
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of,
+            )
+        if self.reviewed_document_inputs is not None:
+            if (entry.candidate.instrument.asset_type is not AssetType.EQUITY
+                    or self.financial_inputs is not None):
+                raise ValueError("reviewed-document input requires equity and no canonical receipt")
+            self.reviewed_document_inputs.validate_context(
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of,
+            )
+            if (self.native_financial_inputs is not None
+                    and self.native_financial_inputs.sector_profile
+                    != self.reviewed_document_inputs.sector_profile):
+                raise ValueError("native/manual requested sector contexts disagree")
+        if (type(self.supplemental_ratio_inputs) is not tuple
+                or len(self.supplemental_ratio_inputs) > 3
+                or self.supplemental_ratio_inputs and self.reviewed_ratio_inputs is None):
+            raise ValueError("supplemental ratios require a primary receipt and at most 3 items")
+        ratio_inputs = (
+            *((self.reviewed_ratio_inputs,) if self.reviewed_ratio_inputs is not None else ()),
+            *self.supplemental_ratio_inputs,
+        )
+        document_urls: set[str] = set()
+        for ratio_input in ratio_inputs:
+            if not isinstance(ratio_input, ReviewedRatioResearchInput):
+                raise ValueError("reviewed ratio inputs require immutable ratio receipts")
+            if (entry.candidate.instrument.asset_type is not AssetType.EQUITY
+                    or self.financial_inputs is not None):
+                raise ValueError("reviewed-ratio input requires equity and no canonical receipt")
+            ratio_input.validate_context(
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of,
+            )
+            document_url = str(ratio_input.document()["document_url"])
+            if document_url in document_urls:
+                raise ValueError("reviewed ratio documents must be unique; no duplicate editions")
+            document_urls.add(document_url)
+            for other in (self.native_financial_inputs, self.reviewed_document_inputs,
+                          self.reviewed_ratio_inputs):
+                if other is not None and other.sector_profile != (
+                    ratio_input.sector_profile
+                ):
+                    raise ValueError("ratio/native/monetary requested sector contexts disagree")
+        if self.sec_period_inputs is not None:
+            if (not isinstance(self.sec_period_inputs, SECPeriodResearchInput)
+                    or entry.candidate.instrument.asset_type is not AssetType.EQUITY
+                    or entry.candidate.instrument.market is not Market.US
+                    or self.financial_inputs is not None):
+                raise ValueError("SEC period inputs require US equity and no canonical receipt")
+            self.sec_period_inputs.validate_context(
+                symbol=entry.candidate.instrument.symbol, market=entry.candidate.instrument.market,
+                as_of=self.as_of)
+            for other in (self.native_financial_inputs, self.reviewed_document_inputs,
+                          *ratio_inputs):
+                if (other is not None
+                        and other.sector_profile != self.sec_period_inputs.sector_profile):
+                    raise ValueError("SEC and other financial requested sector contexts disagree")
 
     def evidence_for(self, module: ResearchModuleName) -> tuple[ResearchEvidence, ...]:
         return tuple(item for item in self.evidence if item.module is module)
@@ -244,8 +343,11 @@ class ResearchRequest:
     invalidation_conditions: tuple[ThesisInvalidationCondition, ...]
     unresolved_questions: tuple[str, ...] = ()
     researcher: str | None = None
+    condition_style: str | None = None
 
     def __post_init__(self) -> None:
+        if self.condition_style not in {None, "long_term_confirmation", "improved_turtle"}:
+            raise ValueError("unsupported research condition style")
         if not self.modules:
             raise ValueError("research request requires modules")
         if len(set(self.modules)) != len(self.modules):

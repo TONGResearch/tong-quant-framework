@@ -78,7 +78,9 @@ def test_sqlite_initializes_required_tables(tmp_path: Path) -> None:
     assert store.table_count("notification_deliveries") == 0
     assert store.table_count("notification_dead_letters") == 0
     assert store.table_count("schema_metadata") == 3
-    assert store.table_count("schema_migrations") == 11
+    assert store.table_count("schema_migrations") == 12
+    assert store.table_count("refresh_jobs") == 0
+    assert store.table_count("refresh_attempts") == 0
     assert store.table_count("schema_fingerprints") == 1
     assert store.schema_version() == DATABASE_SCHEMA_VERSION
     assert store.migration_head() == MIGRATION_HEAD

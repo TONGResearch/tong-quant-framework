@@ -1,6 +1,7 @@
 import os
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -82,6 +83,38 @@ class TechnicalResearchSettings:
     short_ma_period: int
     long_ma_period: int
     position_period: int
+    macd_fast: int = 12
+    macd_slow: int = 26
+    macd_signal: int = 9
+    kdj_period: int = 9
+    kdj_k: int = 3
+    kdj_d: int = 3
+    triple_periods: tuple[int, ...] = (5, 10, 20)
+    granville_period: int = 200
+    slope_period: int = 3
+    support_tolerance: float = 0.01
+    extreme_deviation: float = 0.10
+    setup_expiry: int = 5
+    atr_period: int = 14
+    atr_multiple: float = 2.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "triple_periods", tuple(self.triple_periods))
+        periods = (self.short_ma_period, self.long_ma_period, self.position_period,
+                   self.macd_fast, self.macd_slow, self.macd_signal, self.kdj_period,
+                   self.kdj_k, self.kdj_d, self.granville_period, self.slope_period,
+                   self.setup_expiry, self.atr_period, *self.triple_periods)
+        if any(type(value) is not int or value < 1 for value in periods):
+            raise ValueError("technical periods must be positive integers")
+        if self.macd_fast >= self.macd_slow:
+            raise ValueError("MACD fast period must be smaller than slow period")
+        if len(self.triple_periods) != 3 or len(set(self.triple_periods)) != 3:
+            raise ValueError("three distinct triple-average periods are required")
+        if any(type(value) not in {int, float} or not isfinite(value) or value <= 0
+               for value in (self.support_tolerance, self.extreme_deviation, self.atr_multiple)):
+            raise ValueError("technical tolerances must be positive finite numbers")
+        if not self.support_tolerance < self.extreme_deviation < 1:
+            raise ValueError("require support tolerance < extreme deviation < 1")
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +132,18 @@ class PatternResearchSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class FinancialResearchSettings:
+    maximum_report_age_days: int = 0
+    maximum_source_age_seconds: int = 0
+
+    def __post_init__(self) -> None:
+        if type(self.maximum_report_age_days) is not int or self.maximum_report_age_days < 0:
+            raise ValueError("financial maximum report age must be a nonnegative integer")
+        if type(self.maximum_source_age_seconds) is not int or self.maximum_source_age_seconds < 0:
+            raise ValueError("financial maximum source age must be a nonnegative integer")
+
+
+@dataclass(frozen=True, slots=True)
 class ResearchSettings:
     enabled: bool
     model_version: str
@@ -106,6 +151,13 @@ class ResearchSettings:
     technical: TechnicalResearchSettings
     trend: TrendResearchSettings
     pattern: PatternResearchSettings
+    financial: FinancialResearchSettings = field(default_factory=FinancialResearchSettings)
+    minimum_condition_confidence: float = 60.0
+
+    def __post_init__(self) -> None:
+        value = self.minimum_condition_confidence
+        if type(value) not in {int, float} or not isfinite(value) or not 0 <= value <= 100:
+            raise ValueError("minimum condition confidence must be finite and between 0 and 100")
 
 
 @dataclass(frozen=True, slots=True)
@@ -283,6 +335,8 @@ def load_settings(path: Path, *overrides: Path) -> Settings:
             technical=TechnicalResearchSettings(**raw["research"]["technical"]),
             trend=TrendResearchSettings(**raw["research"]["trend"]),
             pattern=PatternResearchSettings(**raw["research"]["pattern"]),
+            financial=FinancialResearchSettings(**raw["research"].get("financial", {})),
+            minimum_condition_confidence=raw["research"].get("minimum_condition_confidence", 60.0),
         ),
         portfolio=PortfolioSettings(**raw["portfolio"]),
         portfolio_evidence=PortfolioEvidenceSettings(**raw["portfolio_evidence"]),

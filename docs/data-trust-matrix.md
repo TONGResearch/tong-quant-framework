@@ -19,6 +19,27 @@ No currently integrated AKShare dataset qualifies as universally PIT-safe.
 Individual records backed by exact CNInfo announcement timestamps may be usable
 when runtime coverage passes, but that does not upgrade the entire dataset.
 
+October 28 [source-pinned overseas transcription](global-document-manual-review-2026-10-28.md)
+adds eight native monetary observations, not canonical facts. LOW/RETRIEVAL_TIME
+starts at actual recording, not claimed reviewed_at or the printed period.
+Single manual scope/column/unit/page annotations, scaling and source consistency
+do not grant independent review, accounting/issuer/sector qualification, scoring
+or replay/validation admission. Missing/unreadable/conflicting values stay null.
+
+October 28 [HKEX/Maybank original PDFs](hk-my-primary-documents-2026-10-28.md)
+are LOW / RETRIEVAL_TIME snapshots. Caller identity/period/landing annotations
+remain unverified; capture and manual page inspection do not grant numeric
+extraction, source/sector scoring, publication history or PIT replay authority.
+The Malaysia scope is Maybank-specific, not a market-wide Bursa integration.
+No dataset or overall readiness is upgraded by the two successful captures.
+
+October 27 [SEC primary-body evidence](sec-body-numeric-review-2026-10-27.md)
+remains LOW / RETRIEVAL_TIME. Nine supported API/body numeric correspondences are
+same-origin only; unsupported occurrences remain visible. Original byte retention
+and exact arithmetic do not grant accounting/source qualification, historical
+publication, issuer/equity identity, scoring or validation/PIT replay admission.
+No trust classification or overall UNSUITABLE readiness has been upgraded.
+
 October 16 usability follow-up: runtime and lifecycle coverage now share
 record review. Quarantined records remain visible but cannot improve coverage;
 observation-only data stays weak. REVIEWABLE is a structural result, not an
@@ -76,6 +97,9 @@ successful provider response is not a normalization/readiness pass.
 | Direct CNInfo disclosures and artifacts | MEDIUM | EXACT per official announcement timestamp | Direct filing metadata and content-hash evidence from `available_at`; artifact bytes are research evidence only | Public web contract, representative parity, historical coverage, URL-change behavior, and correction continuity remain unverified. |
 | Yahoo Finance unadjusted daily bars | LOW | RETRIEVAL_TIME | Global exploratory research and provider comparison from ingestion time | Unofficial API, no authoritative historical availability, and unverified delisting/symbol/correction continuity. |
 | Massive unadjusted US daily bars and action dates | LOW | RETRIEVAL_TIME | Optional independent calibration after authorized retrieval | No provider is trusted by default; permissions, corrections, identifier history, and continuity are unverified. |
+| SEC issuer submissions snapshots | LOW | RETRIEVAL_TIME | Retained issuer metadata and form-aware date/reference research from actual capture | Acceptance/filed/report labels are not public availability; CIK/equity identity and older-page continuity are unverified. No canonical facts or replay admission. |
+| SEC standard-taxonomy concept snapshots | LOW | RETRIEVAL_TIME | Retained native integer observations and same-cutoff filing-reference diagnostics | All units/periods/accessions remain separate. Fractional rows are unusable; missing references stay visible. Metadata matches are not independent value/accounting corroboration, complete history or scoring admission. |
+| SEC parent-pinned older filing pages | LOW | RETRIEVAL_TIME | Explicit opt-in reference research after verified capture and parent/descriptor checks | Count/range/byte agreement is not independent truth or complete history. Page 002 date/field gaps remain quarantined; 649/649 sample references do not establish numeric or PIT qualification. |
 
 These adapter defaults are deliberately weaker than any dataset-specific trust
 that may be earned later. A scheduled provider contract check tests endpoint and

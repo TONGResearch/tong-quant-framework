@@ -2,6 +2,14 @@
 
 ## Safety Boundary
 
+November 4 [rollback retention](artifact-rollback-retention-2026-11-04.md) keeps
+published shared original bytes even when their creator's database transaction
+fails. Some files may therefore be unregistered. Database backup and registered-
+artifact audits do not inventory every original or prove global non-reference.
+Never automatically delete files merely absent from one registry; include
+explicit original-byte inventory, encrypted co-retention and storage capacity in
+recovery review. No new backup or cleanup service is activated by this policy.
+
 Tong Quant database recovery is evidence preservation, not trading
 functionality. The tooling never connects to providers, notifications, brokers,
 orders, or execution.
@@ -20,6 +28,14 @@ The tools enforce these rules:
   schema-fingerprint, and row-count checks pass;
 - published database files use mode `0600`;
 - command arguments never accept credentials.
+
+New manifests additionally compare source/snapshot logical content under
+`sqlite-iterdump-content-v1`. Same-schema restores require matching dump hashes
+and do not reinitialize metadata. Embedded NUL text is unsupported and fails
+closed because SQLite dump quoting is lossy for that value. This comparison is
+SQLite-version/representation/row-order sensitive, not a canonical cross-host
+forensic identity. It never exports SQL or row values. See the
+[actual encrypted recovery observation](encrypted-recovery-2026-10-18.md).
 
 ## Read-Only Audit
 
@@ -74,10 +90,16 @@ python scripts/manage_database.py restore-dry-run \
 ```
 
 The drill audits the backup, restores through the SQLite backup API, runs
-supported forward migrations on the isolated temporary copy, audits it again,
+supported forward migrations only when required on the isolated temporary copy, audits it again,
 verifies all source data-table counts and nondecreasing migration-ledger counts,
 and only then publishes the drill database. It never changes the backup or the
 active source database.
+
+Current-schema restores skip initialization to preserve metadata timestamps and
+must return `same_schema_content_verified=true`. Older schema transitions return
+this flag false even if migration/integrity/count checks pass; projected domain
+content across schema changes still needs separate review. Historical reports
+without content hashes must not be described as having this newer guarantee.
 
 An older backup is accepted only when its migration ledger is a checksum-valid
 prefix and both its physical fingerprint and frozen historical schema-definition

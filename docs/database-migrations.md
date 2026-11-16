@@ -1,5 +1,12 @@
 # Database Migration Framework
 
+November 3 [refresh ledger implementation](refresh-ledger-persistence-2026-11-03.md)
+registers 0011_refresh_ledger / schema 0.8.3 with two audit tables, indexes and
+immutable identity/history/batch guards. New DDL is transactional; old 0010
+definition hash is pinned. Tests use temporary databases and restore copies only.
+Retained user databases remain older, not silently upgraded. Explicit initialize
+can migrate; never run it on originals merely to test the new ledger.
+
 ## Current Design
 
 `SQLiteStore.initialize()` creates missing baseline tables and then runs ordered,
@@ -8,7 +15,7 @@ stored in `schema_migrations` with an identifier, checksum, description, and
 application time. A checksum mismatch fails closed.
 
 `schema_metadata` records both the public database schema version and the exact
-migration head. The current schema is `0.8.2` while the framework remains
+migration head. The current schema is `0.8.3` while the framework remains
 `0.8.0`; the patch version records an operational database change without a
 new trading milestone.
 

@@ -1,0 +1,25 @@
+# Year-end balance comparative, not year-on-year growth or an original historical value.
+[review]
+subject = "002624"
+period_end = "2025-12-31"
+reviewed_at = "2026-10-20T11:12:08+00:00"
+reviewer = "Codex manual filing review; no independent second review"
+filing_artifact_id = "39798ad9fe058ac4c36bab4edbe2672bb212986ea76360b5bb6f9ccb8e21dfbf"
+filing_sha256 = "284af037c8a319c67a13ce6ecf0b17fceb29e0c96e902c06b4107b9e605c7691"
+source_unit = "CNY"
+currency = "CNY"
+reporting_scope = "group"
+source_column = "group_prior_year_end"
+audit_status = "unaudited"
+sector_profile = "nonfinancial"
+filing_period_end = "2026-06-30"
+comparability = "as_presented_same_filing"
+issuer_revision_status = "unverified"
+
+[[rows]]
+metric = "total_assets"
+statement = "balance"
+source_value = "10468434793.94"
+period_start = ""
+source_pages = [7, 41, 42]
+source_label = "Group total assets, December 31 2025 comparative in unaudited 2026H1 filing"

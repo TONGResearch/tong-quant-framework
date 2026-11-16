@@ -1,7 +1,7 @@
 [baseline]
 framework_version = "0.8.0"
-database_schema_version = "0.8.2"
-migration_head = "0010_portfolio_evidence_lineage"
+database_schema_version = "0.8.3"
+migration_head = "0011_refresh_ledger"
 current_phase = "parallel-evidence-and-controlled-launch"
 canonical_status_document = "PROJECT_STATUS.md"
 
@@ -39,6 +39,8 @@ required_commands = [
   ".venv/bin/python scripts/check_project_governance.py",
 ]
 required_documents = [
+  "docs/independent-review-hardening-2026-11-16.md",
+  "docs/long-horizon-observations-2026-11-15.zh-CN.md",
   "AGENTS.md",
   "PROJECT_STATUS.md",
   "docs/architecture.md",
@@ -78,11 +80,100 @@ required_documents = [
   "docs/artifact-portability-2026-10-18.md",
   "docs/research-bar-integrity-2026-10-18.md",
   "docs/reviewed-baseline-2026-10-18.md",
+  "docs/encrypted-recovery-2026-10-18.md",
+  "docs/financial-source-corroboration-2026-10-18.md",
+  "docs/reviewed-filing-facts-2026-10-18.md",
+  "docs/financial-source-inputs-2026-10-19.md",
+  "docs/financial-comparatives-2026-10-19.md",
+  "docs/bank-financial-inputs-2026-10-19.md",
+  "docs/financial-scoring-admission-2026-10-19.md",
+  "docs/bank-research-input-policy-2026-10-19.md",
+  "docs/research-evidence-admission-2026-10-20.md",
+  "docs/technical-implementation-audit-2026-10-20.md",
+  "docs/research-condition-bridge-2026-10-20.md",
+  "docs/nonfinancial-research-inputs-2026-10-20.md",
+  "docs/bse-price-source-repair-2026-10-20.md",
+  "docs/sse-pilot-symbol-scope-2026-10-22.md",
+  "docs/nonfinancial-roe-inputs-2026-10-22.md",
+  "docs/nonfinancial-cash-balance-2026-10-22.md",
+  "docs/research-assessment-cutoff-2026-10-23.md",
+  "docs/valuation-basis-inputs-2026-10-23.md",
+  "docs/trailing-financial-inputs-2026-10-23.md",
+  "docs/market-value-inputs-2026-10-23.md",
+  "docs/market-value-research-binding-2026-10-24.md",
+  "docs/research-input-utc-integrity-2026-10-24.md",
+  "docs/provider-ingestion-utc-integrity-2026-10-25.md",
+  "docs/yahoo-china-quote-evidence-2026-10-25.md",
+  "docs/price-input-alignment-2026-10-26.md",
+  "docs/daily-refresh-suspension-guard-2026-10-26.md",
+  "docs/share-count-review-2026-10-26.md",
+  "docs/share-continuity-inventory-2026-10-26.md",
+  "docs/share-action-review-2026-10-26.md",
+  "docs/financial-snapshot-utc-2026-10-27.md",
+  "docs/nonfinancial-input-checklist-2026-10-27.md",
+  "docs/decision-delivery-plan-2026-10-27.zh-CN.md",
+  "docs/four-market-readonly-release-2026-10-27.zh-CN.md",
+  "docs/global-price-technical-bridge-2026-10-27.md",
+  "docs/global-native-financial-inputs-2026-10-27.md",
+  "docs/global-native-sector-review-2026-10-27.md",
+  "docs/native-financial-research-binding-2026-10-27.md",
+  "docs/sec-filing-evidence-2026-10-27.md",
+  "docs/sec-concept-evidence-2026-10-27.md",
+  "docs/sec-older-pages-2026-10-27.md",
+  "docs/sec-body-numeric-review-2026-10-27.md",
+  "docs/hk-my-primary-documents-2026-10-28.md",
+  "docs/global-document-manual-review-2026-10-28.md",
+  "docs/global-review-display-2026-10-28.md",
+  "docs/global-native-manual-candidates-2026-10-28.md",
+  "docs/bank-income-arithmetic-2026-10-28.md",
+  "docs/reviewed-document-research-binding-2026-10-29.md",
+  "docs/bank-source-input-coverage-2026-10-29.md",
+  "docs/manual-income-comparatives-2026-10-29.md",
+  "docs/global-bank-ratio-evidence-2026-10-29.md",
+  "docs/original-ratio-research-binding-2026-10-30.md",
+  "docs/bank-capital-equity-evidence-2026-10-31.md",
+  "docs/manual-ratio-arithmetic-2026-10-31.md",
+  "docs/bank-liquidity-source-evidence-2026-10-31.md",
+  "docs/multi-document-ratio-research-2026-10-31.md",
+  "docs/readonly-ratio-source-selection-2026-10-31.md",
+  "docs/original-document-freshness-2026-11-02.md",
+  "docs/proposals/automated-data-refresh-v1.zh-CN.md",
+  "docs/offline-data-refresh-plan-2026-11-03.md",
+  "docs/akshare-offline-refresh-bridge-2026-11-03.md",
+  "docs/ai-assisted-and-independent-operation.zh-CN.md",
+  "docs/refresh-attempt-contract-2026-11-03.md",
+  "docs/proposals/data-refresh-ledger-v1.zh-CN.md",
+  "docs/refresh-ledger-persistence-2026-11-03.md",
+  "docs/github-reviewed-sync-2026-11-03.md",
+  "docs/artifact-rollback-retention-2026-11-04.md",
+  "docs/refresh-reconciliation-2026-11-04.md",
+  "docs/artifact-capacity-preflight-2026-11-04.md",
+  "docs/proposals/one-shot-refresh-admission-v1.md",
+  "docs/refresh-fetch-lease-guard-2026-11-05.md",
+  "docs/prepared-resource-ownership-2026-11-05.md",
+  "docs/us-readonly-delivery-2026-11-05.zh-CN.md",
+  "docs/us-issuer-declarations-2026-11-06.md",
+  "docs/us-sec-period-inputs-2026-11-06.md",
+  "docs/us-sec-research-binding-2026-11-06.md",
+  "docs/calendar-period-diagnostics-2026-11-06.md",
+  "docs/calendar-declaration-coverage-2026-11-06.md",
+  "docs/nasdaq-calendar-source-2026-11-07.md",
+  "docs/nasdaq-calendar-freshness-2026-11-08.md",
+  "docs/research-confidence-utc-2026-11-08.md",
+  "docs/single-equity-usability-2026-11-08.zh-CN.md",
+  "docs/turtle-price-observations-2026-11-08.md",
+  "docs/holding-review-2026-11-09.zh-CN.md",
+  "docs/sec-source-root-composition-2026-11-10.zh-CN.md",
+  "docs/proposals/msft-holding-thesis-validation-v1.zh-CN.md",
+  "docs/proposals/msft-dimensional-context-review-v1.zh-CN.md",
+  "docs/proposals/us-regular-session-calendar-v1.md",
+  "docs/provider-integration-status-2026-10-28.zh-CN.md",
+  "docs/proposals/nonfinancial-long-term-rubric-v1.zh-CN.md",
   "requirements/README.md",
 ]
 
 [next_phase]
-objective = "Accumulate evidence while hardening lineage and market rules for controlled paper trading"
+objective = "Prioritize MSFT holding research within the November 30 US read-only increment; evidence and controlled-launch hardening continue in parallel"
 promotion_requirement = "Paper trading requires authoritative lineage, deterministic simulation, reconciliation, and fail-closed risk controls; live trading remains separately gated"
 
 [[work_packages]]
@@ -153,6 +244,20 @@ document = "docs/work-packages/wp-research-001.md"
 depends_on = ["WP-EVIDENCE-001"]
 
 [[work_packages]]
+id = "WP-RESEARCH-002"
+title = "Explicit technical calculation audit and research diagnostics"
+status = "completed"
+document = "docs/work-packages/wp-research-002.md"
+depends_on = []
+
+[[work_packages]]
+id = "WP-RESEARCH-003"
+title = "Technical fundamental candidate conditions and endpoint diagnostics"
+status = "completed"
+document = "docs/work-packages/wp-research-003.md"
+depends_on = ["WP-RESEARCH-002"]
+
+[[work_packages]]
 id = "WP-VALIDATION-001"
 title = "Historical replay data quality eligibility gate"
 status = "completed"
@@ -160,11 +265,25 @@ document = "docs/work-packages/wp-validation-001.md"
 depends_on = ["WP-READINESS-001"]
 
 [[work_packages]]
+id = "WP-RESEARCH-004"
+title = "Real nonfinancial filing inputs and exact monetary units"
+status = "completed"
+document = "docs/work-packages/wp-research-004.md"
+depends_on = ["WP-RESEARCH-003"]
+
+[[work_packages]]
 id = "WP-LAUNCH-001"
 title = "Execution lineage and market-rule hardening"
 status = "ready"
 document = "docs/work-packages/wp-launch-001.md"
 depends_on = ["WP-VALIDATION-001"]
+
+[[work_packages]]
+id = "WP-DATA-004"
+title = "BSE raw price source repair and conservative evidence capture"
+status = "completed"
+document = "docs/work-packages/wp-data-004.md"
+depends_on = ["WP-RESEARCH-003"]
 
 [[work_packages]]
 id = "WP-PAPER-001"

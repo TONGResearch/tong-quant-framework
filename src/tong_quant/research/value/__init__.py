@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from tong_quant.domain.enums import ResearchModuleName
 from tong_quant.research.base import evidence_driven_assessment
 from tong_quant.research.models import ResearchAssessment, ResearchContext
+from tong_quant.version import VALUE_RESEARCH_VERSION
 
 VALUE_FIELDS = frozenset({"survival", "cycle", "valuation", "growth"})
 
@@ -18,7 +19,7 @@ class ValueResearchModule:
             ResearchModuleName.INDUSTRY,
         }
     )
-    model_version: str = "value-v0.5"
+    model_version: str = VALUE_RESEARCH_VERSION
 
     def evaluate(
         self,

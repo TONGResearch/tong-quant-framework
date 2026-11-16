@@ -18,6 +18,15 @@ from tong_quant.markets.capabilities import (
 SSE_PROFILE_VERSION = "sse-main-board-2026-v1"
 SSE_PILOT_SCOPE = MarketRuleScope(Market.CHINA_A, "SSE", "main", "cash")
 SSE_EXCHANGE_IDENTIFIERS = frozenset({"SSE", "XSHG"})
+SSE_MAIN_BOARD_PILOT_PREFIXES = ("600", "601", "603", "605")
+
+
+def is_sse_main_board_pilot_symbol(symbol: str) -> bool:
+    """Conservative pilot boundary, not dated security-master or listing approval."""
+    return (
+        isinstance(symbol, str) and len(symbol) == 6 and symbol.isascii() and symbol.isdigit()
+        and symbol.startswith(SSE_MAIN_BOARD_PILOT_PREFIXES)
+    )
 
 
 def evidence_hash(value: object) -> str:

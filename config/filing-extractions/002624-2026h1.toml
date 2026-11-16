@@ -1,0 +1,46 @@
+# Manual annotations; source_pages are one-based PDF pages, not printed page numbers.
+[review]
+subject = "002624"
+period_end = "2026-06-30"
+reviewed_at = "2026-10-20T11:12:08+00:00"
+reviewer = "Codex manual filing review; no independent second review"
+filing_artifact_id = "39798ad9fe058ac4c36bab4edbe2672bb212986ea76360b5bb6f9ccb8e21dfbf"
+filing_sha256 = "284af037c8a319c67a13ce6ecf0b17fceb29e0c96e902c06b4107b9e605c7691"
+source_unit = "CNY"
+currency = "CNY"
+reporting_scope = "group"
+source_column = "group_current_period"
+audit_status = "unaudited"
+sector_profile = "nonfinancial"
+
+[[rows]]
+metric = "revenue"
+statement = "income"
+source_value = "2751024838.40"
+period_start = "2026-01-01"
+source_pages = [7, 45, 46]
+source_label = "Group operating revenue, January-June 2026, CNY yuan"
+
+[[rows]]
+metric = "profit_attributable_to_parent"
+statement = "income"
+source_value = "-118437769.22"
+period_start = "2026-01-01"
+source_pages = [7, 45, 46]
+source_label = "Group net profit attributable to parent shareholders, January-June 2026"
+
+[[rows]]
+metric = "operating_cash_flow"
+statement = "cash_flow"
+source_value = "647301141.75"
+period_start = "2026-01-01"
+source_pages = [7, 48, 49]
+source_label = "Group net cash from operating activities, January-June 2026; not parent-only or FCF"
+
+[[rows]]
+metric = "total_assets"
+statement = "balance"
+source_value = "10542798063.76"
+period_start = ""
+source_pages = [7, 41, 42]
+source_label = "Group total assets, June 30 2026"

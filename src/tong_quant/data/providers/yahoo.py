@@ -44,10 +44,15 @@ class YahooChartHttpClient:
     timeout_seconds: float = 15
     max_attempts: int = 3
     sleeper: Callable[[float], None] = sleep
+    max_response_bytes: int = 4 * 1024 * 1024
 
     def __post_init__(self) -> None:
         if self.timeout_seconds <= 0 or self.max_attempts <= 0:
             raise ValueError("Yahoo HTTP timeout and attempts must be positive")
+        if type(self.max_response_bytes) is not int or not 0 < self.max_response_bytes <= (
+            16 * 1024 * 1024
+        ):
+            raise ValueError("Yahoo HTTP response byte limit is invalid")
 
     def chart(
         self,
@@ -77,7 +82,9 @@ class YahooChartHttpClient:
                     timeout=self.timeout_seconds,
                     context=ssl_context,
                 ) as response:
-                    raw = response.read()
+                    raw = response.read(self.max_response_bytes + 1)
+                if len(raw) > self.max_response_bytes:
+                    raise ValueError("Yahoo chart response exceeds byte limit")
                 payload = json.loads(raw.decode("utf-8"))
                 if not isinstance(payload, dict):
                     raise ValueError("Yahoo chart response is not an object")

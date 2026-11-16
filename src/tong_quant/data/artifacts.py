@@ -3,13 +3,16 @@ import tempfile
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from tong_quant.data.providers.contracts import ProviderArtifact
+from tong_quant.version import ARTIFACT_STORAGE_VERSION
 
 
 @dataclass(frozen=True, slots=True)
 class StoredProviderArtifact:
+    """A publication receipt; created is not an exclusive ownership or deletion lease."""
+
     artifact: ProviderArtifact
     storage_key: str
     created: bool
@@ -23,11 +26,16 @@ class StoredProviderArtifact:
 class ProviderArtifactStore(Protocol):
     def put(self, artifact: ProviderArtifact) -> StoredProviderArtifact: ...
 
-    def discard(self, stored: StoredProviderArtifact) -> None: ...
+    def discard(self, stored: StoredProviderArtifact) -> None:
+        """Abandon the attempt without deleting bytes other writers may have adopted."""
+        ...
 
 
 @dataclass(frozen=True, slots=True)
 class FileSystemArtifactStore:
+    """Content-addressed bytes are shared; rollback never proves exclusive ownership."""
+
+    model_version: ClassVar[str] = ARTIFACT_STORAGE_VERSION
     root: Path
 
     def read_content(self, content_hash: str, media_type: str, *, max_bytes: int) -> bytes:
@@ -87,13 +95,10 @@ class FileSystemArtifactStore:
             temporary.unlink(missing_ok=True)
 
     def discard(self, stored: StoredProviderArtifact) -> None:
-        if not stored.created:
-            return
-        destination = self.root.expanduser() / stored.storage_key
-        if destination.is_symlink():
-            raise ValueError("artifact cleanup refuses symbolic links")
-        if destination.exists() and _file_hash(destination) == stored.artifact.content_hash:
-            destination.unlink()
+        """Abandon this attempt, not shared bytes; reference-safe garbage collection is separate."""
+        # Another process or database may have adopted even a newly created file.
+        # Keep unregistered content for audited reconciliation; never delete on rollback.
+        return None
 
 
 def _verify_existing(path: Path, artifact: ProviderArtifact) -> None:

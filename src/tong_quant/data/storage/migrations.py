@@ -168,6 +168,71 @@ PORTFOLIO_EVIDENCE_LINEAGE = Migration(
     """,
 )
 
+REFRESH_LEDGER_SQL = (
+    """CREATE TABLE refresh_jobs (
+        job_id TEXT PRIMARY KEY CHECK(length(job_id) = 64),
+        plan_hash TEXT NOT NULL CHECK(length(plan_hash) = 64),
+        scope_hash TEXT NOT NULL CHECK(length(scope_hash) = 64),
+        trigger_reference TEXT NOT NULL CHECK(length(trigger_reference) BETWEEN 1 AND 64),
+        plan_json TEXT NOT NULL, policy_json TEXT NOT NULL, model_version TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN
+            ('queued','running','retry_wait','reconciliation_required','failed','exhausted')),
+        generation INTEGER NOT NULL CHECK(generation BETWEEN 0 AND 10),
+        row_version INTEGER NOT NULL CHECK(row_version >= 0),
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, next_eligible_at TEXT,
+        UNIQUE(plan_hash, scope_hash, trigger_reference)
+    )""",
+    """CREATE TABLE refresh_attempts (
+        job_id TEXT NOT NULL, generation INTEGER NOT NULL CHECK(generation BETWEEN 1 AND 10),
+        worker_id TEXT NOT NULL CHECK(length(worker_id) BETWEEN 1 AND 64),
+        lease_nonce TEXT NOT NULL UNIQUE CHECK(length(lease_nonce) = 32),
+        phase TEXT NOT NULL CHECK(phase IN ('fetching','retaining')),
+        status TEXT NOT NULL CHECK(status IN ('running','fetch_failed','retention_failed',
+            'lease_expired','data_retained','failure_snapshot_retained')),
+        claimed_at TEXT NOT NULL, lease_expires_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        retention_started_at TEXT,
+        captured_payload_hash TEXT CHECK(captured_payload_hash IS NULL
+                                        OR length(captured_payload_hash) = 64),
+        ingestion_batch_id TEXT UNIQUE,
+        failure_code TEXT CHECK(failure_code IS NULL OR failure_code IN
+            ('timeout','network_unavailable','rate_limited','permission_denied',
+             'unsupported_endpoint','invalid_response','insufficient_data','provider_unavailable',
+             'internal_error','lease_expired')),
+        model_version TEXT NOT NULL,
+        PRIMARY KEY(job_id, generation),
+        FOREIGN KEY(job_id) REFERENCES refresh_jobs(job_id) ON DELETE RESTRICT,
+        FOREIGN KEY(ingestion_batch_id) REFERENCES ingestion_batches(batch_id) ON DELETE RESTRICT
+    )""",
+    """CREATE UNIQUE INDEX idx_refresh_single_running
+        ON refresh_attempts(job_id) WHERE status = 'running'""",
+    "CREATE INDEX idx_refresh_due ON refresh_jobs(status, next_eligible_at)",
+    "CREATE INDEX idx_refresh_lease ON refresh_attempts(status, lease_expires_at)",
+    """CREATE TRIGGER refresh_job_identity_immutable BEFORE UPDATE OF
+        job_id, plan_hash, scope_hash, trigger_reference, plan_json, policy_json,
+        model_version, created_at ON refresh_jobs
+        BEGIN SELECT RAISE(ABORT, 'refresh job identity is immutable'); END""",
+    """CREATE TRIGGER refresh_attempt_identity_immutable BEFORE UPDATE OF
+        job_id, generation, worker_id, lease_nonce, claimed_at, lease_expires_at, model_version
+        ON refresh_attempts
+        BEGIN SELECT RAISE(ABORT, 'refresh attempt identity is immutable'); END""",
+    """CREATE TRIGGER refresh_attempt_terminal_immutable BEFORE UPDATE ON refresh_attempts
+        WHEN OLD.status != 'running'
+        BEGIN SELECT RAISE(ABORT, 'refresh terminal attempt is immutable'); END""",
+    """CREATE TRIGGER refresh_attempt_no_delete BEFORE DELETE ON refresh_attempts
+        BEGIN SELECT RAISE(ABORT, 'refresh attempt history cannot be deleted'); END""",
+    """CREATE TRIGGER refresh_job_no_delete BEFORE DELETE ON refresh_jobs
+        BEGIN SELECT RAISE(ABORT, 'refresh job history cannot be deleted'); END""",
+    """CREATE TRIGGER refresh_batch_immutable BEFORE UPDATE ON ingestion_batches
+        WHEN EXISTS (SELECT 1 FROM refresh_attempts WHERE ingestion_batch_id = OLD.batch_id)
+        BEGIN SELECT RAISE(ABORT, 'associated refresh batch is immutable'); END""",
+)
+
+REFRESH_LEDGER = Migration(
+    migration_id="0011_refresh_ledger",
+    description="add durable data refresh jobs, attempts and immutable lease audit",
+    definition="\n".join(REFRESH_LEDGER_SQL),
+)
+
 MIGRATIONS = (
     SCHEMA_BASELINE,
     NOTIFICATION_HARDENING,
@@ -180,6 +245,7 @@ MIGRATIONS = (
     PROVIDER_CALIBRATION_ATTEMPTS,
     PROVIDER_CONTRACT_RUN_ORIGIN,
     PORTFOLIO_EVIDENCE_LINEAGE,
+    REFRESH_LEDGER,
 )
 MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 
@@ -187,6 +253,9 @@ MIGRATION_HEAD = MIGRATIONS[-1].migration_id
 # persisted fingerprint. This lets newer code authenticate an older snapshot
 # before applying forward migrations in an isolated restore copy.
 SCHEMA_DEFINITION_HASHES = {
+    PORTFOLIO_EVIDENCE_LINEAGE.migration_id: (
+        "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
+    ),
     PROVIDER_EVIDENCE_FOUNDATION.migration_id: (
         "b8a416cc3683a6f4031db9781b643369f4459e167a20c1d4dbdec6629c965bf6"
     ),
@@ -247,6 +316,12 @@ def run_migrations(connection: sqlite3.Connection) -> tuple[str, ...]:
 
 
 def _apply_migration(connection: sqlite3.Connection, migration: Migration) -> None:
+    if migration is REFRESH_LEDGER:
+        if not connection.in_transaction:
+            connection.execute("BEGIN IMMEDIATE")
+        for statement in REFRESH_LEDGER_SQL:
+            connection.execute(statement)
+        return
     if migration is SCHEMA_BASELINE:
         _apply_schema_baseline(connection)
         return
@@ -1013,6 +1088,7 @@ def _add_column_if_missing(
 
 
 __all__ = [
+    "REFRESH_LEDGER",
     "CNINFO_ARTIFACT_CAPTURE",
     "MIGRATION_HEAD",
     "MIGRATIONS",

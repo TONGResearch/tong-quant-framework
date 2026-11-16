@@ -228,7 +228,7 @@ def test_direct_cninfo_missing_artifact_and_url_change_remain_visible(
     }
 
 
-def test_artifact_file_is_removed_when_database_transaction_fails(
+def test_artifact_bytes_remain_unregistered_when_database_transaction_fails(
     tmp_path: Path,
 ) -> None:
     class _FailingStore(SQLiteStore):
@@ -253,7 +253,9 @@ def test_artifact_file_is_removed_when_database_transaction_fails(
         service.ingest(adapter, _request())
 
     assert store.table_count("ingestion_batches") == 0
-    assert list(artifact_root.rglob("*.pdf")) == []
+    assert store.table_count("provider_artifacts") == 0
+    retained = list(artifact_root.rglob("*.pdf"))
+    assert len(retained) == 1 and retained[0].read_bytes() == PDF
 
 
 def test_invalid_ingestion_clock_does_not_write_artifact(tmp_path: Path) -> None:

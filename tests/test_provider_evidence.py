@@ -120,8 +120,9 @@ class _HttpResponse:
     def __exit__(self, *args: object) -> None:
         del args
 
-    def read(self) -> bytes:
-        return json.dumps({"chart": {"error": None, "result": []}}).encode()
+    def read(self, size: int = -1) -> bytes:
+        content = json.dumps({"chart": {"error": None, "result": []}}).encode()
+        return content if size < 0 else content[:size]
 
 
 def test_yahoo_http_client_uses_explicit_ca_bundle(
@@ -361,7 +362,7 @@ def test_provider_evidence_repository_rejects_nested_credentials_atomically(
         as_of=NOW,
     )
 
-    with pytest.raises(ValueError, match="credential-like field"):
+    with pytest.raises(ValueError, match="credential"):
         ProviderNeutralIngestionService(store=store, clock=lambda: NOW).ingest(
             _SensitiveEvidenceAdapter(), request
         )

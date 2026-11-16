@@ -1,7 +1,7 @@
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 import pandas as pd
@@ -87,7 +87,7 @@ class IngestionBatch:
         require_timezone(self.started_at, "started_at")
         if self.completed_at is not None:
             require_timezone(self.completed_at, "completed_at")
-            if self.completed_at < self.started_at:
+            if self.completed_at.astimezone(UTC) < self.started_at.astimezone(UTC):
                 raise ValueError("completed_at cannot precede started_at")
         if self.status is IngestionBatchStatus.FAILED and not self.failure_reason:
             raise ValueError("failed ingestion batches require a failure reason")

@@ -1,0 +1,32 @@
+# Source-pinned caller-proposed equations, not an admitted issuer formula or rounding policy.
+[plan]
+money_evidence_id = "cd960b1f8a01123bb49a08ee9f19e67b0c49b8c551cc4156a7ab7d7c38cd2655"
+money_envelope_sha256 = "82c24ad69af1890f0369244c6ef598f1b89ae9ca607d45fe7db6d88f87aebd5e"
+ratio_evidence_id = "7baa2f03ed448184922ff3aa5c3136991f8431e6794b68cfa9a83518cf8d8ace"
+ratio_envelope_sha256 = "82f17fe3ae323bda926dcf7f8d82392f3a06a7d2f92c5af56e757b0e6d50b488"
+source_document_sha256 = "2fc421fac71b9f5a9c3063709662a265b9c1fe3c7e29ea842ff2c78eaf041c55"
+available_at = "2026-10-30T16:47:53+00:00"
+
+[[identities]]
+ratio_row_key = "cet1_group_2025"
+numerator_row_key = "group_cet1_capital_note59_2025"
+denominator_row_key = "group_total_rwa_note59_2025"
+decimal_places = 3
+rounding = "half_even"
+rationale = "Candidate Note 59(b)/(c) CET1 against Note 59(d) Total RWA, physical pages 243/244; formula/scope/rounding independently unqualified"
+
+[[identities]]
+ratio_row_key = "total_capital_group_2025"
+numerator_row_key = "group_total_capital_note59_2025"
+denominator_row_key = "group_total_rwa_note59_2025"
+decimal_places = 3
+rounding = "half_even"
+rationale = "Candidate Note 59(b)/(c) Total Capital against Note 59(d) Total RWA, physical pages 243/244; not financial equity or approved bank policy"
+
+[[identities]]
+ratio_row_key = "net_impaired_loans_note12_group_2025"
+numerator_row_key = "group_net_impaired_loans_note12_2025"
+denominator_row_key = "group_net_loans_note12_2025"
+decimal_places = 2
+rounding = "half_even"
+rationale = "Candidate original Note 12(ix) net impaired loans over net loans, physical page 86; retain investment-account/allowance basis, not gross NPL"

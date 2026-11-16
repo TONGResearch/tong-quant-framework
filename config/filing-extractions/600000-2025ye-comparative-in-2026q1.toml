@@ -1,0 +1,25 @@
+# Audited prior-year-end column as presented in a later unaudited quarterly filing.
+[review]
+subject = "600000"
+period_end = "2025-12-31"
+filing_period_end = "2026-03-31"
+comparability = "as_presented_same_filing"
+issuer_revision_status = "unverified"
+reviewed_at = "2026-10-18T16:38:57+00:00"
+reviewer = "Codex manual comparative-column review; no independent second review"
+filing_artifact_id = "2a5b84236a193ecb68d65af262bebe4189d2f19fd9f849e139febb05581463f1"
+filing_sha256 = "df6911eb74bd5448fbf7729936979c60391052746db7d0577e4d4803f38d77e1"
+source_unit = "CNY_million"
+currency = "CNY"
+reporting_scope = "group"
+source_column = "group_prior_year_end"
+audit_status = "audited"
+sector_profile = "bank"
+
+[[rows]]
+metric = "total_assets"
+statement = "balance"
+source_value = "10081746"
+period_start = ""
+source_pages = [15]
+source_label = "Total assets, group audited comparative column, December 31 2025"

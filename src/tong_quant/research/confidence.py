@@ -1,8 +1,9 @@
 import math
 from collections.abc import Iterable, Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 
 from tong_quant.domain.enums import EvidenceQuality
+from tong_quant.domain.models import require_timezone
 from tong_quant.research.models import (
     ConfidenceBreakdown,
     ResearchAssessment,
@@ -24,7 +25,9 @@ def confidence_from_evidence(
     as_of: datetime,
     agreement_scores: Sequence[float] = (),
 ) -> ConfidenceBreakdown:
-    visible = [item for item in evidence if item.available_at <= as_of]
+    require_timezone(as_of, "research confidence cutoff")
+    cutoff = as_of.astimezone(UTC)
+    visible = [item for item in evidence if item.available_at.astimezone(UTC) <= cutoff]
     point_in_time_integrity = 100.0 if len(visible) == len(evidence) else 0.0
     quality = (
         sum(QUALITY_SCORES[item.quality] for item in visible) / len(visible)
@@ -52,6 +55,8 @@ def report_confidence(
     *,
     as_of: datetime,
 ) -> ConfidenceBreakdown:
+    require_timezone(as_of, "research confidence cutoff")
+    cutoff = as_of.astimezone(UTC)
     scored = [
         assessment.score
         for assessment in assessments
@@ -70,7 +75,7 @@ def report_confidence(
         else 0.0
     )
     integrity = (
-        100.0 if all(item.available_at <= as_of for item in evidence) else 0.0
+        100.0 if all(item.available_at.astimezone(UTC) <= cutoff for item in evidence) else 0.0
     )
     return combine_confidence(
         evidence_quality=quality,

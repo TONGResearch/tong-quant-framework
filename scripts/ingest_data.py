@@ -3,7 +3,7 @@ import json
 import math
 import subprocess
 import sys
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -16,12 +16,14 @@ from tong_quant.data.ingestion import ProviderNeutralIngestionService
 from tong_quant.data.models import DailyBarRequest
 from tong_quant.data.pipeline import DataIngestionPipeline
 from tong_quant.data.providers import AkShareAdapter
+from tong_quant.data.providers.akshare import AkShareDailyBarsUnavailableError
 from tong_quant.data.providers.contracts import (
     SSE_CALENDAR_DATASET,
     ProviderDatasetCapability,
     ProviderDatasetRequest,
     ProviderEvidenceBatch,
 )
+from tong_quant.data.providers.sina_prices import SINA_BSE_DATASET, SinaBsePriceObservationAdapter
 from tong_quant.data.providers.sse_calendar import (
     SSECalendarNoticeAdapter,
     SSECalendarNoticeProfile,
@@ -68,6 +70,10 @@ def parse_args() -> argparse.Namespace:
     )
     financial.add_argument("symbol")
     financial.add_argument("statement", choices=("income", "balance", "cash_flow"))
+    sina = subparsers.add_parser("sina-bse-snapshot", help="Raw price evidence, no canonical bars")
+    sina.add_argument("symbol")
+    sina.add_argument("start_date")
+    sina.add_argument("end_date")
     suspension = subparsers.add_parser("suspension-events")
     suspension.add_argument("date", help="Explicit YYYYMMDD date; partial event evidence only")
     subparsers.add_parser("universe")
@@ -87,7 +93,7 @@ def parse_args() -> argparse.Namespace:
             parser.error("suspension date must be a valid YYYYMMDD date")
         if query_date > datetime.now(ZoneInfo("Asia/Shanghai")).date():
             parser.error("suspension date cannot be in the future")
-    if args.command == "daily-bars":
+    if args.command in {"daily-bars", "sina-bse-snapshot"}:
         try:
             start = datetime.strptime(args.start_date, "%Y%m%d").date()
             end = datetime.strptime(args.end_date, "%Y%m%d").date()
@@ -95,13 +101,41 @@ def parse_args() -> argparse.Namespace:
             parser.error("dates must be valid YYYYMMDD dates")
         if start > end:
             parser.error("start date cannot follow end date")
-        if args.adjustment != Adjustment.NONE.value:
+        if args.command == "daily-bars" and args.adjustment != Adjustment.NONE.value:
             parser.error("strict PIT ingestion accepts only unadjusted bars")
     return args
 
 
 def run_worker(args: argparse.Namespace) -> int:
     settings = load_settings(Path("config/default.toml"))
+    if args.command == "sina-bse-snapshot":
+        sina_adapter = SinaBsePriceObservationAdapter()
+        query = ProviderDatasetRequest(SINA_BSE_DATASET, Market.CHINA_A, args.symbol,
+                                       datetime.now(UTC), {"start_date": args.start_date,
+                                                           "end_date": args.end_date})
+        batch = sina_adapter.fetch(query)
+        admission = replace(query, as_of=batch.retrieved_at)
+
+        class CapturedSina:
+            provider_id = sina_adapter.provider_id
+
+            def capabilities(self) -> tuple[ProviderDatasetCapability, ...]:
+                return sina_adapter.capabilities()
+
+            def fetch(self, request: ProviderDatasetRequest) -> ProviderEvidenceBatch:
+                if request != admission:
+                    raise ValueError("captured Sina query mismatch")
+                return batch
+
+        store = SQLiteStore(args.database or settings.data.database_path)
+        store.initialize()
+        captured = ProviderNeutralIngestionService(
+            store, artifact_store=FileSystemArtifactStore(
+                store.path.parent / "raw/provider-artifacts")
+        ).ingest(CapturedSina(), admission)
+        print(json.dumps({"status": "partial", **asdict(captured),
+                          "canonical_bar_authorized": False}, sort_keys=True))
+        return 2
     if args.command == "sse-calendar-notice":
         # Verify before touching SQLite; the common parent bounds network runtime.
         adapter = SSECalendarNoticeAdapter(SSECalendarNoticeProfile.load(args.profile))
@@ -200,6 +234,11 @@ def main() -> int:
             raise ValueError("worker exit status contradicts completion")
         print(json.dumps(record, sort_keys=True))
         return 0 if result.returncode == 0 and record["status"] == "completed" else 2
+    except AkShareDailyBarsUnavailableError as error:
+        record = error.diagnostic_record()
+        reject_sensitive_structure(record, path="ingestion_result")
+        print(json.dumps(record, sort_keys=True))
+        return 2
     except subprocess.TimeoutExpired:
         print(json.dumps({"status": "failed", "error_type": "ProviderTimeout"}))
         return 2

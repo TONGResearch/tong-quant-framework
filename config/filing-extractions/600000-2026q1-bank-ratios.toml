@@ -1,0 +1,31 @@
+# Percent observations only; never CNY amounts or automatically annualized returns.
+[review]
+subject = "600000"
+period_end = "2026-03-31"
+reviewed_at = "2026-10-19T03:03:05+00:00"
+reviewer = "Codex manual filing review; no independent second review"
+filing_artifact_id = "2a5b84236a193ecb68d65af262bebe4189d2f19fd9f849e139febb05581463f1"
+filing_sha256 = "df6911eb74bd5448fbf7729936979c60391052746db7d0577e4d4803f38d77e1"
+source_unit = "percent"
+currency = "not_applicable"
+reporting_scope = "group"
+source_column = "group_current_period"
+audit_status = "unaudited"
+sector_profile = "bank"
+measurement_basis = "period_end_ratio"
+
+[[rows]]
+metric = "nonperforming_loan_ratio"
+statement = "bank_asset_quality"
+source_value = "1.23"
+period_start = ""
+source_pages = [2, 12]
+source_label = "Nonperforming loan ratio, group, March 31 2026, percent"
+
+[[rows]]
+metric = "provision_coverage_ratio"
+statement = "bank_asset_quality"
+source_value = "204.79"
+period_start = ""
+source_pages = [2, 12]
+source_label = "Loan impairment allowance / nonperforming loans, group, March 31 2026, percent"

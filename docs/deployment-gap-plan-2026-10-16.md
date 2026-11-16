@@ -1,5 +1,12 @@
 # Deployment Gap Plan: 2026-10-16
 
+October 27 follow-up: this document retains the broad five-group trading roadmap.
+For a proposed first read-only research-decision release and an explicitly
+conditional effort estimate, see the
+[six-group decision delivery plan](decision-delivery-plan-2026-10-27.zh-CN.md).
+These are different scopes, not competing counts of prompts until live trading.
+Consult PROJECT_STATUS.md for current source/data/checkpoint observations.
+
 ## Honest baseline
 
 Tong Quant is a research/validation framework under controlled-launch

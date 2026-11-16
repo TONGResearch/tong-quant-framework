@@ -8,6 +8,10 @@ from pathlib import Path
 import pytest
 
 from tong_quant.data.models import IngestionResult
+from tong_quant.data.providers.akshare import (
+    AkShareDailyBarsUnavailableError,
+    DailyEndpointFailure,
+)
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "ingest_data.py"
 
@@ -143,3 +147,53 @@ def test_financial_capture_never_claims_canonical_data_completion(monkeypatch, c
     assert namespace["run_worker"](args) == 2
     record = json.loads(capsys.readouterr().out)
     assert record["accepted"] == 5 and record["status"] == "partial"
+
+
+def test_daily_worker_and_parent_preserve_safe_endpoint_failure(monkeypatch, capsys):
+    namespace = runpy.run_path(str(SCRIPT))
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--worker", "daily-bars", "920982",
+                                     "20240101", "20261019"])
+    error = AkShareDailyBarsUnavailableError((
+        DailyEndpointFailure("stock_zh_a_hist", "failed", "network_or_upstream",
+                             "ConnectionError", attempts=3),
+        DailyEndpointFailure("stock_zh_a_hist_tx", "failed", "provider_or_contract",
+                             "KeyError", "day", limitation="bse_daily_payload_unavailable"),
+    ))
+
+    def failed_worker(args):
+        raise error
+
+    monkeypatch.setitem(namespace["main"].__globals__, "run_worker", failed_worker)
+    assert namespace["main"]() == 2
+    stdout = capsys.readouterr().out
+    assert json.loads(stdout) == error.diagnostic_record()
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "daily-bars", "920982", "20240101", "20261019"])
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs:
+                        subprocess.CompletedProcess([], 2, stdout, "private provider response"))
+    assert namespace["main"]() == 2
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == error.diagnostic_record()
+    assert "private" not in captured.out + captured.err
+
+
+def test_sina_worker_admits_capture_at_retrieval_and_never_creates_canonical_bars(
+    tmp_path, monkeypatch, capsys,
+):
+    from tong_quant.data.providers.sina_prices import SinaBsePriceObservationAdapter
+    from tong_quant.data.storage import SQLiteStore
+
+    namespace = runpy.run_path(str(SCRIPT))
+    source = SinaBsePriceObservationAdapter(
+        download=lambda _: b"synthetic raw wire",
+        decode=lambda *args: [{"date": "2026-01-02", "open": 10, "high": 11,
+                               "low": 9, "close": 10, "volume": 100, "amount": 1000}],
+    )
+    monkeypatch.setitem(namespace["run_worker"].__globals__, "SinaBsePriceObservationAdapter",
+                        lambda: source)
+    path = tmp_path / "sina.sqlite3"
+    args = Namespace(command="sina-bse-snapshot", symbol="920982", start_date="20260101",
+                     end_date="20260102", database=path)
+    assert namespace["run_worker"](args) == 2
+    document = json.loads(capsys.readouterr().out)
+    assert document["accepted"] == 1 and not document["canonical_bar_authorized"]
+    assert SQLiteStore(path).table_count("daily_bars") == 0

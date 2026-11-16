@@ -56,7 +56,7 @@ NOW = datetime(2026, 1, 2, tzinfo=UTC)
 
 
 def test_notification_and_schema_versions_are_v08() -> None:
-    assert DATABASE_SCHEMA_VERSION == "0.8.2"
+    assert DATABASE_SCHEMA_VERSION == "0.8.3"
     assert FRAMEWORK_VERSION == "0.8.0"
     assert NOTIFICATION_ENGINE_VERSION == "notification-engine-v0.8"
 

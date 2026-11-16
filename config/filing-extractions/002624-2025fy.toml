@@ -1,0 +1,31 @@
+# Current 2025 full-year group income; amounts are CNY, not CNY-million.
+# Manual visual review, no independent second review or original revision proof.
+[review]
+subject = "002624"
+period_end = "2025-12-31"
+reviewed_at = "2026-10-23T14:41:30+00:00"
+reviewer = "Codex manual filing review; no independent second review"
+filing_artifact_id = "990ef7edde280bcf3f5e85e2294d03e2e6c44fb178bb787d42cef4b4b1ed5f31"
+filing_sha256 = "8243d61d2a8b7524c544305d7d6add4513724d0c278f6d2eae5d2c6f6ff8b9c6"
+source_unit = "CNY"
+currency = "CNY"
+reporting_scope = "group"
+source_column = "group_current_period"
+audit_status = "audited"
+sector_profile = "nonfinancial"
+
+[[rows]]
+metric = "revenue"
+statement = "income"
+source_value = "6659558521.64"
+period_start = "2025-01-01"
+source_pages = [7, 80]
+source_label = "Group operating revenue for calendar 2025, CNY yuan"
+
+[[rows]]
+metric = "profit_attributable_to_parent"
+statement = "income"
+source_value = "730859018.92"
+period_start = "2025-01-01"
+source_pages = [7, 80, 81]
+source_label = "Group net profit attributable to owners of the parent for calendar 2025, CNY yuan"

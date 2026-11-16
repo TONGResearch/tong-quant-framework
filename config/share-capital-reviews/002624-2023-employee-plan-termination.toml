@@ -1,0 +1,41 @@
+# Manual retained-PDF annotation only; not independently verified issuer actions.
+[review]
+subject = "002624"
+reviewed_at = "2026-10-26T15:24:39+00:00"
+reviewer = "Codex manual text and visual page review; independent second review pending"
+filing_artifact_id = "52b1876663bdf88ca53c689cb942b098cd62edf9f66d823c4a89aedbf48a2b3f"
+filing_sha256 = "d93419f4c3d7108b43c691e6ab9961dbe732bd28cfc63cd414c07b5c6fa22719"
+model_version = "share-action-document-review-v1"
+
+[[review.observations]]
+reference = "Section I.2: existing shares moved from company repurchase account to employee-plan account; reported 0.76 percent is not inverted into total shares"
+scope = "holder_or_plan"
+kind = "transfer"
+stage = "reported_completed"
+source_pages = [1]
+quantity_shares = 14650000
+effective_date = "2024-06-21"
+
+[[review.observations]]
+reference = "Section I.4: plan shares transferred to 320 personal accounts on June 24; June 25 is receipt of transfer confirmation, not the transfer date"
+scope = "holder_or_plan"
+kind = "transfer"
+stage = "reported_completed"
+source_pages = [1]
+quantity_shares = 7325000
+effective_date = "2026-06-24"
+
+[[review.observations]]
+reference = "Section II: remaining unvested plan shares reportedly sold by announcement dated 2026-09-04; exact disposal date not reported; rounded 0.38 percent not inverted"
+scope = "holder_or_plan"
+kind = "disposal"
+stage = "reported_completed"
+source_pages = [2]
+quantity_shares = 7325000
+
+[[review.observations]]
+reference = "Section II: plan liquidation/distribution completed and plan terminated by announcement; not issuer share cancellation; exact completion date not reported"
+scope = "holder_or_plan"
+kind = "plan_termination"
+stage = "reported_completed"
+source_pages = [2]

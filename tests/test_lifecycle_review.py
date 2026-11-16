@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -110,6 +111,50 @@ def test_review_hash_is_deterministic_and_binds_original_content():
     same = event(details={"b": "2", "a": "1"})
     assert review(first) == review(same)
     assert review(first).record_hash != review(replace(first, source="changed")).record_hash
+
+
+@pytest.mark.parametrize("kind", ["event", "status"])
+@pytest.mark.parametrize("field", ["availability", "instrument"])
+@pytest.mark.parametrize("utc_cutoff", [False, True])
+def test_lifecycle_review_quarantines_future_dst_fold_and_cannot_raise_coverage(
+    kind, field, utc_cutoff
+):
+    first = datetime(2026, 11, 1, 1, 30, tzinfo=ZoneInfo("America/New_York"), fold=0)
+    later = first.replace(fold=1)
+    cutoff = first.astimezone(UTC) if utc_cutoff else first
+    record = event(available_at=first, instrument=replace(event().instrument, available_at=first))
+    if field == "availability":
+        record = replace(record, available_at=later)
+    else:
+        record = replace(record, instrument=replace(record.instrument, available_at=later))
+    if kind == "status":
+        record = InstrumentStatus(
+            record.instrument, DAY, SecurityStatus.SUSPENDED, False, record.available_at,
+            record.source, raw_data_hash=record.raw_data_hash,
+            availability_precision=record.availability_precision, trust_level=record.trust_level,
+        )
+    result = review_lifecycle_record(record, as_of=cutoff, effective_on_or_before=DAY)
+    assert result.disposition is Disposition.QUARANTINED
+    assert ("future_availability" if field == "availability" else "future_instrument_snapshot"
+            ) in result.reasons
+    if kind == "event":
+        quality = SecurityTimelineQualityInput(
+            "china_a:equity:600000", date(2026, 10, 1), DAY, (record,),
+            (LifecycleEventType.SUSPENSION_STARTED,), expected_provider_count=1,
+        )
+        assessed = HistoricalCoverageEvaluator().security_timeline(quality, assessed_at=cutoff)
+        assert assessed.confidence_score == 0
+        assert assessed.classification is PITReadinessClassification.UNSUITABLE
+
+
+def test_lifecycle_review_accepts_equivalent_utc_instants_without_mutating_sources():
+    instant = datetime(2026, 11, 1, 1, 30, tzinfo=ZoneInfo("America/New_York"), fold=1)
+    record = event(available_at=instant,
+                   instrument=replace(event().instrument, available_at=instant))
+    result = review_lifecycle_record(record, as_of=instant.astimezone(UTC),
+                                    effective_on_or_before=DAY)
+    assert result.disposition is Disposition.REVIEWABLE
+    assert record.available_at is instant
 
 
 @pytest.mark.parametrize(

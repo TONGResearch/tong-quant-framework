@@ -41,6 +41,48 @@ def audit_provider_artifacts(
             ).fetchall()
     except (OSError, ValueError, sqlite3.Error):
         return _report((), "registry_unreadable", "", False)
+    return _audit_rows(
+        rows, artifact_root, max_records=max_records,
+        max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
+    )
+
+
+def audit_provider_artifact_selection(
+    rows: tuple[tuple[object, ...], ...],
+    artifact_root: Path,
+    *,
+    max_records: int = 10_000,
+    max_file_bytes: int = 64 * 1024 * 1024,
+    max_total_bytes: int = 512 * 1024 * 1024,
+) -> dict[str, object]:
+    """Verify explicit caller-selected registry rows, NOT the whole registry."""
+    for limit in (max_records, max_file_bytes, max_total_bytes):
+        if type(limit) is not int or limit < 1:
+            raise ValueError("artifact audit limits must be positive integers")
+    result = _audit_rows(
+        rows, artifact_root, max_records=max_records,
+        max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
+    )
+    result.pop("report_hash")
+    result["registry_scope"] = "caller_selected_rows_only"
+    result["selection_hash"] = result.pop("registry_hash")
+    result["selection_scan_complete"] = result.pop("registry_scan_complete")
+    result["selected_count"] = result.pop("registered_count")
+    result["selected_artifacts_verified"] = result.pop("registered_artifacts_verified")
+    result["report_hash"] = sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return result
+
+
+def _audit_rows(
+    rows: list[tuple[object, ...]] | tuple[tuple[object, ...], ...],
+    artifact_root: Path,
+    *,
+    max_records: int,
+    max_file_bytes: int,
+    max_total_bytes: int,
+) -> dict[str, object]:
     if len(rows) > max_records:
         return _report((), "record_limit_exceeded", "", False)
 
@@ -87,7 +129,7 @@ def audit_provider_artifacts(
     return _report(tuple(entries), "", registry_hash.hexdigest(), True)
 
 
-def _open_without_links(path: Path) -> int:
+def _open_without_links(path: Path, *, directory: bool = False) -> int:
     """Anchor every component with no-follow directory descriptors (POSIX)."""
     with ExitStack() as stack:
         parent = os.open(path.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
@@ -102,7 +144,9 @@ def _open_without_links(path: Path) -> int:
         if path.name in {"", ".", ".."}:
             raise ValueError("file path is required")
         return os.open(
-            path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent
+            path.name,
+            os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | (os.O_DIRECTORY if directory else 0),
+            dir_fd=parent,
         )
 
 

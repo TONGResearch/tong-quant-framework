@@ -102,6 +102,19 @@ def codes(store: SQLiteStore) -> set[str]:
     return {gap.code for gap in reader(store).read("600000", QUERY, calendar_start=START).gaps}
 
 
+@pytest.mark.parametrize("symbol", ["688363", "689009", "900901", "920982", "000063"])
+def test_runtime_inventory_flags_misclassified_exchange_tag_without_dropping_record(store, symbol):
+    original = MarketDataService(store).instrument(
+        "600000", Market.CHINA_A, AssetType.EQUITY, as_of=AS_OF)
+    instrument = replace(original, symbol=symbol)
+    store.upsert_instruments((instrument,))
+    snapshot = reader(store).read(symbol, QUERY, calendar_start=START)
+    assert snapshot.instrument is not None and snapshot.instrument.symbol == symbol
+    assert "instrument_scope_unverified" in {gap.code for gap in snapshot.gaps}
+    assert "instrument_scope_unverified" in {
+        gap["code"] for gap in snapshot.to_record()["gaps"]}
+
+
 def coverage(store: SQLiteStore, **kwargs):
     return SSEPilotCoverageReader(store, load_settings(Path("config/default.toml"))).read(
         "600000", QUERY, calendar_start=START, universe="china_a_all", **kwargs

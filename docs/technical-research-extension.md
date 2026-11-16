@@ -2,10 +2,21 @@
 
 ## Status And Boundary
 
-This document reserves a future research extension. It does not implement a
+November 6 [calendar observations](calendar-period-diagnostics-2026-11-06.md)
+add unscored market-local week/month OHLCV with explicit missing, unended and
+suspension states. They are not verified exchange-session candles. Technical's
+5/21-interval return and 252-observation positioning proxies remain unchanged,
+now explicitly labeled. Coverage qualification and period-trend admission remain
+open; this does not complete the style/intraday extension or actual validation.
+
+This document describes the full future research extension. The October 20
+[implementation audit](technical-implementation-audit-2026-10-20.md) supersedes
+the historical coverage table below for the narrowly approved WP-RESEARCH-002
+calculation slice. It does not complete WP-RESEARCH-001 or its data gates.
+The full extension does not implement a
 trading strategy, create a buy or sell decision, change Portfolio weights,
-create an Order, or enable Execution. `WP-EVIDENCE-001` remains the only ready
-work package and PIT readiness remains `UNSUITABLE`.
+create an Order, or enable Execution. Consult current governance for ready
+work packages; PIT readiness remains `UNSUITABLE`.
 
 The extension belongs inside the existing workflow:
 

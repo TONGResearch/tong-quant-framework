@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -790,6 +791,58 @@ def test_bad_nested_research_stays_visible_but_cannot_be_validated(tmp_path: Pat
     assert store.table_count("historical_replay_samples") == 1
     with pytest.raises(ValueError, match="research content review failed"):
         _validation_request(result)
+
+
+@pytest.mark.parametrize("field", [
+    "report_generated", "report_available", "assessment_evaluated", "assessment_available",
+    "evidence_observed", "evidence_available",
+])
+@pytest.mark.parametrize("utc_cutoff", [False, True])
+def test_replay_research_snapshot_rejects_future_repeated_hour_evidence(
+    tmp_path, field, utc_cutoff
+):
+    store, instrument = _prepared_store(tmp_path)
+    original = SQLiteHistoricalReplayRepository(store).research_report(
+        instrument, _query().decision_as_of
+    )
+    first = datetime(2026, 11, 1, 1, 30, tzinfo=ZoneInfo("America/New_York"), fold=0)
+    later = first.replace(fold=1)
+    evidence = replace(original.assessments[0].evidence[0], observed_at=first, available_at=first)
+    assessment = replace(original.assessments[0], evaluated_at=first, available_at=first,
+                         evidence=(evidence,))
+    report = replace(original, generated_at=first, available_at=first, assessments=(assessment,))
+    # Replay must revalidate retained models, even if nested legacy values bypass constructors.
+    target, name = {
+        "report_generated": (report, "generated_at"),
+        "report_available": (report, "available_at"),
+        "assessment_evaluated": (assessment, "evaluated_at"),
+        "assessment_available": (assessment, "available_at"),
+        "evidence_observed": (evidence, "observed_at"),
+        "evidence_available": (evidence, "available_at"),
+    }[field]
+    object.__setattr__(target, name, later)
+    snapshot = research_snapshot(report, decision_at=first.astimezone(UTC) if utc_cutoff
+                                 else first, instrument_id=report.instrument_id)
+    assert snapshot["blocking_reasons"]
+    assert snapshot["report"] is None
+    assert snapshot["report_hash"]
+    assert getattr(target, name) is later
+
+
+def test_replay_research_snapshot_accepts_equivalent_cutoff_instants(tmp_path):
+    store, instrument = _prepared_store(tmp_path)
+    report = SQLiteHistoricalReplayRepository(store).research_report(
+        instrument, _query().decision_as_of
+    )
+    cutoff = _query().decision_as_of.astimezone(ZoneInfo("America/New_York"))
+    snapshot = research_snapshot(report, decision_at=cutoff, instrument_id=report.instrument_id)
+    assert snapshot["blocking_reasons"] == []
+    assert snapshot["report"] is not None
+
+
+def test_replay_research_snapshot_rejects_naive_decision_cutoff():
+    with pytest.raises(ValueError, match="timezone"):
+        research_snapshot(None, decision_at=datetime(2026, 11, 1), instrument_id="synthetic")
 
 
 @pytest.mark.parametrize(

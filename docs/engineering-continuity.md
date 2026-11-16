@@ -2,6 +2,10 @@
 
 ## Purpose
 
+For Tong's Chinese owner/method/current-state summary and device-transfer steps,
+read [PROJECT_HANDOFF.zh-CN.md](PROJECT_HANDOFF.zh-CN.md). Check its dated Git
+observations against live state; it is not proof of upload or restored data.
+
 This protocol makes Tong Quant maintainable when the next developer or AI has a
 smaller context window, a lower token budget, or less capable reasoning. Project
 state must live in versioned files and executable checks, not conversation
@@ -95,5 +99,6 @@ without reading the original chat.
 The governance audit proves internal consistency only. It does not prove data,
 research, validation, production, or trading readiness. Readiness promotion
 requires new measured evidence, reviewed documentation, updated risk controls,
-and explicit approval. Trading-related development remains frozen throughout
-the current phase.
+and explicit approval. Governed controlled-launch, Paper and sandbox development
+may proceed only when their package dependencies permit it; live trading remains
+frozen. A general development authorization never marks a planned package ready.

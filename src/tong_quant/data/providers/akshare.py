@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from io import BytesIO
 from time import sleep
@@ -20,9 +21,56 @@ from tong_quant.data.models import (
 from tong_quant.domain.enums import Adjustment, AssetType
 from tong_quant.version import (
     AKSHARE_CORPORATE_ACTION_VERSION,
+    AKSHARE_DAILY_FETCH_VERSION,
     AKSHARE_MARKET_NORMALIZATION_VERSION,
     AKSHARE_SUSPENSION_VERSION,
+    AKSHARE_SYMBOL_ROUTING_VERSION,
 )
+
+_NETWORK_ERRORS = frozenset({
+    "ConnectionError", "ConnectTimeout", "ReadTimeout", "TimeoutError",
+    "Timeout", "ProxyError", "SSLError", "RemoteDisconnected",
+})
+_DAILY_FIELDS = frozenset({"day", "data", "klines", "qfqday", "hfqday"})
+
+
+@dataclass(frozen=True)
+class DailyEndpointFailure:
+    endpoint: str
+    status: str
+    category: str
+    error_type: str = ""
+    missing_field: str = ""
+    attempts: int = 1
+    limitation: str = ""
+
+
+class AkShareDailyBarsUnavailableError(DataProviderError):
+    """Sanitized endpoint results; never retain raw provider exceptions."""
+
+    def __init__(self, failures: tuple[DailyEndpointFailure, ...]) -> None:
+        super().__init__("AKShare daily bars unavailable; inspect endpoint_failures")
+        self.endpoint_failures = failures
+
+    def diagnostic_record(self) -> dict[str, object]:
+        return {"status": "failed", "error_type": type(self).__name__,
+                "endpoint_failures": [asdict(item) for item in self.endpoint_failures],
+                "coverage_qualified": False}
+
+
+def _daily_exception_failure(
+    endpoint: str, symbol: str, asset_type: AssetType, error: Exception, attempts: int = 1,
+) -> DailyEndpointFailure:
+    kind = type(error).__name__
+    field = (error.args[0] if isinstance(error, KeyError) and error.args
+             and type(error.args[0]) is str and error.args[0] in _DAILY_FIELDS else "")
+    bse_missing = (endpoint == "stock_zh_a_hist_tx" and field == "day"
+                   and _market_symbol(symbol, asset_type).startswith("bj"))
+    return DailyEndpointFailure(
+        endpoint, "failed", "network_or_upstream" if kind in _NETWORK_ERRORS
+        else "provider_or_contract", kind, field, attempts,
+        "bse_daily_payload_unavailable" if bse_missing else "",
+    )
 
 
 class AkShareClient(Protocol):
@@ -31,6 +79,8 @@ class AkShareClient(Protocol):
     def index_zh_a_hist(self, **kwargs: Any) -> pd.DataFrame: ...
 
     def stock_zh_a_hist_tx(self, **kwargs: Any) -> pd.DataFrame: ...
+
+    def stock_zh_a_daily(self, **kwargs: Any) -> pd.DataFrame: ...
 
     def tool_trade_date_hist_sina(self) -> pd.DataFrame: ...
 
@@ -106,20 +156,20 @@ class AkShareAdapter:
             "asset_type": request.asset_type.value,
             "adjustment": request.adjustment.value,
             "normalization_version": AKSHARE_MARKET_NORMALIZATION_VERSION,
+            "symbol_routing_version": AKSHARE_SYMBOL_ROUTING_VERSION,
+            "fetch_version": AKSHARE_DAILY_FETCH_VERSION,
         }
 
         def fetch() -> pd.DataFrame:
-            try:
+            def primary() -> pd.DataFrame:
                 if request.asset_type is AssetType.INDEX:
-                    frame = self._client.index_zh_a_hist(
+                    return self._client.index_zh_a_hist(
                         symbol=request.symbol,
                         period="daily",
                         start_date=request.start_date,
                         end_date=request.end_date,
                     )
-                    frame.attrs["tong_quant_source"] = "akshare:index_zh_a_hist"
-                    return frame
-                frame = self._client.stock_zh_a_hist(
+                return self._client.stock_zh_a_hist(
                     symbol=request.symbol,
                     period="daily",
                     start_date=request.start_date,
@@ -127,25 +177,125 @@ class AkShareAdapter:
                     adjust=_akshare_adjustment(request.adjustment),
                     timeout=self._timeout_seconds,
                 )
-                frame.attrs["tong_quant_source"] = "akshare:stock_zh_a_hist"
-                return frame
-            except Exception:
-                frame = self._client.stock_zh_a_hist_tx(
+
+            def fallback() -> pd.DataFrame:
+                return self._client.stock_zh_a_hist_tx(
                     symbol=_market_symbol(request.symbol, request.asset_type),
                     start_date=request.start_date,
                     end_date=request.end_date,
                     adjust=_akshare_adjustment(request.adjustment),
                     timeout=self._timeout_seconds,
                 )
-                normalized = _normalize_tencent_frame(
-                    frame,
-                    request.symbol,
-                    include_symbol=request.asset_type is AssetType.EQUITY,
-                )
-                normalized.attrs["tong_quant_source"] = "akshare:stock_zh_a_hist_tx"
-                return normalized
+
+            primary_name = ("index_zh_a_hist" if request.asset_type is AssetType.INDEX
+                            else "stock_zh_a_hist")
+            failures = []
+            for endpoint, fetcher, required in (
+                (primary_name, primary, {"日期", "开盘", "收盘", "最高", "最低", "成交量"}),
+                ("stock_zh_a_hist_tx", fallback,
+                 {"date", "open", "close", "high", "low", "amount"}),
+            ):
+                frame, failure = self._daily_endpoint(request, endpoint, fetcher, required)
+                if failure is not None:
+                    failures.append(failure)
+                    continue
+                assert frame is not None
+                if endpoint == "stock_zh_a_hist_tx":
+                    frame = _normalize_tencent_frame(
+                        frame, request.symbol,
+                        include_symbol=request.asset_type is AssetType.EQUITY,
+                    )
+                frame.attrs["tong_quant_source"] = f"akshare:{endpoint}"
+                return frame
+            raise AkShareDailyBarsUnavailableError(tuple(failures)) from None
 
         return self._fetch(dataset_name, parameters, fetch)
+
+    def _daily_endpoint(
+        self, request: DailyBarRequest, endpoint: str,
+        fetch: Callable[[], pd.DataFrame], required: set[str],
+    ) -> tuple[pd.DataFrame | None, DailyEndpointFailure | None]:
+        for attempt in range(1, self._max_attempts + 1):
+            try:
+                frame = fetch()
+            except Exception as error:
+                failure = _daily_exception_failure(
+                    endpoint, request.symbol, request.asset_type, error, attempt,
+                )
+                if failure.category == "network_or_upstream" and attempt < self._max_attempts:
+                    self._sleeper(self._retry_delay_seconds * attempt)
+                    continue
+                return None, failure
+            if not isinstance(frame, pd.DataFrame):
+                failure = DailyEndpointFailure(endpoint, "contract_mismatch", "response_type",
+                                               attempts=attempt)
+            elif frame.empty:
+                failure = DailyEndpointFailure(
+                    endpoint, "empty", "empty_response", attempts=attempt)
+            elif not required.issubset(frame.columns):
+                failure = DailyEndpointFailure(endpoint, "contract_mismatch", "response_schema",
+                                               attempts=attempt)
+            else:
+                return frame, None
+            return None, failure
+        raise AssertionError("daily endpoint retry bound must be positive")
+
+    def probe_daily_endpoint(
+        self, request: DailyBarRequest, *, endpoint: str,
+    ) -> dict[str, object]:
+        """Probe access separately; never ingest, expose exceptions or certify coverage.
+
+        The caller must bound the entire worker lifetime: upstream helpers may
+        make preliminary requests without honoring their supplied timeout.
+        """
+        if request.asset_type is not AssetType.EQUITY or request.adjustment is not Adjustment.NONE:
+            raise ValueError("daily endpoint probes require unadjusted equities")
+        if endpoint not in {"stock_zh_a_hist", "stock_zh_a_hist_tx", "stock_zh_a_daily"}:
+            raise ValueError("unsupported daily endpoint probe")
+        routed_symbol = request.symbol if endpoint == "stock_zh_a_hist" else _market_symbol(
+            request.symbol, request.asset_type
+        )
+        record: dict[str, object] = {
+            "endpoint": endpoint, "symbol": request.symbol, "routed_symbol": routed_symbol,
+            "start_date": request.start_date, "end_date": request.end_date,
+            "captured_at": self._clock().isoformat(), "rows": None,
+            "status": "failed", "error_type": "", "missing_field": "",
+            "category": "unclassified", "coverage_qualified": False,
+        }
+        if endpoint == "stock_zh_a_daily":
+            record["limitations"] = [
+                "Sina SDK output may forward-fill joined series, round and drop repeated bars",
+                "Diagnostic only; not approved as a daily-bar ingestion fallback",
+            ]
+        try:
+            arguments = {"symbol": routed_symbol, "start_date": request.start_date,
+                         "end_date": request.end_date, "adjust": "",
+                         "timeout": self._timeout_seconds}
+            if endpoint == "stock_zh_a_hist":
+                frame = self._client.stock_zh_a_hist(period="daily", **arguments)
+                required = {"日期", "开盘", "收盘", "最高", "最低", "成交量"}
+            elif endpoint == "stock_zh_a_hist_tx":
+                frame = self._client.stock_zh_a_hist_tx(**arguments)
+                required = {"date", "open", "close", "high", "low", "amount"}
+            else:
+                # No native timeout; the diagnostic CLI bounds the whole subprocess.
+                arguments.pop("timeout")
+                frame = self._client.stock_zh_a_daily(**arguments)
+                required = {"date", "open", "close", "high", "low", "volume", "amount"}
+            if not isinstance(frame, pd.DataFrame):
+                record.update(status="contract_mismatch", category="response_type")
+            elif frame.empty:
+                record.update(status="empty", category="empty_response", rows=0)
+            elif not required.issubset(frame.columns):
+                record.update(status="contract_mismatch", category="response_schema",
+                              rows=len(frame))
+            else:
+                record.update(status="available", category="access_observed", rows=len(frame))
+        except Exception as error:
+            failure = _daily_exception_failure(endpoint, request.symbol, request.asset_type, error)
+            record.update(error_type=failure.error_type, category=failure.category,
+                          missing_field=failure.missing_field, limitation=failure.limitation)
+        return record
 
     def trading_calendar(self) -> ProviderResponse:
         return self._fetch(
@@ -388,6 +538,9 @@ class AkShareAdapter:
         for attempt in range(1, self._max_attempts + 1):
             try:
                 return fetch()
+            except AkShareDailyBarsUnavailableError:
+                # Daily endpoints already applied their individual retry policies.
+                raise
             except Exception as error:
                 last_error = error
                 if attempt < self._max_attempts:
@@ -410,6 +563,8 @@ def _akshare_adjustment(adjustment: Adjustment) -> str:
 def _market_symbol(symbol: str, asset_type: AssetType) -> str:
     if asset_type is AssetType.INDEX:
         return f"sz{symbol}" if symbol.startswith("399") else f"sh{symbol}"
+    if symbol.startswith("920"):
+        return f"bj{symbol}"
     if symbol.startswith(("6", "9")):
         return f"sh{symbol}"
     if symbol.startswith(("4", "8")):

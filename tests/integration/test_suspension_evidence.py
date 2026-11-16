@@ -4,6 +4,7 @@ import subprocess
 import sys
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 
 import pandas as pd
@@ -182,7 +183,7 @@ def test_snapshot_cache_version_isolated_from_pre_repair_data(foundation, tmp_pa
     assert store.table_count("provider_artifacts") == 1
 
 
-def test_canonical_write_failure_rolls_back_source_evidence_and_files(
+def test_canonical_write_failure_rolls_back_evidence_but_retains_unregistered_original(
     foundation,
     monkeypatch,
 ) -> None:
@@ -202,7 +203,9 @@ def test_canonical_write_failure_rolls_back_source_evidence_and_files(
         "instruments",
     ):
         assert store.table_count(table) == 0
-    assert not list((store.path.parent / "raw/provider-artifacts").rglob("*.json"))
+    retained = list((store.path.parent / "raw/provider-artifacts").rglob("*.bin"))
+    assert len(retained) == 1
+    assert retained[0].stem == sha256(retained[0].read_bytes()).hexdigest()
 
 
 def test_suspension_capture_preserves_existing_company_metadata(foundation) -> None:

@@ -6,6 +6,11 @@ Current project state and the next approved work packages are in
 `PROJECT_STATUS.md`. Run `python scripts/check_project_governance.py` before
 starting a new milestone.
 
+For the Chinese owner philosophy, seven technical research groups, actual
+implementation gaps, and cross-device recovery checklist, read
+[the project handoff](docs/PROJECT_HANDOFF.zh-CN.md). Local uncommitted code and
+ignored research data do not automatically exist on GitHub or another device.
+
 ## Philosophy
 
 Discover Opportunities -> Screen Opportunities -> Research Opportunities ->

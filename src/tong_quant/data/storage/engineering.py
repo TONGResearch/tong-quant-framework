@@ -3,6 +3,7 @@ import os
 import sqlite3
 import tempfile
 from collections.abc import Callable
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -18,7 +19,11 @@ from tong_quant.data.storage.migrations import (
     schema_fingerprint,
 )
 from tong_quant.data.storage.sqlite import SCHEMA, SQLiteStore
-from tong_quant.version import DATABASE_ENGINEERING_VERSION, DATABASE_SCHEMA_VERSION
+from tong_quant.version import (
+    DATABASE_CONTENT_VERSION,
+    DATABASE_ENGINEERING_VERSION,
+    DATABASE_SCHEMA_VERSION,
+)
 
 
 def _utc_now() -> datetime:
@@ -89,6 +94,9 @@ class DatabaseBackupManifest:
     migration_head: str
     schema_fingerprint: str
     table_counts_match: bool
+    source_content_hash: str
+    backup_content_hash: str
+    content_model_version: str = DATABASE_CONTENT_VERSION
     model_version: str = DATABASE_ENGINEERING_VERSION
 
     def __post_init__(self) -> None:
@@ -96,6 +104,11 @@ class DatabaseBackupManifest:
             raise ValueError("database backup identifiers must be SHA-256 digests")
         if self.backup_size_bytes < 1 or not self.table_counts_match:
             raise ValueError("database backup manifest requires a verified snapshot")
+        if (
+            len(self.source_content_hash) != 64
+            or self.source_content_hash != self.backup_content_hash
+        ):
+            raise ValueError("database backup must preserve logical content")
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +125,10 @@ class DatabaseRestoreReport:
     common_table_counts_match: bool
     restored_schema_fingerprint: str
     restored_sha256: str
+    source_content_hash: str
+    restored_content_hash: str
+    same_schema_content_verified: bool
+    content_model_version: str = DATABASE_CONTENT_VERSION
     model_version: str = DATABASE_ENGINEERING_VERSION
 
     def __post_init__(self) -> None:
@@ -119,6 +136,12 @@ class DatabaseRestoreReport:
             raise ValueError("database restore identifiers must be SHA-256 digests")
         if not self.common_table_counts_match:
             raise ValueError("database restore must preserve all source table counts")
+        if not self.migration_applied and (
+            not self.same_schema_content_verified
+            or len(self.source_content_hash) != 64
+            or self.source_content_hash != self.restored_content_hash
+        ):
+            raise ValueError("same-schema restore must preserve logical content")
 
 
 BackupProgress = Callable[[int, int, int], None]
@@ -136,7 +159,8 @@ class SQLiteIntegrityService:
             if expanded_path.is_symlink():
                 raise ValueError("database path must not be a symbolic link")
             _require_database_file(path)
-            with _read_only_connection(path) as connection:
+            with closing(_read_only_connection(path)) as connection:
+                connection.execute("BEGIN")
                 integrity_messages = tuple(
                     str(row[0])
                     for row in connection.execute("PRAGMA integrity_check").fetchall()
@@ -235,6 +259,7 @@ class SQLiteBackupService:
         _require_distinct_new_destination(source, destination)
         source_report = self.integrity_service.audit(source)
         _require_passed(source_report, "source database failed pre-backup audit")
+        source_content_hash = _logical_dump_hash(source)
 
         temporary = _copy_to_temporary(
             source=source,
@@ -245,6 +270,11 @@ class SQLiteBackupService:
         try:
             backup_report = self.integrity_service.audit(temporary)
             _require_passed(backup_report, "backup snapshot failed post-copy audit")
+            backup_content_hash = _logical_dump_hash(temporary)
+            if source_content_hash != backup_content_hash:
+                raise DatabaseIntegrityError(
+                    "backup logical content does not match source snapshot"
+                )
             table_counts_match = source_report.table_counts == backup_report.table_counts
             if not all(
                 (
@@ -279,6 +309,8 @@ class SQLiteBackupService:
                 migration_head=backup_report.migration_head,
                 schema_fingerprint=backup_report.schema_fingerprint,
                 table_counts_match=table_counts_match,
+                source_content_hash=source_content_hash,
+                backup_content_hash=backup_content_hash,
             )
             _publish_without_overwrite(temporary, destination)
             return manifest
@@ -296,6 +328,7 @@ class SQLiteBackupService:
         _require_distinct_new_destination(backup, destination)
         source_report = self.integrity_service.audit(backup)
         _require_restorable(source_report)
+        source_content_hash = _logical_dump_hash(backup)
 
         temporary = _copy_to_temporary(
             source=backup,
@@ -304,7 +337,8 @@ class SQLiteBackupService:
             progress=self.progress,
         )
         try:
-            SQLiteStore(temporary).initialize()
+            if source_report.requires_migration:
+                SQLiteStore(temporary).initialize()
             restored_report = self.integrity_service.audit(temporary)
             _require_passed(restored_report, "restored database failed audit")
             source_counts = {item.table: item.rows for item in source_report.table_counts}
@@ -324,6 +358,15 @@ class SQLiteBackupService:
                 raise DatabaseIntegrityError("restore changed source table row counts")
             if restored_report.migration_head != MIGRATION_HEAD:
                 raise DatabaseIntegrityError("restore did not reach the migration head")
+            restored_content_hash = _logical_dump_hash(temporary)
+            same_schema_content_verified = (
+                not source_report.requires_migration
+                and source_content_hash == restored_content_hash
+            )
+            if not source_report.requires_migration and not same_schema_content_verified:
+                raise DatabaseIntegrityError(
+                    "restore logical content does not match source snapshot"
+                )
             restored_hash = _file_sha256(temporary)
             restored_at = self.clock()
             restore_id = _stable_hash(
@@ -350,6 +393,9 @@ class SQLiteBackupService:
                 common_table_counts_match=common_table_counts_match,
                 restored_schema_fingerprint=restored_report.schema_fingerprint,
                 restored_sha256=restored_hash,
+                source_content_hash=source_content_hash,
+                restored_content_hash=restored_content_hash,
+                same_schema_content_verified=same_schema_content_verified,
             )
             _publish_without_overwrite(temporary, destination)
             return report
@@ -404,6 +450,9 @@ def database_backup_json(manifest: DatabaseBackupManifest) -> dict[str, object]:
         "migration_head": manifest.migration_head,
         "schema_fingerprint": manifest.schema_fingerprint,
         "table_counts_match": manifest.table_counts_match,
+        "source_content_hash": manifest.source_content_hash,
+        "backup_content_hash": manifest.backup_content_hash,
+        "content_model_version": manifest.content_model_version,
         "model_version": manifest.model_version,
     }
 
@@ -422,6 +471,10 @@ def database_restore_json(report: DatabaseRestoreReport) -> dict[str, object]:
         "common_table_counts_match": report.common_table_counts_match,
         "restored_schema_fingerprint": report.restored_schema_fingerprint,
         "restored_sha256": report.restored_sha256,
+        "source_content_hash": report.source_content_hash,
+        "restored_content_hash": report.restored_content_hash,
+        "same_schema_content_verified": report.same_schema_content_verified,
+        "content_model_version": report.content_model_version,
         "model_version": report.model_version,
     }
 
@@ -669,8 +722,8 @@ def _copy_to_temporary(
     temporary = Path(temporary_name)
     try:
         with (
-            _read_only_connection(source) as source_connection,
-            sqlite3.connect(temporary) as destination_connection,
+            closing(_read_only_connection(source)) as source_connection,
+            closing(sqlite3.connect(temporary)) as destination_connection,
         ):
             source_connection.backup(
                 destination_connection,
@@ -730,6 +783,36 @@ def _file_sha256(path: Path) -> str:
     with path.open("rb") as source_file:
         for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _logical_dump_hash(path: Path) -> str:
+    """Same-schema/same-SQLite comparison only; never export SQL or row values."""
+    digest = sha256()
+    try:
+        with closing(_read_only_connection(path)) as connection:
+            connection.execute("BEGIN")
+            # SQLite quote()/iterdump() truncates text at embedded NUL characters.
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+            ).fetchall():
+                table = str(row[0]).replace('"', '""')
+                columns = connection.execute(f'PRAGMA table_info("{table}")').fetchall()
+                predicates = []
+                for column in columns:
+                    name = str(column[1]).replace('"', '""')
+                    predicates.append(
+                        f'(typeof("{name}") = \'text\' AND instr("{name}", char(0)) > 0)'
+                    )
+                if predicates and connection.execute(
+                    f'SELECT 1 FROM "{table}" WHERE {" OR ".join(predicates)} LIMIT 1'
+                ).fetchone() is not None:
+                    raise DatabaseIntegrityError("logical dump cannot safely represent NUL text")
+            for statement in connection.iterdump():
+                digest.update(statement.encode("utf-8"))
+                digest.update(b"\n")
+    except (OSError, sqlite3.Error, UnicodeError) as error:
+        raise DatabaseIntegrityError("database logical content could not be verified") from error
     return digest.hexdigest()
 
 

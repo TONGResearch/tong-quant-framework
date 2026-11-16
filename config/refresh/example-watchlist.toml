@@ -1,0 +1,57 @@
+# Offline demonstration only, not a selected portfolio or an activated service.
+version = "four-market-example-v1"
+
+[[scopes]]
+provider = "akshare"
+dataset = "a_share_daily"
+market = "china_a"
+subject = "000063"
+currency = "CNY"
+exchange = "SZSE"
+timezone = "Asia/Shanghai"
+start_date = "2026-01-01"
+end_date = "2026-11-02"
+
+[[scopes]]
+provider = "yahoo_finance"
+dataset = "global_equity_price_snapshot"
+market = "us"
+subject = "MSFT"
+currency = "USD"
+exchange = "NMS"
+timezone = "America/New_York"
+start_date = "2026-01-01"
+end_date = "2026-11-02"
+
+[[scopes]]
+provider = "yahoo_finance"
+dataset = "global_equity_price_snapshot"
+market = "hong_kong"
+subject = "0700.HK"
+currency = "HKD"
+exchange = "HKG"
+timezone = "Asia/Hong_Kong"
+start_date = "2026-01-01"
+end_date = "2026-11-02"
+
+[[scopes]]
+provider = "yahoo_finance"
+dataset = "global_equity_price_snapshot"
+market = "malaysia"
+subject = "1155.KL"
+currency = "MYR"
+exchange = "KLS"
+timezone = "Asia/Kuala_Lumpur"
+start_date = "2026-01-01"
+end_date = "2026-11-02"
+
+[[scopes]]
+provider = "yahoo_finance"
+dataset = "global_native_fundamental_snapshot"
+market = "malaysia"
+subject = "1155.KL"
+currency = "MYR"
+exchange = "KLS"
+timezone = "Asia/Kuala_Lumpur"
+start_date = "2026-01-01"
+end_date = "2026-11-02"

@@ -2,8 +2,12 @@
 
 Review date: 2026-10-16, Asia/Kuala_Lumpur. Package: `WP-LAUNCH-001`.
 Profile: `sse-main-board-2026-v1`. Calculation contract:
-`sse-main-board-calculation-v1.1` (accepts stored XSHG and legacy SSE identifiers
-without rewriting instrument content; other scope checks are unchanged).
+`sse-main-board-calculation-v1.2-symbol-scope` (accepts stored XSHG and legacy SSE
+identifiers without rewriting instrument content, but additionally rejects
+symbols outside the conservative 600/601/603/605 six-digit ASCII boundary).
+Scope hardening reviewed on October 22; see the
+[repair report](sse-pilot-symbol-scope-2026-10-22.md). A matching prefix does not
+replace dated listing/status evidence or establish trading eligibility.
 
 ## Scope
 

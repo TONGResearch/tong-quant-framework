@@ -1,15 +1,17 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from tong_quant.domain.enums import (
     EvidenceQuality,
     Market,
+    ResearchConclusion,
     ResearchModuleName,
 )
 from tong_quant.domain.models import Bar
 from tong_quant.research.bar_inputs import require_period, research_daily_bars
 from tong_quant.research.base import (
     assessment_from_scores,
+    evidence_score,
     insufficient_assessment,
     not_applicable_assessment,
 )
@@ -62,14 +64,18 @@ class PatternResearchModule:
                 model_version=self.model_version,
             )
 
-        bars = research_daily_bars(context)
+        bars = research_daily_bars(context, require_latest_active=True)
         supplied_names = PATTERN_FIELDS - {"high_volume_long_upper_shadow"}
         supplied = tuple(
             item
             for name in supplied_names
             if (item := context.evidence_named(self.module, name)) is not None
         )
-        if len(bars) < self.volume_period + 1 or len(supplied) != len(supplied_names):
+        rising = context.evidence_named(self.module, "rising_stocks_environment")
+        rising_count = None if rising is None else rising.metadata.get("rising_stocks")
+        if (len(bars) < self.volume_period + 1 or len(supplied) != len(supplied_names)
+                or any(evidence_score(item) is None for item in supplied)
+                or type(rising_count) is not int or rising_count < 0):
             return insufficient_assessment(
                 module=self.module,
                 evidence=supplied,
@@ -78,7 +84,9 @@ class PatternResearchModule:
                 limitations=(
                     "A-share pattern research requires complete point-in-time market "
                     "breadth and intraday pattern evidence",
+                    "An explicit nonnegative integer rising-stock count is required",
                     f"At least {self.volume_period + 1} visible daily bars are required",
+                    "The latest supplied observation must be active; no pre-suspension fallback",
                 ),
                 model_version=self.model_version,
             )
@@ -90,13 +98,11 @@ class PatternResearchModule:
             for item in evidence
             if isinstance(item.value, (int, float))
         )
-        rising = context.evidence_named(self.module, "rising_stocks_environment")
-        rising_count = None if rising is None else rising.metadata.get("rising_stocks")
         dependency_features = {
             f"{name.value}_conclusion": assessment.conclusion.value
             for name, assessment in dependencies.items()
         }
-        return assessment_from_scores(
+        result = assessment_from_scores(
             module=self.module,
             scores=scores,
             evidence=evidence,
@@ -119,9 +125,15 @@ class PatternResearchModule:
                 **dependency_features,
                 "rising_stocks": rising_count,
                 "rising_stocks_threshold": self.rising_stocks_threshold,
+                "rising_stocks_environment_satisfied": rising_count > self.rising_stocks_threshold,
                 "china_a_specific": True,
             },
         )
+        if rising_count <= self.rising_stocks_threshold:
+            return replace(result, score=None, conclusion=ResearchConclusion.CAUTION,
+                           limitations=(*result.limitations,
+                                        "Rising-stock count must strictly exceed the threshold"))
+        return result
 
 
 def _upper_shadow_evidence(

@@ -8,6 +8,7 @@ from tong_quant.research.models import (
     ResearchAssessment,
     ResearchContext,
 )
+from tong_quant.version import POLICY_RESEARCH_VERSION
 
 POLICY_FIELDS = frozenset(
     {
@@ -24,7 +25,7 @@ POLICY_FIELDS = frozenset(
 class PolicyResearchModule:
     module: ResearchModuleName = ResearchModuleName.POLICY
     dependencies: frozenset[ResearchModuleName] = frozenset()
-    model_version: str = "policy-v0.5"
+    model_version: str = POLICY_RESEARCH_VERSION
 
     def evaluate(
         self,

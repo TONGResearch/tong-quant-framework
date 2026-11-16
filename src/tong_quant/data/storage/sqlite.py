@@ -930,6 +930,11 @@ class SQLiteStore:
                 (physical_fingerprint, _datetime_text(datetime.now(UTC))),
             )
 
+    @property
+    def has_active_connection(self) -> bool:
+        """Whether this context owns a SQLiteStore-managed snapshot or transaction."""
+        return self._transaction_connection.get() is not None
+
     @contextmanager
     def read_snapshot(self) -> Iterator["SQLiteStore"]:
         """Keep multi-query reads on one snapshot; independent snapshots cannot write."""
@@ -965,6 +970,18 @@ class SQLiteStore:
         finally:
             self._transaction_connection.reset(token)
             connection.close()
+
+    @contextmanager
+    def repository_connection(
+        self, *, require_transaction: bool = False,
+    ) -> Iterator[sqlite3.Connection]:
+        """Share connection ownership with specialized SQL repositories, never initialize."""
+        if require_transaction and (
+            self.read_only or self._transaction_connection.get() is None
+        ):
+            raise RuntimeError("repository writes require an explicit store transaction")
+        with self._connect() as connection:
+            yield connection
 
     def upsert_instruments(self, instruments: Iterable[Instrument]) -> int:
         rows = []
@@ -1090,6 +1107,11 @@ class SQLiteStore:
         return len(rows)
 
     def upsert_trading_sessions(self, sessions: Iterable[TradingSession]) -> int:
+        sessions = tuple(sessions)
+        for session in sessions:
+            session.__post_init__()
+            if type(session.is_open) is not bool:
+                raise ValueError("calendar open state must be a boolean before persistence")
         ingested_at = _datetime_text(datetime.now(UTC))
         rows = [
             (
@@ -1520,6 +1542,20 @@ class SQLiteStore:
                 ),
             )
         return batch.batch_id
+
+    def ingestion_batch(self, batch_id: str) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row: sqlite3.Row | None = connection.execute(
+                "SELECT * FROM ingestion_batches WHERE batch_id = ?", (batch_id,),
+            ).fetchone()
+        return row
+
+    def provider_artifact(self, artifact_id: str) -> sqlite3.Row | None:
+        with self._connect() as connection:
+            row: sqlite3.Row | None = connection.execute(
+                "SELECT * FROM provider_artifacts WHERE artifact_id = ?", (artifact_id,),
+            ).fetchone()
+        return row
 
     def save_raw_dataset_fingerprint(
         self,
@@ -2797,6 +2833,8 @@ class SQLiteStore:
                     _datetime_text(as_of),
                 ),
             ).fetchall()
+        if any(type(row["is_open"]) is not int or row["is_open"] not in (0, 1) for row in rows):
+            raise ValueError("calendar open state must be exactly integer zero or one")
         return [
             TradingSession(
                 market=Market(row["market"]),
@@ -5212,6 +5250,8 @@ class SQLiteStore:
             "universe_memberships",
             "corporate_actions",
             "ingestion_batches",
+            "refresh_jobs",
+            "refresh_attempts",
             "raw_dataset_fingerprints",
             "data_availability_warnings",
             "provider_limitations",

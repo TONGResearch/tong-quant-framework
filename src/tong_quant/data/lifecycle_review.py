@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from hashlib import sha256
 
@@ -35,11 +35,13 @@ def review_lifecycle_record(
 ) -> LifecycleRecordReview:
     """REVIEWABLE is structural eligibility for review, not source/coverage approval."""
     require_timezone(as_of, "lifecycle review as_of")
+    cutoff = as_of.astimezone(UTC)
     errors: list[str] = []
     warnings: list[str] = []
-    if record.available_at > as_of:
+    if record.available_at.astimezone(UTC) > cutoff:
         errors.append("future_availability")
-    if record.instrument.available_at is not None and record.instrument.available_at > as_of:
+    if (record.instrument.available_at is not None
+            and record.instrument.available_at.astimezone(UTC) > cutoff):
         errors.append("future_instrument_snapshot")
     effective_date = (
         record.effective_date

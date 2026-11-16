@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from tong_quant.domain.enums import ResearchModuleName
 from tong_quant.research.base import evidence_driven_assessment
 from tong_quant.research.models import ResearchAssessment, ResearchContext
+from tong_quant.version import INDUSTRY_RESEARCH_VERSION
 
 INDUSTRY_FIELDS = frozenset(
     {
@@ -21,7 +22,7 @@ class IndustryResearchModule:
     dependencies: frozenset[ResearchModuleName] = frozenset(
         {ResearchModuleName.POLICY}
     )
-    model_version: str = "industry-v0.5"
+    model_version: str = INDUSTRY_RESEARCH_VERSION
 
     def evaluate(
         self,

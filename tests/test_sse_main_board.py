@@ -33,6 +33,7 @@ from tong_quant.markets.sse_references import (
     SSE_PROFILE_VERSION,
     ReviewedRuleDocument,
     SSEReferenceBundle,
+    is_sse_main_board_pilot_symbol,
 )
 
 NOW = datetime(2026, 10, 16, 2, tzinfo=UTC)
@@ -133,8 +134,53 @@ def test_canonical_exchange_identifier_uses_same_rules_without_rewriting_input()
     )
     result = SSEMainBoardEvaluator(_references(), context).buy_quantity(250)
     assert result.value == 200
-    assert result.model_version == "sse-main-board-calculation-v1.1"
+    assert result.model_version == "sse-main-board-calculation-v1.2-symbol-scope"
     assert context.instrument.exchange == "XSHG"
+
+
+@pytest.mark.parametrize("symbol", ["600000", "601398", "603093", "605098"])
+def test_bounded_main_board_codes_do_not_replace_existing_evidence_checks(symbol):
+    assert is_sse_main_board_pilot_symbol(symbol)
+    context = _context()
+    instrument = replace(context.instrument, symbol=symbol)
+    context = replace(context, instrument=instrument,
+                      status=replace(context.status, instrument=instrument))
+    context = replace(context, status_evidence=replace(
+        context.status_evidence, content_sha256=security_input_hash(context)))
+    assert SSEMainBoardEvaluator(_references(), context).buy_quantity(250).value == 200
+    with pytest.raises(MarketRuleEvidenceUnavailableError):
+        SSEMainBoardEvaluator(
+            _references(), replace(context, listing_phase="unknown")).buy_quantity(100)
+
+
+@pytest.mark.parametrize("symbol", [
+    "688363", "689009", "900901", "920982", "832982", "000063", "002624",
+    "510300", "730000", "602000", "606000", "60000", "6000000", "６０００００", "60000A",
+])
+@pytest.mark.parametrize("calculation", ["buy", "sellable", "sell", "price_limit"])
+def test_symbol_contradictions_cannot_receive_main_board_rules_despite_sse_tags(
+    symbol, calculation,
+):
+    assert not is_sse_main_board_pilot_symbol(symbol)
+    context = _context()
+    # Deliberately retain otherwise consistent, HIGH-labeled synthetic evidence.
+    instrument = replace(context.instrument, symbol=symbol)
+    context = replace(context, instrument=instrument,
+                      status=replace(context.status, instrument=instrument))
+    context = replace(context, status_evidence=replace(
+        context.status_evidence, content_sha256=security_input_hash(context)))
+    evaluator = SSEMainBoardEvaluator(_references(), context)
+    reference = _price()
+    with pytest.raises(MarketRuleEvidenceUnavailableError, match="outside.*pilot"):
+        if calculation == "buy":
+            evaluator.buy_quantity(250)
+        elif calculation == "sellable":
+            evaluator.sellable_quantity(())
+        elif calculation == "sell":
+            evaluator.sell_quantity(0, ())
+        else:
+            evaluator.price_limit(replace(
+                reference, bar=replace(reference.bar, instrument=instrument)))
 
 
 def _lot(quantity: int = 299) -> SSEPositionLot:

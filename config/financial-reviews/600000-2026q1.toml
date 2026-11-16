@@ -1,0 +1,41 @@
+[common]
+subject = "600000"
+period_end = "2026-03-31"
+currency = "CNY"
+reporting_scope = "group"
+sector_profile = "bank"
+filing_scale = "1000000"
+native_scale_hypothesis = "1"
+filing_sha256 = "df6911eb74bd5448fbf7729936979c60391052746db7d0577e4d4803f38d77e1"
+reviewed_at = "2026-10-18T15:34:32+00:00"
+value_column = "group_current_period; unaudited; manual PDF review"
+
+[[rows]]
+canonical_metric = "revenue"
+statement = "income"
+native_metric = "operating_income_total"
+native_evidence_id = "32a6bca07f85d43bd296dbb12a35855685add1b7f939f459db06214b351ef396"
+period_start = "2026-01-01"
+value_kind = "flow"
+filing_value = "46573"
+source_pages = [17]
+
+[[rows]]
+canonical_metric = "profit_attributable_to_parent"
+statement = "income"
+native_metric = "parent_holder_net_profit"
+native_evidence_id = "71bd07ea2a73d42e2b46591c5e4e9db16d4c5e1665284209daea37cb33ef0b60"
+period_start = "2026-01-01"
+value_kind = "flow"
+filing_value = "17861"
+source_pages = [17, 18]
+
+[[rows]]
+canonical_metric = "total_assets"
+statement = "balance"
+native_metric = "assets_total"
+native_evidence_id = "ed01c049dd43306c8ccd367270d0b82f83b51ee259ee1b3b8071714bee62af2c"
+period_start = ""
+value_kind = "stock"
+filing_value = "10305646"
+source_pages = [15]

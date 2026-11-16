@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -144,7 +144,7 @@ class FundamentalFact:
     def __post_init__(self) -> None:
         require_timezone(self.published_at, "published_at")
         require_timezone(self.available_at, "available_at")
-        if self.available_at < self.published_at:
+        if self.available_at.astimezone(UTC) < self.published_at.astimezone(UTC):
             raise ValueError("available_at cannot precede published_at")
         if self.period_start is not None and self.period_start > self.period_end:
             raise ValueError("period_start cannot follow period_end")

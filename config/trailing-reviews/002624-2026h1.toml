@@ -1,0 +1,29 @@
+# Manual arithmetic bridge only: 2025 FY plus 2026 H1 less 2025 H1 as shown in 2026 H1.
+# Exact input receipts include original bytes, annotations, values and availability.
+# Not independent accounting/revision verification, source promotion or scoring approval.
+[[reviews]]
+metric = "profit_attributable_to_parent"
+current_input_hash = "fefd48e4ee6018288ff4bc0c39ab902f8b93f33500bc74e81523d6c96d918f27"
+annual_input_hash = "da9cc46e6e332ac035c79a04d490909bc038a66d708a700f7c65d9512dd74534"
+prior_input_hash = "ec7ef3bc26f6f394da19cf56dd6a099c4ef07b150497b1c3844b200ec762c66e"
+reviewed_at = "2026-10-23T14:45:14+00:00"
+reviewer = "Codex manual review of annual pages 7/80/81 and half-year page 7; no independent second review"
+limitations = [
+  "As-reported group CNY January-start cumulative amounts, not an annualized interim figure.",
+  "2025 FY audited; 2026 H1 and its 2025 H1 comparative unaudited. The annual report and interim filing are different editions.",
+  "Full consolidation, accounting-policy and original restatement-history comparability remain unverified. This permits descriptive arithmetic only.",
+  "Not a TTM earnings-quality opinion, historical PIT qualification, scoring policy or investment decision.",
+]
+
+[[reviews]]
+metric = "revenue"
+current_input_hash = "35d7bc05ecc680f7b269a46b2a6ddae4551e312b50980e7aef7e3f0e04e7f093"
+annual_input_hash = "36322f51560f94fd290ad75ef99dbb8e1ff32351b8974307ee3766c4b2d30324"
+prior_input_hash = "1c57d6653ff479e7be05ccd071f881f8943f4fde7a876fc0bafa8ae182ad550b"
+reviewed_at = "2026-10-23T14:45:14+00:00"
+reviewer = "Codex manual review of annual pages 7/80 and half-year page 7; no independent second review"
+limitations = [
+  "As-reported group operating revenue in CNY for calendar 2025 and January-June cumulative periods.",
+  "Annual audited versus interim unaudited source editions; consolidation/accounting-policy and original restatement comparability remain unverified.",
+  "Descriptive arithmetic only; not original historical availability, provider independence, valuation qualification or scoring approval.",
+]

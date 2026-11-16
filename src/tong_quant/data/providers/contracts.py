@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from hashlib import sha256
 from typing import Protocol
@@ -133,11 +133,13 @@ class ProviderEvidenceRecord:
             require_timezone(self.observed_at, "provider evidence observed_at")
         if self.published_at is not None:
             require_timezone(self.published_at, "provider evidence published_at")
-        if self.available_at > self.retrieved_at:
+        if self.available_at.astimezone(UTC) > self.retrieved_at.astimezone(UTC):
             raise ValueError("provider evidence cannot be available after retrieval")
-        if self.published_at is not None and self.available_at < self.published_at:
+        if (self.published_at is not None
+                and self.available_at.astimezone(UTC) < self.published_at.astimezone(UTC)):
             raise ValueError("provider evidence cannot precede publication")
-        if self.observed_at is not None and self.observed_at > self.retrieved_at:
+        if (self.observed_at is not None
+                and self.observed_at.astimezone(UTC) > self.retrieved_at.astimezone(UTC)):
             raise ValueError("provider evidence cannot observe future data")
         if len(self.evidence_id) != 64 or len(self.raw_data_hash) != 64:
             raise ValueError("provider evidence identifiers must be SHA-256 digests")
@@ -167,7 +169,7 @@ class ProviderArtifact:
     def __post_init__(self) -> None:
         require_timezone(self.published_at, "provider artifact published_at")
         require_timezone(self.retrieved_at, "provider artifact retrieved_at")
-        if self.published_at > self.retrieved_at:
+        if self.published_at.astimezone(UTC) > self.retrieved_at.astimezone(UTC):
             raise ValueError("provider artifact cannot precede its publication")
         if len(self.artifact_id) != 64 or len(self.content_hash) != 64:
             raise ValueError("provider artifact identifiers must be SHA-256 digests")
@@ -208,7 +210,7 @@ class ProviderArtifactObservation:
     def __post_init__(self) -> None:
         require_timezone(self.published_at, "provider artifact observation published_at")
         require_timezone(self.retrieved_at, "provider artifact observation retrieved_at")
-        if self.published_at > self.retrieved_at:
+        if self.published_at.astimezone(UTC) > self.retrieved_at.astimezone(UTC):
             raise ValueError("artifact observation cannot precede publication")
         if len(self.observation_id) != 64:
             raise ValueError("artifact observation ID must be a SHA-256 digest")
@@ -257,11 +259,12 @@ class ProviderEvidenceBatch:
         if self.raw_record_count < 0 or self.raw_record_count < len(self.records):
             raise ValueError("provider evidence batch record counts are invalid")
         for record in self.records:
+            record.__post_init__()
             if (
                 record.provider != self.provider
                 or record.dataset != self.dataset
                 or record.market != self.market
-                or record.retrieved_at != self.retrieved_at
+                or record.retrieved_at.astimezone(UTC) != self.retrieved_at.astimezone(UTC)
                 or record.raw_data_hash != self.raw_data_hash
             ):
                 raise ValueError("provider evidence record does not match its batch")
@@ -269,19 +272,21 @@ class ProviderEvidenceBatch:
         if len(artifacts) != len(self.artifacts):
             raise ValueError("provider evidence batch contains duplicate artifact IDs")
         for artifact in self.artifacts:
+            artifact.__post_init__()
             if (
                 artifact.provider != self.provider
                 or artifact.dataset != self.dataset
                 or artifact.market != self.market
-                or artifact.retrieved_at != self.retrieved_at
+                or artifact.retrieved_at.astimezone(UTC) != self.retrieved_at.astimezone(UTC)
             ):
                 raise ValueError("provider artifact does not match its batch")
         for observation in self.artifact_observations:
+            observation.__post_init__()
             if (
                 observation.provider != self.provider
                 or observation.dataset != self.dataset
                 or observation.market != self.market
-                or observation.retrieved_at != self.retrieved_at
+                or observation.retrieved_at.astimezone(UTC) != self.retrieved_at.astimezone(UTC)
             ):
                 raise ValueError("provider artifact observation does not match its batch")
             if (

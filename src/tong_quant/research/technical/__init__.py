@@ -1,5 +1,5 @@
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from tong_quant.domain.enums import EvidenceQuality, ResearchModuleName
@@ -11,6 +11,8 @@ from tong_quant.research.models import (
     ResearchContext,
     ResearchEvidence,
 )
+from tong_quant.research.technical.diagnostics import technical_diagnostics
+from tong_quant.research.technical.indicators import TechnicalParameters
 from tong_quant.version import TECHNICAL_RESEARCH_VERSION
 
 TECHNICAL_FIELDS = frozenset(
@@ -32,6 +34,7 @@ class TechnicalResearchModule:
     short_ma_period: int = 50
     long_ma_period: int = 200
     position_period: int = 252
+    parameters: TechnicalParameters = field(default_factory=TechnicalParameters)
 
     def __post_init__(self) -> None:
         for name in ("short_ma_period", "long_ma_period", "position_period"):
@@ -44,18 +47,27 @@ class TechnicalResearchModule:
     ) -> ResearchAssessment:
         del dependencies
         minimum = max(self.short_ma_period, self.long_ma_period + 1, self.position_period, 22)
-        bars = research_daily_bars(context)
+        bars = research_daily_bars(context, require_latest_active=True)
+        diagnostics = technical_diagnostics(context.bars, self.parameters, as_of=context.as_of)
+        diagnostics.update({
+            "weekly_trend_basis": "5_OBSERVATIONS_PROXY_NOT_CALENDAR_WEEK",
+            "monthly_trend_basis": "21_OBSERVATIONS_PROXY_NOT_CALENDAR_MONTH",
+            "position_52_week_basis": f"{self.position_period}_OBSERVATIONS_PROXY",
+            "calendar_period_scoring_admitted": False,
+        })
         if len(bars) < minimum:
-            return insufficient_assessment(
+            result = insufficient_assessment(
                 module=self.module,
                 evidence=(),
                 required_names=TECHNICAL_FIELDS,
                 as_of=context.as_of,
                 limitations=(
                     f"Technical research requires at least {minimum} visible daily bars",
+                    "The latest supplied observation must be active; no pre-suspension fallback",
                 ),
                 model_version=self.model_version,
             )
+            return replace(result, features=diagnostics)
 
         close = float(bars[-1].close)
         short_ma = _mean_close(bars[-self.short_ma_period :])
@@ -96,9 +108,13 @@ class TechnicalResearchModule:
             limitations=(
                 "Daily observations approximate weekly/monthly trend, not verified sessions",
                 "Structural input checks do not authenticate price sources or PIT coverage",
+                "New technical diagnostics are unscored; the legacy score excludes them",
+                "Unadjusted corporate-action jumps can invalidate technical interpretation",
+                "Alignment and stop references are not investment or executable price decisions",
             ),
             model_version=self.model_version,
             features={
+                **diagnostics,
                 "latest_close": close,
                 "short_moving_average": round(short_ma, 6),
                 "long_moving_average": round(long_ma, 6),

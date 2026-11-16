@@ -42,6 +42,7 @@ from tong_quant.markets.sse_references import (
     SSE_EXCHANGE_IDENTIFIERS,
     SSE_PILOT_SCOPE,
     evidence_hash,
+    is_sse_main_board_pilot_symbol,
     require_sha256,
 )
 from tong_quant.version import SSE_RUNTIME_INPUT_VERSION
@@ -298,13 +299,14 @@ class SSERuntimeInputReader:
         if instrument is None:
             gap("instrument_missing", "No instrument snapshot is visible at decision time")
         elif (
-            instrument.exchange not in SSE_EXCHANGE_IDENTIFIERS
+            not is_sse_main_board_pilot_symbol(instrument.symbol)
+            or instrument.exchange not in SSE_EXCHANGE_IDENTIFIERS
             or instrument.currency != "CNY"
             or instrument.category is not InstrumentCategory.EQUITY
         ):
             gap(
                 "instrument_scope_unverified",
-                "Stored exchange/category/currency does not prove pilot scope",
+                "Stored symbol/exchange/category/currency does not prove pilot scope",
             )
         if missing_dates:
             gap(

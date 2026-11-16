@@ -1,0 +1,249 @@
+# MSFT持仓论点与验证实施规格 V1
+
+## P1维度映射方案附记：2026-11-16
+
+进一步的只读来源清点见[维度映射最小审查方案](msft-dimensional-context-review-v1.zh-CN.md)。
+原45个排除出现项涉及35个不同context，37项带一个显式成员，观察到6种轴和17种轴/成员组合。
+两个AzureMember候选位于ProductOrServiceAxis及产品/服务披露textblock内，并非合并总收入
+或MicrosoftCloudMember的等价定义。金额仍未采用，也没有核实增长、财季连续性或历史定义。
+方案补充完整展开名称/维度集合/来源/期间绑定、包装范围审查和版本兼容要求，尚未实现或准入。
+不能因找到标签就放宽全局解析、生成H1结果或把旧自由文本scope当作会计资格。
+
+## P1排除原因诊断附记：2026-11-16
+
+本轮只为P1增加可选结构诊断，不实现或批准H1-H4论点评估、阈值、窗口和结果标签。
+既有review_inline_body/read_sec_body_inputs增加explain_exclusions=False参数，显式True
+才附加独立版本的exclusion_audit；默认原数值、来源版本、JSON及哈希不变。既有SEC
+原文入口的--explain-exclusions只允许只读，不进入正式研究报告、评分或买卖判断。
+
+留存原文在2026-11-09T15:13:28.573833+00:00重建，原有十项期间检查及其source_input_hash
+精确复现。所选五个标签61个出现项仍有45个被排除，数值准入未扩展：
+
+- 原“dimensional or malformed”11项均观察到segment容器，但这不验证维度或上下文合法性。
+- 原“nested or targeted”34项均存在祖先范围阻断，本次未观察到全局targeted标记。
+- 其中26项同时有segment，因此segment共37项与scope阻断34项重叠，不能相加作失败率。
+- 45项引用在本次结构清点中唯一，均有一个entity和period容器；不能据数量判断CIK、日期
+  内容、命名空间、合并口径、维度含义或财务数值已核实。
+
+这说明这些未采用项并非因为本轮没拿到原文；仍不证明它们都是合法分部数据，也不证明
+微软财报错误。现有安全边界不关闭，不解析额外值，不把OCF减现金资产购买直接叫作FCF。
+详细记录在sec-body-numeric-review-2026-10-27.md；私有审计JSON在
+data/processed/msft-sec-exclusions-20261116。仍需逐项定义/维度/scope审查、来源资格、
+预注册条件及独立Validation，PIT UNSUITABLE，持有期限/补仓/退出状态没有改变。
+
+## 正式报告接入附记：2026-11-15，第二轮
+
+当日首轮合同现已增加可选报告接入：ThesisConditionBinding、ThesisReportBindingPlan
+只用于显式配置DefaultResearchReportBuilder(thesis_binding_plan=plan)，然后由既有
+ResearchEngine运行。ResearchRequest/ResearchReport字段和接口签名不变；不添加第二个报告。
+plan必须绑定当前真实请求的queue_id、instrument_id和精确UTC决策时点，并完整覆盖
+所有既有条件；阈值、窗口描述等原条件定义有任何不一致就拒绝，不按名字套用另一套规则。
+整个计划最多128个来源引用，不做来源选择、数值计算或合格性升级。
+
+已有ResearchAssessment.features保存规范JSON及哈希，SQLiteResearchRepository事务保存、
+SQLiteHistoricalReplayRepository重建均复用原路径；没有新表或schema迁移。
+PolicyAssessment里的同一评估同步保留，原模块分数和置信度不提升。缺来源会明确留缺口；
+future available_at/published_at或未来期间的引用直接拒绝发布正式报告/Signal，而非将其
+放入决策报告再仅附警告。独立describe_thesis_binding仍可留存排除原因，二者边界不同。
+
+此功能仍是声明诊断，不是已核实业务论点。完整声明也强制报告INCOMPLETE，
+InvestmentAssessmentStatus.INCOMPLETE且无InvestmentScore；研究Signal仍仅为信息。
+NOT_EVALUATED、NOT_ADMITTED、NOT_ESTIMATED及所有false权限不变。
+现有condition_review的候选状态不授予此论点评估/评分权限；Market Regime不变为硬开关。
+
+新增中央版本research-thesis-binding-diagnostics-v1及
+research-report-v0.5.3-thesis-declarations，仅用于显式启用的新报告。默认None不附加特征、
+不改变原报告版本或语义；改动前构建器与当前默认构建器在固定合成样例下的6740字节
+JSON完全一致，SHA256 eded82f130d832f4ed568550a5b2caf0f2d3dcd0ed61d054d07bc731bdf28112。
+测试固定该合成基线，不依赖临时目录；这不是所有报告的全局证明或真实数据准入。
+
+本次22项新集成用例覆盖正式报告持久化/反序列化、三种候选风格、旧格式哈希、
+错队列/公司/时点、改条件/漏条件/重复条件、未来引用、缺来源、资源上限、
+伪造预注入特征、HIGH声明不升级、拒绝投资评分。测试结果见PROJECT_STATUS。
+测试均合成，没有在真实MSFT数据库创建新报告或将其来源声明为已核实。
+最终全套pytest：3910通过、6跳过，568.00秒；Ruff、mypy（316源文件）、
+治理（174项）、差异及新增文件空白检查和限定依赖/默认状态检查通过。
+这些混合工作区检查不是精确发布候选、独立审查或真实来源/策略验收。
+
+仍无新CLI、真实资料自动映射、来源字节/会计口径核验、业务结果生成、数值规则评估、
+持有期限估计或补仓/卖出判断。下一步首先补原文/指标定义审查与可复核的来源资格合同，
+再用合格资料计算已审查的论点条件，接入既有Validation。阈值及持续窗口仍未批准；
+不以增加显示入口代替研究与验证，不启用实盘，不提交/推送。
+
+## 合同基础附记：2026-11-15，首轮历史记录
+
+新增research.thesis_bindings的独立、可调用类型化合同：ThesisPeriod、
+ThesisMetricBinding、ThesisEvidenceReference和describe_thesis_binding。
+它绑定既有ThesisInvalidationCondition，不新增第二个ResearchReport，也不修改
+旧条件/请求/报告的字段、序列化或存储身份。中央版本为thesis-explicit-evidence-binding-v1。
+
+显式记录公司标识、原生标签/namespace、定义版本、statement scope、行业口径、
+币种/单位、精确期间、文件/输入哈希、批次、修订、发布和可用时点，分别保留
+DataTrustLevel与AvailabilityPrecision。窗口必须显式、历史、有序、不重叠，
+不解析旧自由文本，也不据日期自动认定财季连续。缺失、错期/错定义/错公司、
+未来引用和多版本歧义保留为具体诊断；未来引用仅为排除原因留痕，不成为研究输入。
+不选择“最新有利版本”，不静默回退或合并。规范UTC与固定排序支持确定性哈希。
+
+完整声明仅为DECLARED_ONLY，非完整/冲突为INCOMPLETE_OR_CONFLICTED；两者均
+NOT_EVALUATED，来源NOT_ADMITTED、原文校验NOT_PERFORMED、时效UNASSESSED、
+连续性NOT_VERIFIED、期限NOT_ESTIMATED，所有评分/验证/执行权限为false。
+引用里的HIGH/VERIFIED仍只是声明，不验证原文存在、内容、账号、口径或来源资格。
+函数不读取/计算事实值，不比较阈值，不评估业务论点或产生结果标签。
+
+首轮仅完成P2的合同基础，不是整个P2或11月30日交付验收：当时尚未接入ResearchRequest、
+ResearchAssessment.features、CLI、正式报告持久化或真实MSFT资料。下一步应在
+既有研究流程做显式、版本化的可选绑定，保持旧报告哈希，之后才建设来源资格核验与
+真实结果生成。H1-H4原文/会计口径审查、预注册方法、独立验证和期限/补仓/退出判断仍未完成。
+不新增schema、数据抓取、交易功能或默认启用项；不提交/推送。测试结果见PROJECT_STATUS。
+
+日期：2026-11-14，马来西亚时间。状态：DRAFT，完成设计与现状审查，未实现规则评估器。
+属于ready的WP-LAUNCH-001及11月30日美股只读目标，不新开交易工作包。
+不批准阈值、评分、历史验证、实盘或自动加仓。其他三市场和金融行业总体范围保留；
+本案例仅针对明确选择的美国非金融普通股研究，不能当成四市场通用财务方法。
+
+## 1. 本轮代码审查结论
+
+- research.models.ResearchReport是唯一正式报告，已有thesis、counter_thesis、
+  ThesisInvalidationCondition；不再增加第二个持仓研究报告领域模型。
+- ThesisInvalidationCondition目前只有metric、operator、threshold、自由文本observation_window等。
+  它检查字段非空与操作符，不代表已经解析了“连续两季”等窗口或核实了财报口径。
+- research.conditions.research_condition_features连接既有筛选和模块评估，但明确输出
+  thesis_invalidation_evaluation=NOT_EVALUATED。它没有从SEC原文自动算持仓论点失效。
+- validation.thesis.ThesisValidationModule统计ValidationOutcome提供的thesis_status和
+  invalidation_triggered，不能据此宣称实现了来源绑定的业务结果标签生成器。
+- application.holding_review只做手工备注与价格时点复核；它不认证成交/现金，期限仍
+  NOT_ESTIMATED，补仓仍阻断。不能把这些占位状态翻译成持有或卖出指令。
+
+这些是实现能力边界和下一步缺口，不是本轮已发现实盘损失、提供商财报错误或可绕过门槛的理由。
+
+## 2. 真实证据审查
+
+复用留存MSFT 10-Q：CIK 0000789019，accession 0001193125-26-436133，
+报告期末2026-09-30，原文SHA256：
+02b4114045c34fdd95c32b1efbf9acde4afffc094d887031b19b0be5bb5fc825。
+本轮没有新网络抓取或更改原库；审查固定在已留存的2026-11-09T20:44:15+00:00。
+这是选定文件，不宣称已核对11月14日最新全部披露。
+
+按本期/去年同期明确7月1日至9月30日读取五个原生标签，共10项期间检查：
+RevenueFromContractWithCustomerExcludingAssessedTax、OperatingIncomeLoss、NetIncomeLoss、
+NetCashProvidedByUsedInOperatingActivities、PaymentsToAcquirePropertyPlantAndEquipment。
+
+- 所选标签61个出现项中，45个被现有有界解析器保留为不支持。
+- 11个原因是“dimensional or malformed context is unsupported”；这个合并原因不能进一步
+  断言11个全部只是合法维度，也不能说全部是错误财报。
+- 34个原因是“nested or targeted document scope is unsupported”；不得关闭scope限制强取数。
+- 10个期间检查均为OBSERVED_SUBSET_UNQUALIFIED，其中6项保留其他标签上下文未解析提示。
+  有值的子集不等于数据全部错误，但也不能证明完整会计定义/合并范围已核实。
+- 这个分母只覆盖选定标签，不是整份财报覆盖率、原始披露完整度或独立双源一致率。
+
+本轮核对保持原数据库哈希不变。来源仍LOW/retrieval_time，PIT UNSUITABLE。
+原文捕获晚于手工买入，不能把后来捕获的数值回填为原程序当时已消费的决策证据。
+人工当时看到的网页与程序已准入事实是两回事；不能据缺少程序证据反推人工当时没有信息。
+
+## 3. 五项持仓论点及反论点
+
+| 编号 | 待验证论点 | 反论点/失效研究问题 | 当前证据缺口 |
+| --- | --- | --- | --- |
+| H1 | 企业软件与云业务保持可持续需求和竞争力 | 总收入增长是否掩盖关键业务放缓、客户流失或份额变化 | 合并总收入标签不等于Azure、订阅增长或客户留存；需要各业务正式披露和可比定义 |
+| H2 | 盈利改善主要来自经常经营而非会计/投资项目 | GAAP利润增长是否主要受投资估值、税项、一次性损益及比较基数驱动 | 已有GAAP营业/净利润子集；经常性桥接、调整依据和分部结构未完成 |
+| H3 | AI投入最终带来可持续现金回报 | 经营现金流上升时，现金投入后的余量是否持续恶化，融资/租赁承诺是否扩大 | 两期OCF与现金固定资产购买原生字段存在；资本租赁、其他投入及自由现金流定义需审查 |
+| H4 | 未来盈利和现金回报能够支持所付估值 | 即使业务增长，估值隐含的增长要求是否过高、回报是否依赖倍数扩张 | 合格现价、股类/股本/公司行为、盈利期间和估值方法尚未组合准入 |
+| H5 | 持仓风险与所有者资金需求一致 | 集中度、流动性、汇率、费用或借款是否使实际风险超出承受能力 | 手工持仓不能认证现金/融资/实际成本和后续变化；不能仅用最大可买或截图占比推断 |
+
+H1-H4可以共用财报，但不是四份独立利好。Market Regime、行业与政策是重要研究变量，
+不是单因子开关。价格跌了不证明论点失效，价格涨了也不证明经营论点正确。
+H5中的数据/风险缺口可以阻断准入，但不能据某一经济指标直接授权交易。
+
+## 4. 评估器的最小输入与所有权
+
+以下是实现规格，不是本轮新增的类、数据库表或可加载运行时配置：
+
+1. 沿用ResearchRequest/ResearchContext及真实ResearchQueueEntry；不得为演示伪造筛选通过或队列。
+2. 每个条件显式绑定：condition_id、论点/反论点、来源/文件/批次/哈希、原生标签、
+   期间起止、币种/单位、statement/scope、修订、可用时间、定义版本和适用行业。
+3. 自由文本window不能直接执行。拟增加独立、类型化的绑定规格，明确需要的完整期间序列、
+   连续性、最低可比观测、分母/非正基期处理；原有条件描述仍保留，不静默改旧报告语义。
+4. 阈值、持续季数、恢复规则、比较基准及必要模块清单必须显式预注册并审查。
+   当前均未确定；不能把None或未配置窗口当中性、满足或未触发。
+5. 合格来源资格来自可复核的准入记录，不能由调用方metadata或JSON里的true字段授予。
+   同源数字一致、AI人工判断、源目录正确和自报行业都不能升级来源资格。
+6. Research侧仅评估decision_as_of当时可见信息。Outcome侧在独立outcome_as_of重建证据，
+   绑定原研究条件版本，不能反向修改决策时的论点或把后来修订搬回过去。
+7. 在唯一ResearchReport/已有ResearchAssessment.features中保留可解释诊断；
+   不增加替代报告、直接订单、独立投资总分或未经审查的sidecar数据库。
+
+现有条件合同如需扩展，要使用前瞻版本与明确兼容器，保存旧报告身份。
+只读诊断可以显示未准入的原生数值，但不得把它们代入合格论点阈值后输出真实通过/失效。
+
+## 5. 输出语义
+
+拟在既有报告特征中分别记录条件的数据状态、计算状态、论点观察与验证状态，不能合成一个买卖灯：
+
+- 缺失、过期、错期、错币种、冲突、修订不明、维度/文档scope不支持：保留具体原因，
+  对该条件NOT_EVALUATED，不输出“未触发所以继续持有”。
+- 数据合格后的条件触及：只请求研究复核，不直接生成卖出；多层研究、验证、风险仍需参与。
+- 数据合格但未触及：只说明所声明窗口内未观察到该条件，不保证未来不会发生或可以加仓。
+- 不足以评价业务论点的标签不能伪装成负面结果；ValidationOutcome保留不可观察/未解决状态。
+- 外部已提供的thesis_status不得冒充本评估器实际生成；需要结果证据、期间、时点及版本绑定。
+
+现有DATA_BLOCKED、WAIT_CONFIRMATION、VALIDATION_REQUIRED均不改为BUY/SELL/HOLD。
+不修改Financial当前未评分边界，也不修改InvestmentAssessmentStatus或绕过Validation。
+
+## 6. 技术与加仓/退出的结合
+
+- 长期价值与改进海龟是不同研究假设。前者沿用既有long_term_confirmation必要模块；
+  后者保留严格突破、量能、情绪、行业热度四确认，缺一不算完整海龟信号。
+- MACD/KDJ共用动能家族；均线、三线和格兰维尔延续属于相关趋势证据，不重复计权。
+  均值回归事件单独保留；一次死叉不机械等于长期清仓，低K值不证明底部。
+- 已失效启动形态和熊向参考不能当作当前多头持仓止损。未来动态风险参考必须另绑定
+  当前仓位、实际成交/成本、公司行为和成交约束；触价不保证退出价格。
+- 趋势顺势金字塔、价值分批建仓、下跌摊平必须分开命名、验证和限额。
+  本次不授权任何一类；不得因浮亏、均价降低或某个指标转强自动增加仓位。
+- 补仓研究还需现金/融资、集中度、风险预算、费用/汇率和验证证据；不是只满足技术图形。
+- A股涨家数>3000、盘中时间窗、连板/VWAP形态和T+1不移植到MSFT。
+  七加一仍按所有者要求暂缓，不能自行补一套网上规则。
+
+## 7. 持有多久：验证设计
+
+3—5年只是此前聊天中的人工规划，不是当前模型输出，也不构成锁定资金期限。
+将来应比较预先声明的多个持有窗口、条件退出与继续观察，而不是倒找单只股票历史最高点。
+可讨论3/6/12/24/36个月作为候选研究网格，但本文件没有注册或批准这些参数。
+
+- 预注册入样日期/真实股票池、窗口、基准、成本/汇率、论点结果定义、退出可行性、
+  数据资格、最低样本及成功/失败指标，再看样本外结果。
+- 使用既有HistoricalReplaySource/ValidationRequest、walk-forward及最终OOS使用限制。
+  LOW/retrieval_time不能回填成历史PIT；当前样例无法支持严格历史验收。
+- 保留未到期样本及右删失，不把结果未知当成功/失败，也不只保留活到期末的公司。
+- 不同持有窗口重叠、共同AI因子和同一公司多期样本并非独立；需要防泄漏分割和相应隔离期。
+- 当前三年左右行情不自动足以验证三年窗口：还需要预热、原决策可得财报与之后完整结果。
+- 研究正确、决定正确、模拟可成交和收益应分别评价。手工买入一笔不验证策略有效。
+- 先输出分布、样本量和不确定性，不宣称能确定一个最优卖出日期或未来上涨概率。
+
+纯规则/合同及合成测试可以继续开发，不等待84天观察期；真实数据/方法准入及历史效果声明仍独立受限。
+
+## 8. 下一步实施顺序与验收
+
+1. P1：逐项核实H1-H4来源定义和未解析上下文，形成明确必要输入、缺口和预注册绑定规格。
+   合并收入不得代替分部需求、OCF减现金固定资产购买额不得未经审查自动命名为FCF。
+2. P2：在已有研究链增加小范围的类型化条件绑定与诊断，先合成测试；未准入原生样例保持阻断。
+   不要求同时实现所有估值、行业和新闻方法，更不能删除必要维度来凑完成。
+3. P3：来源和方法获得独立资格后，生成有依据的论点结果，再交给现有ThesisValidationModule。
+   不能反过来先手工填成功标签，再把统计分数当商业验证。
+4. P4：按真实数据可得性运行预注册验证，最后交付只读持仓报告与更新/失败提示。
+   未通过部分保留原因；11月30日目标不是自动开放决策或实盘的豁免。
+
+验收用例包括：旧版本重建、UTC/DST和未来修订、精确期间与连续窗口缺口、非正分母、
+同名不同定义/维度、latest-bad无有利回退、真实队列缺失、未准入来源/伪造true字段、
+原始/结果上下文隔离、未知结果与右删失、技术冲突不成为卖出、未验证补仓保持阻断，
+以及固定快照下输出哈希确定性。这里是测试规格，不能计为本轮新增可执行测试。
+
+## 9. 本轮交付边界
+
+本轮是设计、代码能力审查和已有原文只读审查，没有实现评估器或生成新ResearchReport/评分/验证结果。
+不变更运行时参数、schema、提供商、Execution、Paper、Broker、Portfolio或Notification。
+无网络抓取、提交或推送；执行/通知默认disabled，PIT UNSUITABLE、production NOT_READY保持。
+完整工程回归结果见PROJECT_STATUS。测试通过不是本规格的业务验收或投资收益保证。
+
+本轮回归：pytest 3846通过、6跳过，290.74秒；Ruff、mypy（315源文件）、
+治理（174项）、git diff --check与新文档空白检查通过。没有新增可执行测试或运行时代码，
+不是精确发布候选树/独立审查；没有提交或推送，也没有把设计测试清单计入通过数。

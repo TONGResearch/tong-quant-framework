@@ -161,7 +161,7 @@ def test_conflicting_evidence_is_visible_without_overwriting_the_price(foundatio
 
 
 @pytest.mark.parametrize("method", ("upsert_daily_bars", "save_data_availability_warning"))
-def test_failed_canonical_or_warning_write_rolls_back_evidence_and_new_artifact(
+def test_failed_canonical_or_warning_write_rolls_back_evidence_but_retains_original(
     tmp_path: Path,
     foundation,
     monkeypatch: pytest.MonkeyPatch,
@@ -185,7 +185,11 @@ def test_failed_canonical_or_warning_write_rolls_back_evidence_and_new_artifact(
         "provider_artifact_observations",
     ):
         assert store.table_count(table) == 0
-    assert list((tmp_path / "artifacts").rglob("*.bin")) == []
+    retained = list((tmp_path / "artifacts").rglob("*.bin"))
+    assert len(retained) == 1
+    content = retained[0].read_bytes()
+    assert retained[0].stem == sha256(content).hexdigest()
+    assert json.loads(content)["parameters"]["symbol"] == REQUEST.symbol
 
 
 def test_cache_tampering_is_rejected_without_creating_a_new_evidence_batch(

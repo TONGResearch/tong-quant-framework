@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from tong_quant.core.exceptions import DatabaseIntegrityError
+from tong_quant.data.storage import engineering
 from tong_quant.data.storage.engineering import (
     DatabaseAuditStatus,
     SQLiteBackupService,
@@ -107,6 +108,9 @@ def test_backup_and_dry_run_restore_preserve_database_state(tmp_path: Path) -> N
     assert restore.source_migration_head == MIGRATION_HEAD
     assert restore.restored_migration_head == MIGRATION_HEAD
     assert restore.migration_applied is False
+    assert manifest.source_content_hash == manifest.backup_content_hash
+    assert restore.same_schema_content_verified is True
+    assert restore.source_content_hash == restore.restored_content_hash
     assert restore.restored_sha256 == _sha256(restored)
     assert restored.stat().st_mode & 0o777 == 0o600
 
@@ -135,7 +139,11 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
             """,
             ("legacy-run", NOW.isoformat(), NOW.isoformat(), "healthy", "v1", NOW.isoformat()),
         )
+        connection.execute("DROP TRIGGER refresh_batch_immutable")
+        connection.execute("DROP TABLE refresh_attempts")
+        connection.execute("DROP TABLE refresh_jobs")
         connection.execute("DROP TABLE portfolio_evidence_references")
+        connection.execute("DELETE FROM schema_migrations WHERE migration_id > ?", (previous_head,))
         if previous_head != PROVIDER_CONTRACT_RUN_ORIGIN.migration_id:
             connection.execute(
                 "ALTER TABLE provider_contract_runs DROP COLUMN origin_reference"
@@ -201,6 +209,7 @@ def test_restore_migrates_a_supported_fingerprinted_backup(
     assert report.source_migration_head == previous_head
     assert report.restored_migration_head == MIGRATION_HEAD
     assert report.migration_applied is True
+    assert report.same_schema_content_verified is False
     assert report.common_table_counts_match is True
     assert integrity.audit(restored).passed is True
     with sqlite3.connect(restored) as connection:
@@ -226,6 +235,87 @@ def test_backup_never_overwrites_existing_destination(tmp_path: Path) -> None:
         service.create_backup(source_path=source, destination_path=destination)
 
     assert destination.read_bytes() == before
+
+
+def test_current_schema_restore_does_not_reinitialize_or_rewrite_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "source.sqlite3"
+    restored = tmp_path / "restored.sqlite3"
+    _database(source)
+    before = engineering._logical_dump_hash(source)
+
+    def forbidden_initialize(self: SQLiteStore) -> None:
+        raise AssertionError("current-schema restore must not reinitialize metadata")
+
+    monkeypatch.setattr(SQLiteStore, "initialize", forbidden_initialize)
+    report = SQLiteBackupService(SQLiteIntegrityService()).dry_run_restore(
+        backup_path=source, destination_path=restored,
+    )
+    assert report.same_schema_content_verified is True
+    assert engineering._logical_dump_hash(restored) == before
+    assert engineering._logical_dump_hash(source) == before
+
+
+@pytest.mark.parametrize("operation", ["backup", "restore"])
+def test_same_count_content_tampering_blocks_publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str,
+) -> None:
+    source = tmp_path / "source.sqlite3"
+    destination = tmp_path / "destination.sqlite3"
+    _database(source)
+    original_copy = engineering._copy_to_temporary
+    before = engineering._logical_dump_hash(source)
+
+    def changed_copy(**kwargs: object) -> Path:
+        temporary = original_copy(**kwargs)
+        with sqlite3.connect(temporary) as connection:
+            connection.execute("UPDATE instruments SET name = 'Changed synthetic name'")
+        return temporary
+
+    monkeypatch.setattr(engineering, "_copy_to_temporary", changed_copy)
+    service = SQLiteBackupService(SQLiteIntegrityService())
+    with pytest.raises(DatabaseIntegrityError, match="logical content"):
+        if operation == "backup":
+            service.create_backup(source_path=source, destination_path=destination)
+        else:
+            service.dry_run_restore(backup_path=source, destination_path=destination)
+    assert not destination.exists()
+    assert list(tmp_path.glob(".destination.sqlite3.*.tmp")) == []
+    assert engineering._logical_dump_hash(source) == before
+
+
+def test_integrity_audit_closes_its_read_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "source.sqlite3"
+    _database(source)
+    original = engineering._read_only_connection
+    connections: list[sqlite3.Connection] = []
+
+    def tracked(path: Path) -> sqlite3.Connection:
+        connection = original(path)
+        connections.append(connection)
+        return connection
+
+    monkeypatch.setattr(engineering, "_read_only_connection", tracked)
+    assert SQLiteIntegrityService().audit(source).passed
+    for connection in connections:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            connection.execute("SELECT 1")
+
+
+def test_logical_dump_rejects_text_that_sqlite_quote_would_truncate(tmp_path: Path) -> None:
+    source = tmp_path / "source.sqlite3"
+    _database(source)
+    with sqlite3.connect(source) as connection:
+        connection.execute("UPDATE instruments SET name = ?", ("synthetic\0hidden",))
+    assert SQLiteIntegrityService().audit(source).passed
+    with pytest.raises(DatabaseIntegrityError, match="NUL text"):
+        SQLiteBackupService(SQLiteIntegrityService()).create_backup(
+            source_path=source, destination_path=tmp_path / "snapshot.sqlite3",
+        )
+    assert not (tmp_path / "snapshot.sqlite3").exists()
 
 
 def test_backup_rejects_source_as_destination(tmp_path: Path) -> None:

@@ -1,8 +1,9 @@
 """Bind reconstructed research content, not independently attested source truth."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from tong_quant.domain.enums import ResearchRunStatus
+from tong_quant.domain.models import require_timezone
 from tong_quant.research.models import ResearchAssessment, ResearchReport
 from tong_quant.validation.replay.hashing import stable_hash, stable_json
 from tong_quant.validation.replay.models import ReplayValidationSample
@@ -12,21 +13,25 @@ from tong_quant.version import REPLAY_RESEARCH_BINDING_VERSION
 def research_snapshot(
     report: ResearchReport | None, *, decision_at: datetime, instrument_id: str
 ) -> dict[str, object]:
+    require_timezone(decision_at, "research replay decision_at")
+    cutoff = decision_at.astimezone(UTC)
     reasons: list[str] = []
     if report is not None:
+        generated_at = report.generated_at.astimezone(UTC)
         if report.instrument_id != instrument_id:
             reasons.append("research_instrument_mismatch")
-        if report.available_at > decision_at or report.generated_at > decision_at:
+        if report.available_at.astimezone(UTC) > cutoff or generated_at > cutoff:
             reasons.append("future_research_report")
-        if report.market_regime is not None and report.market_regime.as_of > report.generated_at:
+        if (report.market_regime is not None
+                and report.market_regime.as_of.astimezone(UTC) > generated_at):
             reasons.append("future_research_market_regime")
         if len({item.module for item in report.assessments}) != len(report.assessments):
             reasons.append("duplicate_research_module")
         evidence_hashes: dict[str, str] = {}
         for assessment in _assessments(report):
             if (
-                assessment.evaluated_at > report.generated_at
-                or assessment.available_at > report.generated_at
+                assessment.evaluated_at.astimezone(UTC) > generated_at
+                or assessment.available_at.astimezone(UTC) > generated_at
             ):
                 reasons.append("research_assessment_after_report")
             ids = tuple(item.evidence_id for item in assessment.evidence)
@@ -38,9 +43,11 @@ def research_snapshot(
                 reasons.append("research_evidence_reference_mismatch")
             for evidence in assessment.evidence:
                 if (
-                    evidence.available_at > assessment.available_at
-                    or evidence.observed_at > assessment.evaluated_at
-                    or evidence.available_at > decision_at
+                    evidence.available_at.astimezone(UTC)
+                    > assessment.available_at.astimezone(UTC)
+                    or evidence.observed_at.astimezone(UTC)
+                    > assessment.evaluated_at.astimezone(UTC)
+                    or evidence.available_at.astimezone(UTC) > cutoff
                 ):
                     reasons.append("research_evidence_after_cutoff")
                 content_hash = stable_hash(evidence)
