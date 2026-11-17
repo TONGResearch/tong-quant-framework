@@ -1,5 +1,42 @@
 # Engineering Risk Register
 
+SEC capture identity risk (November 17): four UTC envelopes could disagree with
+original-offset capture IDs. Zero-offset producer guards prevent new unsupported
+captures without rewriting legacy records, source versions or publication times.
+Synthetic mismatch is proven; no corruption of default-clock real data is claimed.
+Read-only old MSFT hashes match, but two archive gaps remain. Other producers have
+static identity/observation risks pending separate proof; a universal UTC guard
+would be unsafe for legitimate publication times or request-derived availability.
+Pre-fetch audit, historical compatibility and source/method qualification remain
+open. See docs/sec-capture-clocks-2026-11-17.md; PIT remains UNSUITABLE.
+
+Yahoo producer identity risk (November 17): normalized UTC envelope time and
+original-offset evidence IDs could diverge for unsupported capture clocks. The
+adapter now rejects them before retention; default/zero-offset captures retain
+their identities, and query timezone flexibility remains. Legacy records stay
+blocked and cannot be silently repaired or replaced by older good captures.
+Rejected new attempts have no ingestion row, so unattended monitoring still
+needs durable attempt audit; old data is not a successful refresh. Other producer
+clock contracts, source truth and PIT/session/action evidence remain unqualified.
+
+Replay endpoint risk (November 17): explicitly suspended positive or carried
+closes could form numeric outcome labels, and repeated DST labels could hide
+later availability in direct evaluation. New outcome v2 blocks those cases and
+reversed availability while preserving the exact rows and incomplete samples.
+NOT_OBSERVABLE is not research failure. False flags are not verified lifecycle/
+session or executable-price clearance. Legacy results need reconstruction, not
+automatic reinterpretation. Real source/action/session evidence and the distinction
+between missing raw data versus unavailable usable outcomes remain open risks.
+
+Daily technical composition (November 17): the opt-in bound display recomputes
+against explicit original prices and parameters, rejecting mixed identity/time/
+source/row/output and rehashed contradictions. This protects that selected path,
+not the legacy direct renderer when used without a binding. Current normal CLI
+already builds its sections from one snapshot; no actual owner mislabeling was
+demonstrated. Untrusted original snapshots, source/session/action qualification,
+legacy default cutover and financial/technical strategy validation remain risks.
+No daily binding may be read as PIT, source, holding or execution authorization.
+
 Independent-review blockers (November 16): old candidate passed tests but could
 retain credential-bearing artifacts before SQL rejection and admit future data
 through DST/local-date comparisons. Working repairs preflight before publication

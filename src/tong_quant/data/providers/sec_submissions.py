@@ -7,7 +7,7 @@ import ssl
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from html import unescape
 from pathlib import PurePosixPath
@@ -310,6 +310,8 @@ class SECSubmissionsAdapter:
         capture.__post_init__()
         captured = self.clock()
         require_timezone(captured, "SEC capture timestamp")
+        if captured.utcoffset() != timedelta(0):
+            raise ValueError("SEC submissions capture clock must use UTC")
         content = json.dumps({"model_version": self.model_version,
             "market": request.market.value, "subject": request.subject,
             "parameters": request.parameters, "retrieved_at": captured.astimezone(UTC).isoformat(),

@@ -6,14 +6,18 @@ from hashlib import sha256
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from tong_quant.application.technical_binding import verify_technical_binding
 from tong_quant.core.security import reject_sensitive_structure
 from tong_quant.data.financial_inputs import financial_input_json
+from tong_quant.data.global_price_inputs import GlobalPriceInputs
 from tong_quant.data.providers.yahoo_identity import validate_yahoo_equity_subject
 from tong_quant.domain.enums import Market
 from tong_quant.domain.models import require_timezone
+from tong_quant.research.technical.indicators import TechnicalParameters
 from tong_quant.version import (
     CALENDAR_COVERAGE_NOTE_VERSION,
     CALENDAR_YEAR_COVERAGE_VERSION,
+    EQUITY_BOUND_NOTE_VERSION,
     EQUITY_NOTE_VERSION,
     HOLDING_REVIEW_VERSION,
     LONG_HORIZON_DIAGNOSTICS_VERSION,
@@ -80,7 +84,10 @@ def _utc_cutoff(value: object) -> datetime:
     return value.astimezone(UTC)
 
 
-def render_equity_note(document: Mapping[str, Any]) -> str:
+def render_equity_note(
+    document: Mapping[str, Any], *, technical_source: GlobalPriceInputs | None = None,
+    technical_parameters: TechnicalParameters | None = None,
+) -> str:
     """Presentation only; caller must use existing retained-source readers, not arbitrary JSON."""
     reject_sensitive_structure(document)
     encoded = financial_input_json(dict(document))
@@ -97,6 +104,13 @@ def render_equity_note(document: Mapping[str, Any]) -> str:
     symbol = inputs["subject"]
     validate_yahoo_equity_subject(market, symbol)
     cutoff = _utc_cutoff(inputs.get("as_of"))
+    binding = None
+    if "technical_binding" in document:
+        if technical_source is None or technical_parameters is None:
+            raise ValueError("bound technical display requires original snapshot and parameters")
+        binding = verify_technical_binding(document, technical_source, technical_parameters)
+    elif technical_source is not None or technical_parameters is not None:
+        raise ValueError("technical source verification requires explicit binding receipt")
     horizon = document.get("long_horizon")
     note_version = EQUITY_NOTE_VERSION if horizon is None else (
         MULTI_TIMEFRAME_NOTE_VERSION if horizon.get("model_version") == (
@@ -108,6 +122,8 @@ def render_equity_note(document: Mapping[str, Any]) -> str:
         note_version = CALENDAR_COVERAGE_NOTE_VERSION
     if document.get("nasdaq_calendar_review") is not None:
         note_version = NASDAQ_PRICE_NOTE_CONTEXT_VERSION
+    if binding is not None:
+        note_version = EQUITY_BOUND_NOTE_VERSION
     if (technical.get("technical_research_only") is not True
             or technical.get("technical_scoring_admitted") is not False):
         raise ValueError("equity note requires unscored technical diagnostics")
@@ -146,6 +162,13 @@ def render_equity_note(document: Mapping[str, Any]) -> str:
     rows.extend(["", _CONFLUENCE.get(technical.get("technical_confluence"),
                                     "未知技术状态；不得自行补成方向性结论。"),
         "MACD/KDJ 属于同一动能家族；均线/三线/格兰维尔延续属于同一趋势家族，不能重复投票。"])
+    if binding is not None:
+        rows.extend(["", "## 日线技术展示绑定",
+            "已与明确选择的原始行情快照重新计算并核对；不证明数据真实、PIT合格或策略有效。",
+            f"- 绑定版本：{_cell(binding['model_version'])}",
+            f"- 原始行数：{_cell(binding['supplied_daily_row_count'])}",
+            f"- 绑定标识：{_cell(binding['binding_hash'])}",
+            "缺失、失败与停牌状态仍保留；绑定通过不授权评分、持仓管理或交易。"])
     if technical.get("setup_state") in {"ARMED", "CONFIRMED"} and technical.get(
         "setup_direction") in {"bullish", "bearish"}:
         rows.extend([f"形态结构参考：{_cell(technical.get('structural_invalidation_reference'))}；"

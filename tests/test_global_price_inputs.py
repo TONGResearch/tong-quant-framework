@@ -17,7 +17,7 @@ from tong_quant.data.artifacts import FileSystemArtifactStore
 from tong_quant.data.global_price_inputs import read_global_price_inputs
 from tong_quant.data.ingestion import ProviderNeutralIngestionService
 from tong_quant.data.providers import yahoo
-from tong_quant.data.providers.contracts import ProviderDatasetRequest
+from tong_quant.data.providers.contracts import ProviderDatasetRequest, provider_evidence_id
 from tong_quant.data.providers.yahoo import YahooChartHttpClient
 from tong_quant.data.providers.yahoo_snapshot import (
     DATASET,
@@ -55,6 +55,43 @@ maximum_context_age_seconds = 604800
 maximum_price_age_seconds = 604800
 ''')
     return path
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+def test_technical_binding_cli_is_readonly_opt_in_and_preserves_default(foundation, scope):
+    _ingest(foundation, scope=scope)
+    store, artifacts = foundation
+    args = [sys.executable, "scripts/inspect_global_technical.py", "--market", scope[0].value,
+        "--symbol", scope[1], "--database", str(store.path), "--artifact-root", str(artifacts.root),
+        "--as-of", NOW.isoformat()]
+    before = sha256(store.path.read_bytes()).hexdigest()
+    baseline = subprocess.run(args, capture_output=True, text=True)
+    first = subprocess.run([*args, "--technical-binding"], capture_output=True, text=True)
+    second = subprocess.run([*args, "--technical-binding"], capture_output=True, text=True)
+    markdown = subprocess.run([*args, "--technical-binding", "--format", "markdown"],
+                              capture_output=True, text=True)
+    after = subprocess.run(args, capture_output=True, text=True)
+    assert baseline.returncode == first.returncode == second.returncode == markdown.returncode == 2
+    assert first.stdout == second.stdout and baseline.stdout == after.stdout
+    extended = json.loads(first.stdout)
+    binding = extended.pop("technical_binding")
+    assert extended == json.loads(baseline.stdout)
+    assert binding["subject"] == scope[1] and binding["source_qualified"] is False
+    assert binding["execution_authorized"] is False and binding["pit_qualified"] is False
+    assert "日线技术展示绑定" in markdown.stdout
+    assert before == sha256(store.path.read_bytes()).hexdigest()
+
+
+def test_technical_binding_capture_is_rejected_before_database_creation(tmp_path):
+    database = tmp_path / "absent.sqlite3"
+    raw = tmp_path / "raw"
+    result = subprocess.run([sys.executable, "scripts/inspect_global_technical.py",
+        "--market", "us", "--symbol", "MSFT", "--database", str(database),
+        "--artifact-root", str(raw), "--technical-binding", "--capture"],
+        capture_output=True, text=True)
+    assert result.returncode == 2 and result.stdout == ""
+    assert "technical binding is read-only" in result.stderr
+    assert not database.exists() and not raw.exists()
 
 
 @pytest.mark.parametrize("scope", SCOPES)
@@ -151,6 +188,153 @@ def _ingest(foundation, capture=None, scope=SCOPES[0], at=NOW, completed=None):
 def _read(foundation, scope=SCOPES[0], at=NOW, **kwargs):
     store, artifacts = foundation
     return read_global_price_inputs(store, artifacts, scope[1], scope[0], as_of=at, **kwargs)
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("clock_label", ("naive", "malaysia", "new_york_first", "new_york_second"))
+def test_invalid_capture_clock_rejected_before_snapshot_retention(foundation, scope, clock_label):
+    request = _request(scope)
+    captured = datetime(2026, 11, 1, 1, 30)
+    if clock_label == "malaysia":
+        captured = captured.replace(tzinfo=ZoneInfo("Asia/Kuala_Lumpur"))
+    elif clock_label.startswith("new_york"):
+        captured = captured.replace(tzinfo=ZoneInfo("America/New_York"),
+                                    fold=int(clock_label.endswith("second")))
+    downloads = []
+
+    def download(actual_request):
+        downloads.append(actual_request)
+        return _capture(actual_request)
+
+    store, artifacts = foundation
+    before = store.path.read_bytes()
+    with pytest.raises(ValueError, match="timezone|capture clock must use UTC"):
+        ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: NOW).ingest(
+            YahooGlobalSnapshotAdapter(download=download, clock=lambda: captured), request)
+    assert downloads == [request]
+    assert store.path.read_bytes() == before and not artifacts.root.exists()
+    for table in ("ingestion_batches", "provider_artifacts", "provider_evidence_records",
+                  "raw_dataset_fingerprints", "provider_limitations"):
+        assert store.table_count(table) == 0
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("zone", ("UTC", "Etc/GMT", "Europe/London"))
+def test_zero_offset_capture_clocks_preserve_utc_bytes_ids_and_readback(foundation, scope, zone):
+    request = _request(scope)
+    capture = _capture(request)
+    canonical = YahooGlobalSnapshotAdapter(download=lambda _: capture, clock=lambda: NOW).fetch(
+        request)
+    labelled = NOW.astimezone(ZoneInfo(zone))
+    actual = YahooGlobalSnapshotAdapter(download=lambda _: capture, clock=lambda: labelled).fetch(
+        _request(scope, labelled))
+    assert actual == canonical
+    assert actual.artifacts[0].content == canonical.artifacts[0].content
+    assert actual.records[0].evidence_id == canonical.records[0].evidence_id
+    _ingest(foundation, capture=capture, scope=scope, at=labelled)
+    result = _read(foundation, scope)
+    assert result.status == "observed_unqualified" and len(result.bars) == 300
+    assert result.document()["execution_authorized"] is False
+    assert result.document()["historical_replay_eligible"] is False
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("zone", ("Asia/Kuala_Lumpur", "America/New_York"))
+def test_non_utc_request_and_read_cutoffs_remain_supported_with_utc_capture(
+    foundation, scope, zone,
+):
+    labelled = NOW.astimezone(ZoneInfo(zone))
+    request = _request(scope, labelled)
+    capture = _capture(request)
+    store, artifacts = foundation
+    ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: NOW).ingest(
+        YahooGlobalSnapshotAdapter(download=lambda _: capture, clock=lambda: NOW), request)
+    canonical = _read(foundation, scope)
+    same = _read(foundation, scope, at=labelled)
+    assert same.status == "observed_unqualified" and len(same.bars) == 300
+    assert same.document() == canonical.document()
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("predecessor", (False, True))
+def test_legacy_non_utc_snapshot_identity_stays_blocked_without_good_fallback(
+    foundation, scope, predecessor,
+):
+    store, artifacts = foundation
+    if predecessor:
+        _ingest(foundation, scope=scope)
+    utc_at = NOW + timedelta(seconds=1)
+    labelled = utc_at.astimezone(ZoneInfo("Asia/Kuala_Lumpur"))
+    request = _request(scope, utc_at)
+    canonical = YahooGlobalSnapshotAdapter(download=lambda _: _capture(request),
+        clock=lambda: utc_at).fetch(request)
+    original = canonical.records[0]
+    record = replace(original, available_at=labelled, retrieved_at=labelled,
+        evidence_id=provider_evidence_id(provider=original.provider, dataset=original.dataset,
+            market=original.market, subject=original.subject, available_at=labelled,
+            source_reference=original.source_reference, payload=original.payload))
+    legacy = replace(canonical, retrieved_at=labelled, records=(record,), artifacts=(replace(
+        canonical.artifacts[0], published_at=labelled, retrieved_at=labelled),))
+
+    class LegacyFixtureAdapter:
+        provider_id = canonical.provider
+
+        def capabilities(self):
+            return YahooGlobalSnapshotAdapter().capabilities()
+
+        def fetch(self, actual_request):
+            return legacy
+
+    # Test-only representation of a previously retained clock-label identity.
+    ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: utc_at).ingest(
+        LegacyFixtureAdapter(), _request(scope, labelled))
+    pinned = [store.path]
+    wal = store.path.with_name(store.path.name + "-wal")
+    if wal.exists():
+        pinned.append(wal)
+    before = {path: path.read_bytes() for path in pinned}
+    result = _read(foundation, scope, at=utc_at)
+    assert result.status == "rejected_or_ambiguous" and result.bars == ()
+    assert result.selected_evidence_id == record.evidence_id
+    assert len(result.observations) == 1 + int(predecessor)
+    assert result.document()["execution_authorized"] is False
+    assert before == {path: path.read_bytes() for path in pinned}
+    if predecessor:
+        assert _read(foundation, scope, at=NOW).status == "observed_unqualified"
+    assert store.table_count("provider_evidence_records") == 1 + int(predecessor)
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+def test_failure_capture_non_utc_clock_also_rejects_before_retention(foundation, scope):
+    store, artifacts = foundation
+    before = store.path.read_bytes()
+    with pytest.raises(ValueError, match="capture clock must use UTC"):
+        _ingest(foundation, capture=YahooSnapshotCapture(None, "provider_unavailable"), scope=scope,
+                at=NOW.astimezone(ZoneInfo("Asia/Kuala_Lumpur")))
+    assert store.path.read_bytes() == before and not artifacts.root.exists()
+    assert store.table_count("ingestion_batches") == 0
+    assert store.table_count("provider_evidence_records") == 0
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+def test_rejected_capture_clock_does_not_freshen_or_replace_existing_evidence(foundation, scope):
+    _ingest(foundation, scope=scope)
+    store, artifacts = foundation
+    original = _read(foundation, scope)
+    database = store.path.read_bytes()
+    files = {path: path.read_bytes() for path in artifacts.root.rglob("*") if path.is_file()}
+    attempt_at = NOW + timedelta(seconds=1)
+    with pytest.raises(ValueError, match="capture clock must use UTC"):
+        _ingest(foundation, scope=scope,
+                at=attempt_at.astimezone(ZoneInfo("Asia/Kuala_Lumpur")))
+    assert store.path.read_bytes() == database
+    assert files == {path: path.read_bytes() for path in artifacts.root.rglob("*")
+                     if path.is_file()}
+    after = _read(foundation, scope, at=attempt_at)
+    assert after.selected_evidence_id == original.selected_evidence_id
+    assert len(after.observations) == len(original.observations) == 1
+    assert after.bars[-1].available_at == NOW
+    assert store.table_count("ingestion_batches") == 1
 
 
 @pytest.mark.parametrize("scope", SCOPES)

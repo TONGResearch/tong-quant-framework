@@ -151,6 +151,58 @@ validation, risk management, and controlled execution.
 
 ## Development Style
 
+SEC submissions/concept/filing-page/body producer clocks must be aware and have
+zero actual offset before retained envelope/evidence construction. See
+docs/sec-capture-clocks-2026-11-17.md. Keep accepted UTC bytes/IDs and non-UTC
+request/read cutoffs unchanged; legacy bad captures stay blocked, not rewritten
+or replaced with older good evidence. This is after download, not pre-fetch
+audit. Other provider clock/ID findings are explicitly static follow-up risks,
+not blanket fixes: publication clocks, observation IDs and request-derived
+availability need separate contracts. Do not globally normalize historical IDs.
+
+Yahoo global-equity snapshot capture-clock prevention is documented in
+docs/yahoo-capture-clock-2026-11-17.md. Require an aware zero-offset producer
+clock before artifact/evidence construction; do not normalize unsupported clocks
+into new IDs or rewrite old records. Accepted UTC bytes/normalization stay exact;
+non-UTC request/read cutoffs remain supported. Legacy mismatched captures stay
+blocked without old-good fallback. A rejected new capture leaves no ingestion
+row and does not freshen older evidence; future workers still need durable
+pre-fetch attempts. This does not certify other producers or source/PIT quality,
+enable unattended updates or define a new strategy. Default clock is already UTC.
+
+Replay outcome v2 is documented in
+docs/replay-endpoint-qualification-2026-11-17.md. Explicit suspended or nonboolean
+endpoint flags, future visibility and reversed availability block numerical
+outcomes in actual UTC. Preserve original endpoint bindings and incomplete
+samples, never replace them with nearby/old active bars, zero returns or negative
+research labels. False flags are not independently verified status or trading
+clearance. New identities pin the outcome version; old replay rows stay unchanged
+and require reconstruction before current validation. Existing outcome_missing
+can mean a missing usable outcome, not missing raw records; inspect its precise
+blockers. No source/PIT, strategy or execution admission follows from this repair.
+
+Opt-in --technical-binding is documented in
+docs/technical-display-binding-2026-11-17.md. Bound notes require the exact original
+GlobalPriceInputs and explicit TechnicalParameters on both build and render;
+rehashing copied labels/output is not recomputation. Preserve full original Bar
+hash/count and UTC cutoff, including missing/failed/suspended states. Never equate
+the diagnostic input hash with the differently defined full Bar hash. Omitted
+flags preserve old bytes; legacy unbound direct rendering is not source-bound or
+silently migrated. New binding grants no source/PIT/session/score/holding/trading
+authority, does not replace optional timeframe checks and cannot define 271 rules.
+Use the explicit binding flag for newly produced overseas daily diagnostic notes;
+do not describe an old unbound note as having passed that check. Retained old
+files remain unchanged and need a new explicitly bound rendering for this claim.
+
+Tong's November 16 271 decision is recorded in
+docs/proposals/technical-routing-and-271-v1.zh-CN.md. Missing original definitions
+must remain pending, never synthesized from similar terms or existing indicators.
+This is not approval of a new strategy/router, thresholds or trading capability.
+Seven-plus-one is separate. Features may support a predeclared primary method,
+but correlated signals cannot replace Turtle's four confirmations or count as
+independent confidence votes. Keep continuation versus mean reversion distinct,
+and Turtle pyramiding versus 271 no-intermediate-sizing management isolated.
+
 November 16 independent-review repairs require credential privacy preflight
 before any provider artifact publication, preserving non-deleting rollback.
 Known-pattern/JSON screening is not opaque-binary secret certification. Lifecycle

@@ -17,6 +17,114 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 ## What Exists
 
+### SEC Retained Capture Clock Guard: November 17
+
+Four existing SEC producers now reject naive/nonzero-offset capture clocks
+before artifact/evidence publication, after download. Default UTC and equivalent
+zero-offset labels preserve exact bytes/IDs; query cutoffs may remain non-UTC.
+Sixty new offline regressions pass, and eight frozen-HEAD adapter success/failure
+comparisons preserve UTC batches. Real retained MSFT reconstruction repeats ten
+old period checks and exact period/body hashes with three pinned files unchanged;
+two unusable historical pages remain two gaps, not newly available evidence.
+No schema/default/source admission change. Other provider identity risks are
+documented as static follow-up, not claimed fixed. Scoped read-only AI review's
+failure-fixture finding was repaired and re-reviewed with no further actionable
+issue. Final stable-tree pytest: **4356 passed / 6 skipped**, 439.16 seconds.
+Ruff, mypy (319 files), governance (181 checks), whitespace and scoped known-pattern
+privacy/disabled-default checks pass. All 476 Python/config inputs retain exact
+before/after fingerprints. Working-tree tests are not isolated release review.
+See docs/sec-capture-clocks-2026-11-17.md.
+PIT remains UNSUITABLE, production NOT_READY, execution/notifications disabled.
+No commit or push.
+
+### Yahoo Global Snapshot Producer Clock Guard: November 17
+
+The existing global-equity snapshot producer now rejects naive/nonzero-offset
+capture clocks before evidence/artifact/batch publication. Its envelope already
+normalized time to UTC while evidence IDs retained the original offset, so old
+nonzero clocks could publish unreconstructible identities. Default UTC and other
+zero-offset clocks keep exact accepted bytes/IDs; source normalization version,
+market timezones and non-UTC request/read cutoffs remain unchanged.
+
+Synthetic US/HK/MY tests preserve legacy blocked records and no-good-fallback
+behavior, reject invalid success/failure clocks without retention and do not
+freshen existing evidence. Six frozen-HEAD adapter success/failure comparisons
+confirm unchanged UTC batches. Existing MSFT/NVDA 971/752-row retained snapshots
+reconstruct at original cutoffs with identical binding hashes, repeatable notes
+and six old DB/WAL/JSON files unchanged. Scoped static AI review found no actionable
+issue. Final stable-tree pytest: **4296 passed / 6 skipped**, 404.39 seconds,
+including 39 new clock regressions. Ruff, mypy (319 files), governance (180 checks),
+whitespace and scoped known-pattern privacy/disabled-default checks pass. All 475
+tracked/new Python/config inputs have identical before/after content fingerprints.
+These working-tree checks are not an isolated release. This is not live-provider/source/
+PIT or strategy qualification. Durable failed-attempt/worker integration and
+other producer audits remain open. No real DB/schema/dependency/default/trading
+change. See docs/yahoo-capture-clock-2026-11-17.md. PIT remains UNSUITABLE,
+production NOT_READY, execution/notifications disabled. No commit or push.
+
+### Replay Endpoint Suspension And UTC Qualification: November 17
+
+REPLAY_OUTCOME_VERSION now prospectively requires explicit non-suspended boolean
+flags and actual-UTC visibility/chronology for both exact price endpoints. Known
+suspended/unknown/future/reversed inputs retain raw bindings and reasons but yield
+NOT_OBSERVABLE, not a numerical outcome or adverse research judgment. Existing
+incomplete sample persistence and sample/manifest/request blockers remain active;
+no neighboring-date or old-active fallback is introduced.
+
+The centralized v2 outcome contract changes new replay identities; old rows/hashes
+are preserved and require reconstruction before current Validation. Synthetic
+version-tag tests are not a full v1 interpreter. No schema, dependency, real DB,
+strategy or trading change. All 155 replay tests pass, including 33 added cases;
+scoped read-only AI review found no actionable issue, not source or release approval.
+Full stable-tree pytest: **4257 passed / 6 skipped**, 406.62 seconds. Ruff, mypy
+(319 files), governance (179 checks), whitespace and scoped known-pattern privacy/
+import/disabled-default checks pass. All 475 tracked/new Python/config inputs have
+the same content fingerprint before/after the run. These are working-tree checks,
+not an isolated release candidate or independent source/method qualification.
+See docs/replay-endpoint-qualification-2026-11-17.md. PIT remains UNSUITABLE and
+production NOT_READY; execution/notifications disabled. No commit or push.
+
+### Opt-In Daily Technical Display Binding: November 17
+
+The existing overseas CLI now offers read-only --technical-binding. A separately
+versioned receipt binds the exact price receipt/full original Bar hash and count,
+UTC cutoff, parameters and complete recomputed daily diagnostic. Rendering a bound
+document requires the original snapshot/parameters and recomputes again; six
+synthetic mixed-input cases and rehashed contradictions are rejected. Default
+JSON/Markdown and old records stay unchanged. Legacy unbound direct rendering
+remains a compatibility limitation, not silently repaired or certified.
+
+New synthetic/CLI tests cover US/HK/MY, missing/suspended/duplicate inputs,
+timezone-equivalent versus DST-fold cutoffs, early capture rejection and false
+authority. Real offline MSFT/NVDA rehearsals bind 971/752 retained rows at original
+cutoffs with repeatable JSON/notes, unchanged default output and six pinned old
+DB/WAL/JSON files unchanged. Scoped read-only AI review found no actionable issue.
+Final stable-tree pytest: **4224 passed / 6 skipped**, 694.93 seconds, including
+59 new unit/CLI cases; related display/holding/timeframe tests pass 289 cases.
+Ruff, mypy (319 files), governance (178 checks), scoped import/privacy/default
+checks and whitespace pass. The 475 tracked/new Python/configuration inputs have
+identical content fingerprints before/after the final run. These are working-tree
+checks, not an isolated release candidate. This is not source, session, PIT,
+strategy, holding or launch acceptance; exact-candidate release review and
+legacy default migration remain open. No schema/dependencies/defaults/trading
+change; PIT UNSUITABLE, production NOT_READY. See
+docs/technical-display-binding-2026-11-17.md. No commit or push in this slice.
+
+### Technical Combination And 271 Definition Hold: November 16
+
+Tong explicitly deferred the missing 271 definitions. The owner decision and
+term inventory are retained in
+docs/proposals/technical-routing-and-271-v1.zh-CN.md. G1/D1, high/low sequences,
+trend endings, momentum grades, true breaks, entry candles and management
+branches remain pending definition, not implemented or validated. Seven-plus-one
+is a separate deferred method. Technical features may support a predeclared
+strategy profile, but correlated indicators are not independent votes; Turtle
+four-confirmation requirements cannot be replaced by MACD/KDJ or Granville.
+Turtle pyramiding and 271's no-intermediate-sizing rule stay separate.
+This slice records design/owner intent only: no runtime, schema, configuration,
+score, validation, source/PIT or trading promotion. Execution/notifications remain
+disabled. A context-aware method router remains a proposal, not a completed engine.
+
 ### Independent Review Hardening: November 16
 
 Two authorized read-only AI reviewers found four blockers in the entire pending

@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from tong_quant.data.models import PITReadinessAssessment, ProviderLimitation
+from tong_quant.data.price_evidence import daily_bar_content, daily_bar_content_hash
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.domain.enums import (
     Adjustment,
@@ -22,6 +23,7 @@ from tong_quant.domain.enums import (
     ResearchModuleName,
     ResearchRunStatus,
     SecurityStatus,
+    ThesisOutcomeStatus,
     ValidationModuleName,
 )
 from tong_quant.domain.models import (
@@ -43,11 +45,11 @@ from tong_quant.validation.replay import (
     ReplayQuery,
 )
 from tong_quant.validation.replay.hashing import stable_hash
-from tong_quant.validation.replay.outcomes import evaluate_outcome
+from tong_quant.validation.replay.outcomes import evaluate_outcome, require_verified_outcome
 from tong_quant.validation.replay.repository import SQLiteHistoricalReplayRepository
 from tong_quant.validation.replay.request_factory import ValidationRequestFactory
 from tong_quant.validation.replay.research_binding import research_snapshot
-from tong_quant.version import DATABASE_SCHEMA_VERSION
+from tong_quant.version import DATABASE_SCHEMA_VERSION, REPLAY_OUTCOME_VERSION
 
 
 def test_replay_builds_deterministic_hash_and_request(tmp_path: Path) -> None:
@@ -685,6 +687,223 @@ def test_outcome_rejects_invalid_price_inputs(tmp_path: Path, invalid):
     )
     assert outcome.value is None
     assert context["blocking_reasons"]
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome", "both"))
+@pytest.mark.parametrize("end_price", ("10", "12"))
+def test_flagged_suspension_endpoints_never_produce_price_outcome(boundary, end_price):
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic endpoint fixture")
+    query = _query()
+    decision = replace(_bar(instrument, date(2024, 1, 15), "10"),
+                       is_suspended=boundary != "outcome")
+    end = replace(_bar(instrument, date(2024, 2, 15), end_price),
+                  is_suspended=boundary != "decision")
+    outcome, context = evaluate_outcome(
+        query, instrument, query.outcome_definitions[0], decision, end)
+    assert outcome.value is None and outcome.succeeded is None
+    assert outcome.invalidation_triggered is None
+    assert outcome.thesis_status is ThesisOutcomeStatus.NOT_OBSERVABLE
+    assert context["outcome_contract"] == REPLAY_OUTCOME_VERSION
+    assert context["endpoint_policy"] == (
+        "explicit_non_suspended_flags_not_execution_clearance")
+    expected = [f"{name}_bar_suspended" for name, bar in (
+        ("decision", decision), ("outcome", end)) if bar.is_suspended]
+    assert context["blocking_reasons"] == expected
+    assert context["decision_bar"]["content"]["is_suspended"] is decision.is_suspended
+    assert context["outcome_bar"]["content"]["is_suspended"] is end.is_suspended
+    assert context["outcome_bar"]["content"]["close"] == end_price
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome"))
+@pytest.mark.parametrize("flag", (None, "false", 0, 1))
+def test_nonboolean_suspension_flags_are_preserved_and_blocked(boundary, flag):
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic endpoint fixture")
+    query = _query()
+    decision = _bar(instrument, date(2024, 1, 15), "10")
+    end = _bar(instrument, date(2024, 2, 15), "12")
+    if boundary == "decision":
+        decision = replace(decision, is_suspended=flag)
+    else:
+        end = replace(end, is_suspended=flag)
+    outcome, context = evaluate_outcome(
+        query, instrument, query.outcome_definitions[0], decision, end)
+    assert outcome.value is None and outcome.succeeded is None
+    assert f"{boundary}_bar_suspension_flag_invalid" in context["blocking_reasons"]
+    assert context[f"{boundary}_bar"]["content"]["is_suspended"] == flag
+
+
+def _dst_outcome_case(boundary):
+    zone = ZoneInfo("America/New_York")
+    cutoff = datetime(2026, 11, 1, 1, 30, tzinfo=zone, fold=0)
+    query = replace(_query(),
+        decision_as_of=(cutoff if boundary == "decision" else
+                        datetime(2026, 10, 1, 5, 30, tzinfo=UTC)),
+        outcome_as_of=(cutoff.astimezone(UTC) + timedelta(days=31)
+                       if boundary == "decision" else cutoff))
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic endpoint fixture")
+    start_date = query.decision_as_of.astimezone(UTC).date()
+    end_date = start_date + timedelta(days=31)
+    return query, instrument, _bar(instrument, start_date, "10"), (
+        _bar(instrument, end_date, "12")), cutoff
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome"))
+@pytest.mark.parametrize("cutoff_label", ("native", "utc"))
+def test_endpoint_visibility_uses_actual_utc_at_repeated_dst_clock(boundary, cutoff_label):
+    query, instrument, decision, end, cutoff = _dst_outcome_case(boundary)
+    future = cutoff.replace(fold=1)
+    if boundary == "decision":
+        decision = replace(decision, available_at=future)
+    else:
+        end = replace(end, available_at=future)
+    if cutoff_label == "utc":
+        query = replace(query, **{f"{boundary}_as_of": cutoff.astimezone(UTC)})
+    outcome, context = evaluate_outcome(
+        query, instrument, query.outcome_definitions[0], decision, end)
+    assert outcome.value is None
+    assert f"{boundary}_bar_not_visible" in context["blocking_reasons"]
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome"))
+def test_endpoint_reversed_actual_availability_is_not_hidden_by_dst_fold(boundary):
+    query, instrument, decision, end, cutoff = _dst_outcome_case(boundary)
+    observed = cutoff.replace(fold=1)
+    later_cutoff = cutoff.replace(hour=2, fold=0)
+    if boundary == "decision":
+        query = replace(query, decision_as_of=later_cutoff,
+                        outcome_as_of=later_cutoff.astimezone(UTC) + timedelta(days=31))
+        decision = replace(decision, timestamp=observed, available_at=cutoff)
+    else:
+        query = replace(query, decision_as_of=datetime(2026, 10, 1, 7, 30, tzinfo=UTC),
+                        outcome_as_of=later_cutoff)
+        end = replace(end, timestamp=observed, available_at=cutoff)
+    outcome, context = evaluate_outcome(
+        query, instrument, query.outcome_definitions[0], decision, end)
+    assert outcome.value is None
+    assert f"{boundary}_bar_reversed_availability" in context["blocking_reasons"]
+
+
+@pytest.mark.parametrize("fold", (0, 1))
+def test_equal_instant_endpoint_labels_are_visible_at_both_dst_folds(fold):
+    query, instrument, decision, end, cutoff = _dst_outcome_case("decision")
+    cutoff = cutoff.replace(fold=fold)
+    query = replace(query, decision_as_of=cutoff,
+                    outcome_as_of=cutoff.astimezone(UTC) + timedelta(days=31))
+    decision = replace(decision, available_at=cutoff)
+    before, original = evaluate_outcome(
+        query, instrument, query.outcome_definitions[0], decision, end)
+    same = replace(query, decision_as_of=cutoff.astimezone(UTC))
+    after, equivalent = evaluate_outcome(
+        same, instrument, same.outcome_definitions[0], decision, end)
+    assert before.value == after.value == 20
+    assert original["blocking_reasons"] == equivalent["blocking_reasons"] == []
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome", "both"))
+@pytest.mark.parametrize("require_outcome", (False, True))
+def test_replay_preserves_blocked_suspension_samples_without_nearby_fallback(
+    tmp_path: Path, boundary, require_outcome,
+):
+    store, instrument = _prepared_store(tmp_path)
+    query = replace(_query(), decision_as_of=datetime(2024, 1, 15, 8, tzinfo=UTC),
+                    outcome_as_of=datetime(2024, 2, 15, 8, tzinfo=UTC))
+    if not require_outcome:
+        query = replace(query, required_inputs=("fundamentals",))
+    builder = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store), persist=False)
+    before = builder.build(query)
+    revisions = []
+    for name, trade_date, close in (("decision", date(2024, 1, 15), "10"),
+                                    ("outcome", date(2024, 2, 15), "12")):
+        if boundary in {name, "both"}:
+            original = _bar(instrument, trade_date, close)
+            revisions.append(replace(original,
+                available_at=original.timestamp + timedelta(hours=1), is_suspended=True))
+    revisions += [_bar(instrument, date(2024, 1, 14), "9"),
+                  _bar(instrument, date(2024, 2, 14), "11")]
+    store.upsert_daily_bars(revisions)
+    builder = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store))
+    first = builder.build(query, generated_at=datetime(2025, 2, 1, tzinfo=UTC))
+    second = builder.build(query, generated_at=datetime(2025, 2, 1, tzinfo=UTC))
+    assert first.samples[0].replay_hash == second.samples[0].replay_hash
+    assert first.samples[0].decision_context == before.samples[0].decision_context
+    assert len(first.samples) == store.table_count("historical_replay_samples") == 1
+    sample = first.samples[0]
+    assert sample.instrument.symbol == instrument.symbol
+    assert sample.validation_sample is None and not sample.is_complete
+    assert sample.outcome_context["value"] is None
+    assert "outcome_review_blocked" in sample.missing_data_flags
+    assert not sample.replay_confidence.validation_eligible
+    assert not first.manifest.replay_confidence.validation_eligible
+    for name in ("decision", "outcome"):
+        if boundary in {name, "both"}:
+            assert sample.outcome_context[f"{name}_bar"]["content"]["is_suspended"] is True
+    with pytest.raises(ValueError, match="not eligible for Validation"):
+        _validation_request(first)
+
+
+def test_future_suspension_revision_does_not_rewrite_decision_endpoint(tmp_path: Path):
+    store, instrument = _prepared_store(tmp_path)
+    builder = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store), persist=False)
+    first = builder.build(_query())
+    late = replace(_bar(instrument, date(2024, 1, 15), "10"),
+                   available_at=datetime(2024, 1, 16, tzinfo=UTC), is_suspended=True)
+    store.upsert_daily_bars((late,))
+    second = builder.build(_query())
+    assert first.samples[0].replay_hash == second.samples[0].replay_hash
+    assert second.samples[0].outcome_context["value"] == 20
+    assert second.samples[0].outcome_context["decision_bar"]["content"]["is_suspended"] is False
+
+
+@pytest.mark.parametrize("boundary", ("decision", "outcome", "both"))
+def test_rehashed_suspended_bindings_cannot_keep_a_favorable_outcome(tmp_path: Path, boundary):
+    store, instrument = _prepared_store(tmp_path)
+    result = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store), persist=False).build(
+        _query())
+    sample = result.samples[0]
+    context = deepcopy(sample.outcome_context)
+    for name, trade_date, close in (("decision", date(2024, 1, 15), "10"),
+                                    ("outcome", date(2024, 2, 15), "12")):
+        if boundary in {name, "both"}:
+            suspended = replace(_bar(instrument, trade_date, close), is_suspended=True)
+            context[f"{name}_bar"] = {"content": daily_bar_content(suspended),
+                                     "content_hash": daily_bar_content_hash(suspended)}
+    assert context["value"] == 20 and context["blocking_reasons"] == []
+    changed = replace(sample, outcome_context=context, missing_data_flags=())
+    with pytest.raises(ValueError, match="outcome evidence or window mismatch"):
+        require_verified_outcome(changed, result.query)
+
+
+def test_v1_tagged_replays_are_retained_but_require_reconstruction(tmp_path: Path, monkeypatch):
+    store, _ = _prepared_store(tmp_path)
+    builder = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store))
+    with monkeypatch.context() as patch:
+        for module in ("builder", "integrity", "outcomes"):
+            patch.setattr(f"tong_quant.validation.replay.{module}.REPLAY_OUTCOME_VERSION",
+                          "replay-outcome-v1")
+        legacy = builder.build(_query(), generated_at=datetime(2025, 2, 1, tzinfo=UTC))
+    with sqlite3.connect(store.path) as connection:
+        old_manifest = connection.execute(
+            "SELECT * FROM historical_replay_manifests WHERE manifest_id = ?",
+            (legacy.manifest.manifest_id,)).fetchone()
+        old_sample = connection.execute(
+            "SELECT * FROM historical_replay_samples WHERE sample_id = ?",
+            (legacy.samples[0].sample_id,)).fetchone()
+    current = builder.build(_query(), generated_at=datetime(2025, 2, 1, tzinfo=UTC))
+    assert legacy.manifest.query_hash != current.manifest.query_hash
+    assert legacy.manifest.manifest_id != current.manifest.manifest_id
+    assert legacy.samples[0].replay_hash != current.samples[0].replay_hash
+    assert store.table_count("historical_replay_manifests") == 2
+    assert current.manifest.dataset_versions["outcome_contract"] == REPLAY_OUTCOME_VERSION
+    with sqlite3.connect(store.path) as connection:
+        assert connection.execute(
+            "SELECT * FROM historical_replay_manifests WHERE manifest_id = ?",
+            (legacy.manifest.manifest_id,)).fetchone() == old_manifest
+        assert connection.execute(
+            "SELECT * FROM historical_replay_samples WHERE sample_id = ?",
+            (legacy.samples[0].sample_id,)).fetchone() == old_sample
+    with pytest.raises(ValueError, match="requires reconstruction"):
+        _validation_request(legacy)
+    assert _validation_request(current).samples
 
 
 @pytest.mark.parametrize("duplicate", ("symbols", "outcome_ids"))

@@ -39,6 +39,10 @@ required_commands = [
   ".venv/bin/python scripts/check_project_governance.py",
 ]
 required_documents = [
+  "docs/sec-capture-clocks-2026-11-17.md",
+  "docs/yahoo-capture-clock-2026-11-17.md",
+  "docs/replay-endpoint-qualification-2026-11-17.md",
+  "docs/technical-display-binding-2026-11-17.md",
   "docs/independent-review-hardening-2026-11-16.md",
   "docs/long-horizon-observations-2026-11-15.zh-CN.md",
   "AGENTS.md",

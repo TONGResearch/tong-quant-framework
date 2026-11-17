@@ -22,6 +22,7 @@ def evaluate_outcome(
     outcome_bar: Bar | None,
 ) -> tuple[ValidationOutcome, dict[str, object]]:
     start = query.decision_as_of.astimezone(UTC)
+    end_cutoff = query.outcome_as_of.astimezone(UTC)
     target = start + timedelta(days=definition.observation_horizon_days)
     earliest = target + timedelta(days=definition.availability_lag_days)
     blockers: list[str] = []
@@ -31,7 +32,7 @@ def evaluate_outcome(
         blockers.append("benchmark_not_supported")
     if not isfinite(definition.success_threshold):
         blockers.append("invalid_success_threshold")
-    if query.outcome_as_of < earliest:
+    if end_cutoff < earliest:
         blockers.append("outcome_not_matured")
     for name, bar, expected, cutoff in (
         ("decision", decision_bar, start, query.decision_as_of),
@@ -42,8 +43,16 @@ def evaluate_outcome(
             continue
         if bar.timestamp.astimezone(UTC).date() != expected.date():
             blockers.append(f"{name}_bar_date_mismatch")
-        if bar.timestamp > expected or bar.available_at > cutoff:
+        observed = bar.timestamp.astimezone(UTC)
+        available = bar.available_at.astimezone(UTC)
+        if observed > expected or available > cutoff.astimezone(UTC):
             blockers.append(f"{name}_bar_not_visible")
+        if available < observed:
+            blockers.append(f"{name}_bar_reversed_availability")
+        if type(bar.is_suspended) is not bool:
+            blockers.append(f"{name}_bar_suspension_flag_invalid")
+        elif bar.is_suspended:
+            blockers.append(f"{name}_bar_suspended")
         if bar.adjustment is not Adjustment.NONE:
             blockers.append(f"{name}_bar_adjusted")
         if (
@@ -77,7 +86,7 @@ def evaluate_outcome(
         outcome_id=f"{definition.outcome_id}:{subject}",
         definition_id=definition.outcome_id,
         subject_id=subject,
-        observed_at=min(target, query.outcome_as_of),
+        observed_at=min(target, end_cutoff),
         available_at=query.outcome_as_of,
         value=value,
         benchmark_value=None,
@@ -99,6 +108,7 @@ def evaluate_outcome(
     return outcome, {
         "outcome_contract": REPLAY_OUTCOME_VERSION,
         "date_basis": "exact_utc_calendar_days_no_session_fallback",
+        "endpoint_policy": "explicit_non_suspended_flags_not_execution_clearance",
         "definition": stable_json(definition),
         "expected_start_date": start.date().isoformat(),
         "expected_end_date": target.date().isoformat(),
@@ -115,6 +125,7 @@ def evaluate_outcome(
             "bar_hash_is_content_identity_not_independent_source_verification",
             "corporate_actions_total_return_and_trading_costs_not_evaluated",
             "calendar_dates_do_not_establish_exchange_sessions_or_executable_prices",
+            "false_suspension_flags_do_not_verify_status_history_or_actual_trading",
         ],
     }
 

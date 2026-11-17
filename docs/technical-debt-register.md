@@ -1,5 +1,40 @@
 # Technical Debt Register
 
+SEC clock follow-up (November 17): four producers now reject unsupported capture
+offsets while retaining UTC bytes/IDs. Sixty regressions, frozen-HEAD vectors and
+real old MSFT period/body hash rehearsal cover prevention/compatibility, not new
+source authority. Remaining: legacy compatibility review, durable failed-fetch
+attempts, two historical page gaps and dataset-specific audit of other sources.
+The static inventory in docs/sec-capture-clocks-2026-11-17.md is not remediation:
+separate capture/publication/observation/request time contracts before changing
+other providers or shared IDs. No blanket UTC normalization is approved.
+
+Yahoo clock follow-up (November 17): prospective global-snapshot rejection of
+naive/nonzero producer clocks prevents new irreconstructible label/ID pairs.
+Accepted UTC normalization and bytes remain exact; request/read timezone labels
+are unaffected. Remaining: explicit historical identity compatibility, audits of
+other producers, durable rejected-fetch attempts and worker/recovery integration,
+plus source/session/action/independent consistency qualification. No new capture
+scheduler or source/PIT/strategy admission is implied by this prevention.
+
+Replay endpoint follow-up (November 17): v2 rejects explicit suspended/unknown
+flags and UTC visibility/chronology failures, preserving raw rows and blocked
+samples. New version identities do not overwrite legacy results. Remaining:
+independent status/price/session/action qualification, lifecycle conflicts,
+session-aware windows and total-return/cost semantics, source/method validation
+and distinguishing missing raw observations from unavailable usable outcomes in
+reconstruction-quality scoring. Existing outcome_missing semantics are unchanged;
+read exact blockers, never treat NOT_OBSERVABLE as adverse business-research proof.
+
+Daily technical binding (November 17): a versioned opt-in original-snapshot/
+parameters receipt and read-side recomputation now protect bound notes and the
+explicit US/HK/MY CLI mode. Six synthetic mixed-diagnostic cases are covered;
+old defaults/hashes stay unchanged. Real retained MSFT/NVDA rehearsal and scoped
+static AI review are complete, not release admission. Remaining debt: reviewed
+legacy direct-call cutover, exact-candidate release review and source/session/
+corporate-action qualification. This is partial remediation of direct rendering,
+not full closure or a validated combined technical/fundamental decision engine.
+
 Independent review follow-up (November 16): four blockers, including the re-review
 BOM privacy bypass, have working repairs and 44 regressions. Exact isolated-tree
 checks/re-review are required before sync.

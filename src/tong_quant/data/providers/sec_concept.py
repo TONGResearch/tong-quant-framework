@@ -5,7 +5,7 @@ import re
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from typing import Any
 
@@ -174,6 +174,8 @@ class SECConceptAdapter:
         capture.__post_init__()
         captured = self.clock()
         require_timezone(captured, "SEC concept capture")
+        if captured.utcoffset() != timedelta(0):
+            raise ValueError("SEC concept capture clock must use UTC")
         content = json.dumps({"model_version": SEC_CONCEPT_VERSION,
             "market": request.market.value, "subject": request.subject, "parameters": {},
             "retrieved_at": captured.astimezone(UTC).isoformat(),

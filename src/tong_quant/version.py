@@ -59,6 +59,8 @@ DATABASE_CONTENT_VERSION = "sqlite-iterdump-content-v1"
 RESEARCH_ENGINE_VERSION = "research-engine-v0.5"
 RESEARCH_CONFIDENCE_VERSION = "research-confidence-v2-utc"
 EQUITY_NOTE_VERSION = "equity-diagnostic-note-v2-utc-context"
+TECHNICAL_DISPLAY_BINDING_VERSION = "daily-technical-display-binding-v1"
+EQUITY_BOUND_NOTE_VERSION = "equity-diagnostic-note-v8-technical-binding"
 HOLDING_REVIEW_VERSION = "owner-holding-review-v1-readonly"
 THESIS_BINDING_VERSION = "thesis-explicit-evidence-binding-v1"
 THESIS_REPORT_BINDING_VERSION = "research-thesis-binding-diagnostics-v1"
@@ -115,7 +117,7 @@ ARTIFACT_AUDIT_VERSION = "provider-artifact-audit-v1"
 VALIDATION_ENGINE_VERSION = "validation-engine-v0.6"
 HISTORICAL_REPLAY_VERSION = "historical-replay-v0.6.3.4"
 REPLAY_CONFIDENCE_VERSION = "replay-confidence-v0.6.3.4"
-REPLAY_OUTCOME_VERSION = "replay-outcome-v1"
+REPLAY_OUTCOME_VERSION = "replay-outcome-v2-suspension-utc-endpoints"
 REPLAY_RESEARCH_BINDING_VERSION = "replay-research-binding-v2-utc-cutoffs"
 NOTIFICATION_ENGINE_VERSION = "notification-engine-v0.8"
 PIT_READINESS_VERSION = "pit-readiness-v0.8-phase2"
@@ -248,6 +250,8 @@ __all__ = [
     "RESEARCH_ENGINE_VERSION",
     "RESEARCH_CONFIDENCE_VERSION",
     "EQUITY_NOTE_VERSION",
+    "TECHNICAL_DISPLAY_BINDING_VERSION",
+    "EQUITY_BOUND_NOTE_VERSION",
     "RESEARCH_REPORT_VERSION",
     "RESEARCH_CONDITIONS_VERSION",
     "EVIDENCE_SCORE_ADMISSION_VERSION",

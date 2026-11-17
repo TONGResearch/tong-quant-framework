@@ -4,6 +4,44 @@ Status: `ready`
 
 ## Current implementation slice
 
+November 17 SEC clock prevention covers submissions, concepts, filing pages and
+bodies. Unsupported producer offsets fail before retention, after download;
+accepted UTC identities, non-UTC read cutoffs and historical records stay exact.
+Sixty regressions and eight frozen-HEAD compatibility vectors pass. Real retained
+MSFT's ten period checks retain exact old hashes; two archive gaps remain gaps.
+Other provider clock risks are inventoried, not fixed by this slice. See
+../sec-capture-clocks-2026-11-17.md. No source/PIT/strategy or trading promotion;
+durable fetch attempts, independent qualification and exact-candidate release
+review remain open. Ready, not accepted.
+
+November 17 Yahoo snapshot clock prevention rejects unsupported producer offsets
+before retention, preserving accepted UTC bytes/IDs and all legacy records.
+Non-UTC query cutoffs remain allowed; blocked old captures cannot fall back to an
+older good row. Failed new fetches do not count as fresh captures or durable
+attempt audit. Synthetic tests and frozen-HEAD adapter comparisons cover US/HK/MY;
+scoped static review found no actionable issue. See
+../yahoo-capture-clock-2026-11-17.md. No source/PIT or strategy promotion, real
+DB/schema/default changes or trading behavior. Ready, not accepted.
+
+November 17 replay outcome v2 blocks flagged suspended/unknown price endpoints
+and actual-UTC visibility/chronology failures. Raw bindings and incomplete samples
+remain visible; no neighboring or old-active fallback, zero return or negative
+research label is invented. Centralized versioning yields new identities without
+rewriting legacy rows; old versions require reconstruction for current Validation.
+No schema or real DB writes, source/PIT upgrade or trading change. See
+../replay-endpoint-qualification-2026-11-17.md. Ready, not accepted; session/action/
+source evidence and combined-method validation remain open.
+
+November 17 opt-in daily technical binding recomputes the complete diagnostic
+against explicit original prices/parameters at build and render. It binds full
+Bar identity/count, original price receipt, UTC cutoff and output without changing
+default JSON/Markdown, formulas, old identities or schema. Synthetic mismatch and
+rehashed-content cases are rejected; US/HK/MY CLI scope stays read-only. Legacy
+unbound direct calls, exact-candidate release review and default cutover remain
+open. Retained MSFT/NVDA rehearsals preserve six old files and scoped static AI
+review found no actionable issue. See ../technical-display-binding-2026-11-17.md. This is ready,
+not accepted, and grants no source, strategy, holding, Paper or live authority.
+
 November 16 independent review found four sync blockers despite passing checks.
 Working repairs move credential preflight before artifact publication and use
 UTC for lifecycle visibility, research period dates and nested replay research.

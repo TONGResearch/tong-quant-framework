@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 from tong_quant.application.calendar_review import read_nasdaq_price_review
 from tong_quant.application.equity_note import render_equity_note
 from tong_quant.application.holding_review import build_holding_review, parse_holding_context
+from tong_quant.application.technical_binding import build_technical_binding
 from tong_quant.config.settings import load_settings
 from tong_quant.core.security import reject_sensitive_structure
 from tong_quant.data.artifacts import FileSystemArtifactStore
@@ -86,6 +87,8 @@ def main() -> None:
     parser.add_argument("--market", choices=[market.value for market in TIMEZONES], required=True)
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
+    parser.add_argument("--technical-binding", action="store_true",
+                        help="read-only recomputation binding daily diagnostics to original prices")
     parser.add_argument("--holding-context", type=Path,
                         help="read-only local owner annotation, not verified broker positions")
     parser.add_argument("--trend-observations", action="store_true",
@@ -151,6 +154,8 @@ def main() -> None:
         if (args.nasdaq_calendar_database.resolve() == args.database.resolve()
                 and args.nasdaq_calendar_artifact_root.resolve() != args.artifact_root.resolve()):
             parser.error("one database requires one explicit artifact root")
+    if args.technical_binding and args.capture:
+        parser.error("technical binding is read-only; capture separately")
     if args.multi_timeframe and args.capture:
         parser.error("multi-timeframe observations are read-only; capture separately")
     if args.long_horizon and args.capture:
@@ -364,6 +369,9 @@ def main() -> None:
         "diagnostics": technical_diagnostics(snapshot.bars, module.parameters, as_of=as_of),
         "fundamentals_status": "NOT_ASSESSED", "trend_four_confirmations": "NOT_ASSESSED",
         "research_report_created": False, "readiness_promoted": False}
+    if args.technical_binding:
+        document["technical_binding"] = build_technical_binding(
+            snapshot, module.parameters, document)
     if args.trend_observations:
         trend = next(item for item in engine.modules if isinstance(item, TrendResearchModule))
         document["trend_price_observations"] = trend.price_observations(
@@ -517,7 +525,10 @@ def main() -> None:
         document["combined_evidence_hash"] = sha256(
             financial_input_json(document).encode()).hexdigest()
     reject_sensitive_structure(document)
-    print(render_equity_note(document) if args.format == "markdown" else
+    print(render_equity_note(document,
+          technical_source=snapshot if args.technical_binding else None,
+          technical_parameters=module.parameters if args.technical_binding else None)
+          if args.format == "markdown" else
           json.dumps(json.loads(financial_input_json(document)), sort_keys=True,
                      indent=2, allow_nan=False))
     raise SystemExit(2)  # Exploratory output is never validation acceptance.

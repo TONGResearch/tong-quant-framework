@@ -6,7 +6,7 @@ import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from html import unescape
 from pathlib import PurePosixPath
@@ -147,6 +147,8 @@ class SECBodyAdapter:
         capture.__post_init__()
         captured = self.clock()
         require_timezone(captured, "SEC body capture")
+        if captured.utcoffset() != timedelta(0):
+            raise ValueError("SEC body capture clock must use UTC")
         if captured.astimezone(UTC) < datetime.fromisoformat(
             request.parameters["parent_available_at"]).astimezone(UTC):
             raise ValueError("SEC body capture precedes parent")

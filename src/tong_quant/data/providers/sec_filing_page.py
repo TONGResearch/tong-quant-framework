@@ -4,7 +4,7 @@ import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from typing import Any
 
@@ -168,6 +168,8 @@ class SECFilingPageAdapter:
         capture.__post_init__()
         captured = self.clock()
         require_timezone(captured, "SEC page capture")
+        if captured.utcoffset() != timedelta(0):
+            raise ValueError("SEC page capture clock must use UTC")
         content = json.dumps({"model_version": self.model_version,
             "metadata_version": SEC_SUBMISSIONS_VERSION, "market": request.market.value,
             "subject": request.subject, "parameters": request.parameters,
