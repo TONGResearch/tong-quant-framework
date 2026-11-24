@@ -5,7 +5,7 @@ import re
 import ssl
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from time import sleep
@@ -235,6 +235,8 @@ class YahooFundamentalSnapshotAdapter:
         capture.__post_init__()
         captured = self.clock()
         require_timezone(captured, "native fundamental capture")
+        if captured.utcoffset() != timedelta(0):
+            raise ValueError("native fundamental capture clock must use UTC")
         content = json.dumps({"model_version": GLOBAL_FUNDAMENTAL_SNAPSHOT_VERSION,
             "market": request.market.value, "subject": request.subject,
             "parameters": request.parameters, "retrieved_at": captured.astimezone(UTC).isoformat(),

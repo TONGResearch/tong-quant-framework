@@ -2,7 +2,274 @@
 
 Status: `ready`
 
+## Owner-Approved Usability Priority: November 17
+
+The first acceptance case is a repeatable MSFT research loop, not a prose-only
+stock opinion or a new trading work package. This reorders delivery inside this
+ready package; it does not mark it accepted or activate a scheduler/worker.
+Retain the four-market and financial/nonfinancial scope after this first case.
+Reuse the existing MSFT thesis proposal, technical bindings and official research
+and validation contracts. Do not create an alternative official report or score.
+
+1. Explicit fresh-input and failure checks: retain actual capture/availability,
+   selected source and cutoff; do not present old data as a successful update.
+2. Daily/weekly/monthly context: distinguish primary methods, supporting features,
+   correlated evidence and ended periods. Yearly views cannot finalize an open year.
+3. Compact change digest: compare two explicitly selected, verified original
+   snapshots and their recomputed diagnostics. Bind company, market, source,
+   parameters, exact UTC cutoffs and original receipts. Mark source/parameter/
+   freshness/period changes separately from observed price or business changes.
+4. Holding thesis review: qualified evidence plus explicit approved definitions,
+   thresholds and windows; declarations alone remain NOT_EVALUATED.
+5. Historical/OOS verification and concise research output through existing
+   Validation. No best exit date, success probability or holding/add/exit authority
+   is implied by a diagnostic, a simulated example or passing engineering tests.
+
+The delivered bounded implementation is step 3's read-only daily foundation,
+not the whole loop. Its tests cover fixed-input determinism, wrong-subject/
+market/cutoff/parameter/source handling, DST/late revisions, prior/current
+missing/stale/failed states and no favorable fallback. Missing evidence is not
+no change. Comparing different source versions is not business improvement;
+unverified bar coverage is not verified market sessions. Avoid arbitrary-JSON
+comparison that can be satisfied merely by rehashing caller claims.
+
+Every delivery should identify the runnable increment, remaining blockers and
+next step. Ask Tong only for material operator decisions/actions, specifying what,
+why and what stays blocked without it. No secrets or private position/risk details
+in Git. Risk measurement needs an explicit definition before any policy. Owner-defined
+271 terms and seven-plus-one stay deferred. Execution/notifications remain
+disabled, PIT UNSUITABLE and production NOT_READY. The priority addendum is not
+whole-loop acceptance; actual partial implementation is recorded below.
+
+Research direction: define strategy and horizon before applying fundamental
+criteria; short-term research may differ from long-term value research, but
+data/tradability/validation/portfolio-risk gates remain hard. Separate market,
+industry and instrument trends and large/small horizons; regime is contextual,
+not a global trading switch. Market/flow evidence supports hypotheses, not
+certainty about an institution's identity or intentions. No runtime policy is
+relaxed by this statement, and a losing trade cannot silently change its horizon.
+
 ## Current implementation slice
+
+November 24 independent release review identified unsanitized UTC conversion
+overflow in the equity change CLI. Both price and native change APIs now turn
+either cutoff's conversion overflow into a generic ValueError before source
+reads. Twenty-four added API/CLI cases cover both range edges and all existing
+period/native modes. This is an input-boundary repair, not source qualification,
+new research outcomes, execution or work-package acceptance. Full publication
+still requires exact-candidate quality checks and independent follow-up review.
+
+November 23 H3 evidence-only follow-up binds fourteen original references to
+XML-side affixes/neighbor cells and selected lexical headings. Native sign
+attribute absence and split-cell PPE parentheses cannot determine numeric or
+economic sign or authorize a value rewrite. No selected numeric text, new amounts,
+parser/default/trading or qualification change. Two processes match and five old
+pins stay exact; see ../msft-h3-definition-review-2026-11-19.md for final checks.
+Independent read-only review did not complete due to the tool's usage-limit
+error; it remains pending, not accepted or replaced by main-runner checks.
+All seven accounting relations remain UNKNOWN; ready, not accepted.
+
+November 23 optional compact source view reduces repeated detail after full
+original recomputation on the same snapshot. Distinct source/full-inventory/view
+hashes, explicit omissions and every blocker/unknown/authority are retained;
+49 added cases, one fixed old-default vector and two synthetic byte-size examples.
+See ../sec-window-inventory-2026-11-18.md. This is a bounded source diagnostic
+view, not a new official report, source authentication or holding method. No
+schema/default/trade/commit/push change; ready, not accepted.
+
+November 23 optional v4 adds bounded per-selection parser-record/returned-occurrence
+multiset hashes using the existing original factories and one DB snapshot. Typed
+source/capture binding is rechecked; only hashes/status/counts are published.
+Sixty-two added cases and one frozen old-default vector cover the scoped addition;
+see ../sec-window-inventory-2026-11-18.md. Full lexical/formal SOURCE_CHANGE,
+source/accounting/method/holding gates remain open, all authorities false and H3
+unchanged. No schema/default/trade, commit/push change; ready, not accepted.
+
+November 23 record-projection boundary design plus sixteen existing-reader
+characterizations separates bounded parser records from full XML bytes. The
+512-character decoded preview and independent 128-character stripped numeric
+limit stay unchanged. Future representation scope is parser-occurrence-only;
+original normalized strings/multiplicity and body hashes remain distinct. See
+the SEC comparison proposal/boundary record. This is not parsed/representation
+runtime, financial/source/method admission or a parser repair. No runtime/CLI/
+version/schema/default/trading/commit/push change; ready, not accepted.
+
+November 23 third slice opts into check/gap-state projection through the existing
+source-reference API/CLI, requiring complete capture identity. Same outer snapshot
+and original inventories; v3 preserves default single/v1/v2 outputs on one fixed
+vector. Source failures/missing/stale material and version drift remain unassessed;
+tag-scoped counts and original report-period blockers stay explicit. Forty-eight
+added synthetic cases; see ../sec-window-inventory-2026-11-18.md for verification.
+Parsed/representation and financial/source/method gates remain open. No schema/
+default/trading/commit/push change; ready, not accepted.
+
+November 23 second slice optionally adds full selected-capture ID/time/raw hash
+to the existing two-cutoff source-reference API/CLI, from the original factory
+documents on one outer DB snapshot. Default single-cutoff/v1 outputs match a
+frozen synthetic vector; explicit v2 remains partial observation with all false
+authorities, missing/failure/stale states intact. Forty-two added synthetic cases;
+see ../sec-window-inventory-2026-11-18.md for checks and limitations. Parsed-record,
+representation/gap and financial/method gates remain open. No schema/default/
+trading, commit/push changes; ready, not accepted.
+
+November 23 test-only follow-up adds complete parent/reference-material hash
+assertions and asymmetric missing/available coverage through original synthetic
+factories. Twenty cases include an independent-review-requested first-body capture
+between cutoffs. No runtime, CLI, version, schema/default or authority change;
+see ../sec-window-inventory-2026-11-18.md for final verification and remaining scope.
+Full financial/source/method admission stays separate; ready, not accepted.
+
+November 22 optional two-cutoff SEC source-reference observation is runnable in
+the existing window API/CLI with --previous-as-of. One outer read snapshot binds
+both original inventories. Receipt, capture ID/time reference, parent binding and
+body bytes are separate; unknown/failure/stale is not unchanged. Full planned
+SOURCE_CHANGE, raw_data_hash capture identity, parsed/representation/gap axes and
+financial admission remain unimplemented. No values, default-output, schema,
+source/method/trading, commit/push changes; ready, not accepted. See the November 22
+section of ../sec-window-inventory-2026-11-18.md for verification/limits.
+
+November 22 second follow-up: replay outcome v5 validates integer day horizon/lag
+and catches duration/target/earliest datetime overflow. Invalid windows raise;
+no rounding, fallback, economic horizon cap or session policy is introduced.
+Thirty-two synthetic cases include defensive entry checks, valid integer windows,
+datetime upper boundaries and legacy-v4 row preservation/current reconstruction.
+See the replay endpoint record. No generic constructor/JSON/source admission,
+schema/default/trading, commit/push changes; ready, not accepted.
+
+November 22 follow-up: replay outcome v4 rejects unsupported/bool/overflowing
+threshold inputs; real nonfinite floats retain the existing named blocker and
+diagnostic-only result. Finite comparison and price/business separation stay.
+Seventy-three new synthetic cases include nonzero float thresholds and legacy-v3
+preservation/reconstruction; old rows are never rewritten. See the replay endpoint
+record addendum. Scope is this evaluator, not constructors/windows/JSON or source/
+strategy admission. No schema/default/trading, commit/push change; ready, not accepted.
+
+November 22 H3 metadata review binds the exact lease-note continuedAt link to
+the previously selected wrapper and ten fact references. Current wrapper context
+must not override comparative fact contexts. Existing CIK/date/USD shape checks
+and unique selected IDs do not qualify source/statement/accounting semantics.
+Two runs match, five old file pins stay exact; this is direct pinned-byte review,
+not new registry reconstruction. See ../msft-h3-definition-review-2026-11-19.md.
+No new amounts, parser, test/config/default/authority, commit or push changes.
+Next complete statement/classification and cash/noncash review; all seven overlap
+relations remain UNKNOWN, ready, not accepted.
+
+November 22 replay outcome v3 repairs automatic price-to-business-thesis labels.
+Numerical return/success and endpoint rules are preserved; business thesis stays
+NOT_OBSERVABLE, invalidation detection null. Existing historical price validation
+and thesis aggregation now receive distinct semantics; no new thesis evaluator.
+Twenty-three added synthetic cases include legacy-v2 row preservation/current
+reconstruction and forged-label rejection. See the November 22 addendum in
+../replay-endpoint-qualification-2026-11-17.md. No schema/default/strategy/trading,
+commit or push change. Source-bound business outcomes remain open; ready, not accepted.
+
+November 21 owner exit-research requirement is now in the existing MSFT thesis
+proposal, with thirteen synthetic existing-behavior holding-review regressions.
+Continuing/reducing/exiting/adding require distinct evidence; cost recovery, unknown
+inputs and declared horizons cannot be holding approval or an exit instruction.
+Business/strategy/event/funding reasons and cost-versus-portfolio drawdown scope
+are separated. No evaluator, thresholds, production/default/schema/authority,
+commit or push change. Next explicit falsifiable thesis conditions and qualified
+outcome/OOS review; H3 work remains parallel. Ready, not accepted.
+
+November 20 second H3 slice records fixed-source table/ancestor references for
+four OCF/PPE occurrences and ten lease candidates without new amounts. The latter
+share one issuer nonNumeric textblock; zero segment/scenario containers do not
+admit contexts. No global scope/dimensional relaxation or new parser. Two audits
+match; five old files remain exact, and a new ignored metadata/tool packet records
+pins. See the second November 20 section in
+../msft-h3-definition-review-2026-11-19.md. Next exact wrapper/continuation and
+statement/context review; all seven accounting relations remain UNKNOWN.
+Ready, not accepted; no runtime/test/default/authority, commit or push changes.
+
+November 20 H3 issuer evidence retains a new public deck in an ignored manual
+packet, with visual slide/period/unit/sign binding and two-column arithmetic.
+Four values agree numerically with the exactly reconstructed old SEC subset;
+receipt and five old files remain unchanged. No provider ingestion, independent
+source qualification, approved FCF formula or seven-relation overlap resolution.
+Entry HTML was rejected by existing preflight and not retained, not bypassed.
+See the November 20 section in ../msft-h3-definition-review-2026-11-19.md.
+Next exact statement/scope and cash-versus-lease review. No runtime/test/default/
+schema/authority, commit or push change; ready, not accepted.
+
+November 19 second H3 slice extends the existing review with a proposed signed-
+contribution definition, issuer-versus-research metric identities, seven UNKNOWN
+overlap relations and a pending predeclared outcome/validation path. Documents
+only: no arithmetic, composite binding, extra numeric parsing or new test is
+implemented. Official live references are method context, not retained/fresh
+filing admission. Next retain/reconcile one issuer definition and exact-period
+components before deciding composite support. See the follow-up in
+../msft-h3-definition-review-2026-11-19.md. Ready, not accepted; no authority,
+default/config/schema/runtime, commit or push change.
+
+November 19 H3 source-definition review binds four existing OCF/PPE facts to old
+source labels/contexts and locates ten lease-related metadata candidates without
+extra numeric parsing. The 60-reference/32-name lexical inventory is not financial
+coverage or accounting admission. Signed flows, aggregate overlap, noncash items,
+measure definition and outcome-method questions are explicit. See
+../msft-h3-definition-review-2026-11-19.md. Existing-reader regressions are not a
+new formula, definition approval or H3 validation. No runtime/default/schema/
+trading changes, commit/push or sync retry; ready, not accepted.
+
+November 18 partial SEC window inventory adds a standalone read-only CLI and typed
+API over existing period factories. Exact same-tag windows/namespace/CIK/cutoff and
+selection bindings are inspected with retained blockers; no amount, arithmetic or
+new financial admission. Old MSFT gives two raw unqualified/five economically
+unadmitted pairs, preserving the old receipt and five files. See
+../sec-window-inventory-2026-11-18.md. SOURCE_CHANGE, the full plan, definitions and
+method validation remain open. Defaults/schema/dependencies/trading unchanged;
+ready, not accepted; no commit/push or GitHub sync retry.
+
+November 18 SEC comparison contract separates source changes from financial
+window comparisons and explicitly records namespace/scope/definition/availability
+gaps in the existing exact-period reader. Twelve added characterizations cover
+existing behavior; they do not implement or accept the proposed comparator.
+See ../proposals/sec-filing-change-comparison-v1.md and
+../sec-comparison-boundaries-2026-11-18.md. Next opt-in comparability inventory
+must remain non-dimensional, source-reconstructed and unqualified, with accounting
+and method admission independent. No runtime/schema/default/trading change,
+commit or push. Ready, not accepted.
+
+November 18 optional native annual change context reconstructs original US/HK/MY
+receipts in the same read-only snapshot as price inputs. Same/different retained
+records, latest period/value/label changes and historical changes are descriptive;
+they cannot establish growth or issuer restatements. Latest failures and partial
+metric gaps remain explicit; no capture or older-good fallback. No flag preserves
+v1/v2, opt-in uses v3. Frozen prior outputs and old-cutoff three-market rehearsal
+preserve 54 pinned files, not source qualification. See
+../native-fundamental-changes-2026-11-18.md. Qualified fundamental assessment stays
+NOT_ASSESSED. Filing-backed accounting comparison, reviewed update/recovery and
+method/OOS validation remain open. Ready, not accepted; no commit/push or trading.
+
+November 17 optional weekly/monthly change context reuses existing long-horizon
+calculations on the same read-only original snapshots. Calendar-end advancement
+is distinct from new prices; cross-period indicators are NOT_ALIGNED, gaps and
+missing warmup remain unassessed. False/missing opt-in preserves daily v1 bytes;
+v2 carries compact hashes, dates, statuses and no decision authority. Retained
+three-market compatibility/repeatability preserves 54 pinned files, not current
+market/source qualification. See ../equity-period-changes-2026-11-17.md. Next:
+bound fundamental changes, reviewed update/recovery and method/OOS verification.
+No runtime defaults, schema, trading, commit or push. Ready, not accepted.
+
+November 17 daily change digest and JSON CLI compare two retained US/HK/MY price
+snapshots within one read-only transaction, binding recomputed original-source
+diagnostics. Null counts, missing warmup, revisions/source/parameter changes and
+latest failures stay explicit; no capture or favorable fallback. 65 focused
+offline tests and old-cutoff three-market rehearsal pass. Fundamentals and
+multi-timeframe changes are NOT_ASSESSED; holding method NOT_VALIDATED. Next:
+ended-period context and financial changes, reviewed update/recovery and actual
+method/OOS evidence. See ../equity-change-digest-2026-11-17.md. This is runnable
+daily comparison, not a completed recurring loop or Paper/holding/trading authority.
+Ready, not accepted; no commit or push.
+
+November 17 Yahoo native fundamental clock guard rejects unsupported capture
+offsets for US/HK/MY before retention, after download. UTC contracts and existing
+native accounting boundaries stay unchanged; old mismatched records remain
+blocked without favorable fallback. Seventy-two regressions, six frozen-HEAD
+vectors and old-cutoff real retained MSFT/Tencent/Maybank compatibility checks
+pass. No new capture, canonical fact or holding/strategy admission. See
+../yahoo-fundamental-clock-2026-11-17.md. Pre-fetch attempt/recovery and independent
+source/publication/revision qualification remain open. Ready, not accepted.
 
 November 17 SEC clock prevention covers submissions, concepts, filing pages and
 bodies. Unsupported producer offsets fail before retention, after download;

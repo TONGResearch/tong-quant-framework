@@ -25,6 +25,7 @@ from tong_quant.domain.enums import (
     SecurityStatus,
     ThesisOutcomeStatus,
     ValidationModuleName,
+    ValidationStatus,
 )
 from tong_quant.domain.models import (
     Bar,
@@ -49,6 +50,7 @@ from tong_quant.validation.replay.outcomes import evaluate_outcome, require_veri
 from tong_quant.validation.replay.repository import SQLiteHistoricalReplayRepository
 from tong_quant.validation.replay.request_factory import ValidationRequestFactory
 from tong_quant.validation.replay.research_binding import research_snapshot
+from tong_quant.validation.thesis import ThesisValidationModule
 from tong_quant.version import DATABASE_SCHEMA_VERSION, REPLAY_OUTCOME_VERSION
 
 
@@ -873,13 +875,210 @@ def test_rehashed_suspended_bindings_cannot_keep_a_favorable_outcome(tmp_path: P
         require_verified_outcome(changed, result.query)
 
 
-def test_v1_tagged_replays_are_retained_but_require_reconstruction(tmp_path: Path, monkeypatch):
+@pytest.mark.parametrize("operator,expected", (
+    ("<", (True, False, False)), ("<=", (True, True, False)),
+    (">", (False, False, True)), (">=", (False, True, True)),
+    ("==", (False, True, False)), ("!=", (True, False, True)),
+))
+@pytest.mark.parametrize("price_index,end_price,value", (
+    (0, "8", -20), (1, "10", 0), (2, "12", 20),
+))
+def test_price_outcomes_do_not_observe_business_thesis(
+    operator, expected, price_index, end_price, value,
+):
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic price-only fixture")
+    query = _query()
+    definition = replace(query.outcome_definitions[0], success_operator=operator)
+    query = replace(query, outcome_definitions=(definition,))
+    outcome, context = evaluate_outcome(
+        query, instrument, definition, _bar(instrument, date(2024, 1, 15), "10"),
+        _bar(instrument, date(2024, 2, 15), end_price))
+    assert outcome.value == context["value"] == value
+    assert outcome.succeeded is expected[price_index]
+    assert context["blocking_reasons"] == []
+    assert outcome.thesis_status is ThesisOutcomeStatus.NOT_OBSERVABLE
+    assert outcome.invalidation_triggered is None
+    assert outcome.metadata["thesis_evidence_basis"] == "NOT_EVALUATED_PRICE_ONLY"
+    assert context["thesis_evidence_basis"] == "NOT_EVALUATED_PRICE_ONLY"
+
+
+@pytest.mark.parametrize("threshold,succeeded", ((0, True), (30, False)))
+def test_price_replay_can_resolve_target_without_resolving_thesis(
+    tmp_path: Path, threshold, succeeded,
+):
+    from tong_quant.validation.historical import HistoricalValidationModule
+
+    store, _ = _prepared_store(tmp_path)
+    query = _query()
+    definition = replace(query.outcome_definitions[0], success_threshold=threshold)
+    result = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store)).build(
+        replace(query, outcome_definitions=(definition,)),
+        generated_at=datetime(2025, 2, 1, tzinfo=UTC))
+    request = _validation_request(result)
+    outcome = request.samples[0].outcome
+    assert outcome.value == 20 and outcome.succeeded is succeeded
+    require_verified_outcome(result.samples[0], result.query)
+    historical = HistoricalValidationModule().evaluate(request, ()).assessment
+    thesis = ThesisValidationModule().evaluate(request, ()).assessment
+    assert historical.sample_size == 1 and historical.score is not None
+    assert thesis.sample_size == 0 and thesis.score is None
+    assert thesis.status is ValidationStatus.INCONCLUSIVE
+    assert thesis.metrics[ThesisOutcomeStatus.NOT_OBSERVABLE.value] == 1
+    assert thesis.metrics["invalidation_detection_rate"] is None
+
+
+@pytest.mark.parametrize("status,triggered", (
+    (ThesisOutcomeStatus.SUPPORTED, False), (ThesisOutcomeStatus.INVALIDATED, True),
+))
+def test_price_endpoint_binding_cannot_authorize_forged_thesis_labels(
+    tmp_path: Path, status, triggered,
+):
+    store, _ = _prepared_store(tmp_path)
+    result = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store), persist=False).build(
+        _query())
+    sample = result.samples[0]
+    assert sample.validation_sample is not None
+    forged = replace(sample.validation_sample.outcome,
+                     thesis_status=status, invalidation_triggered=triggered)
+    changed = replace(sample, validation_sample=replace(sample.validation_sample, outcome=forged))
+    with pytest.raises(ValueError, match="outcome evidence or window mismatch"):
+        require_verified_outcome(changed, result.query)
+
+
+@pytest.mark.parametrize("operator", ("<", "<=", ">", ">=", "==", "!="))
+@pytest.mark.parametrize("threshold", (
+    pytest.param(True, id="true"), pytest.param(False, id="false"),
+    pytest.param(None, id="missing"), pytest.param("1", id="numeric-text"),
+    pytest.param(Decimal("1"), id="unsupported-decimal"),
+    pytest.param(10 ** 10000, id="integer-overflows-finite-check"),
+))
+def test_replay_rejects_unsupported_thresholds_before_creating_outcome(operator, threshold):
+    query = _query()
+    definition = replace(query.outcome_definitions[0], success_operator=operator,
+                         success_threshold=threshold)
+    query = replace(query, outcome_definitions=(definition,))
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic threshold fixture")
+    with pytest.raises(ValueError, match="replay threshold requires a supported built-in number"):
+        evaluate_outcome(query, instrument, definition,
+            _bar(instrument, date(2024, 1, 15), "10"),
+            _bar(instrument, date(2024, 2, 15), "12"))
+
+
+@pytest.mark.parametrize("operator", ("<", "<=", ">", ">=", "==", "!="))
+@pytest.mark.parametrize("threshold", (
+    pytest.param(float("nan"), id="nan"), pytest.param(float("inf"), id="positive-infinity"),
+    pytest.param(float("-inf"), id="negative-infinity"),
+))
+def test_replay_retains_nonfinite_threshold_blocker_without_outcome_label(operator, threshold):
+    query = _query()
+    definition = replace(query.outcome_definitions[0], success_operator=operator,
+                         success_threshold=threshold)
+    query = replace(query, outcome_definitions=(definition,))
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic threshold fixture")
+    outcome, context = evaluate_outcome(query, instrument, definition,
+        _bar(instrument, date(2024, 1, 15), "10"), _bar(instrument, date(2024, 2, 15), "12"))
+    assert context["blocking_reasons"] == ["invalid_success_threshold"]
+    assert outcome.value is outcome.succeeded is outcome.invalidation_triggered is None
+    assert outcome.thesis_status is ThesisOutcomeStatus.NOT_OBSERVABLE
+
+
+@pytest.mark.parametrize("operator,expected", (
+    ("<", (True, False, False)), ("<=", (True, True, False)),
+    (">", (False, False, True)), (">=", (False, True, True)),
+    ("==", (False, True, False)), ("!=", (True, False, True)),
+))
+@pytest.mark.parametrize("index,end_price,value", ((0, "10", 0), (1, "10.15", 1.5),
+                                                 (2, "12", 20)))
+def test_replay_preserves_nonzero_float_thresholds(operator, expected, index, end_price, value):
+    query = _query()
+    definition = replace(query.outcome_definitions[0], success_operator=operator,
+                         success_threshold=1.5)
+    query = replace(query, outcome_definitions=(definition,))
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic threshold fixture")
+    outcome, context = evaluate_outcome(query, instrument, definition,
+        _bar(instrument, date(2024, 1, 15), "10"),
+        _bar(instrument, date(2024, 2, 15), end_price))
+    assert outcome.value == value and outcome.succeeded is expected[index]
+    assert context["blocking_reasons"] == []
+    assert outcome.thesis_status is ThesisOutcomeStatus.NOT_OBSERVABLE
+    assert outcome.invalidation_triggered is None
+
+
+@pytest.mark.parametrize("field", ("observation_horizon_days", "availability_lag_days"))
+@pytest.mark.parametrize("invalid", (
+    pytest.param(True, id="true"), pytest.param(False, id="false"),
+    pytest.param(1.5, id="fractional"), pytest.param(31.0, id="whole-float"),
+    pytest.param(float("nan"), id="nan"), pytest.param(float("inf"), id="infinity"),
+    pytest.param(None, id="missing"), pytest.param("31", id="text"),
+    pytest.param(Decimal("31"), id="decimal"),
+    pytest.param(10 ** 10000, id="overflowing-integer"), pytest.param(-1, id="negative"),
+))
+def test_replay_revalidates_duration_fields_before_date_arithmetic(field, invalid):
+    query = _query()
+    definition = replace(query.outcome_definitions[0])
+    # Exercise the entry guard even when construction was bypassed or later tampered.
+    object.__setattr__(definition, field, invalid)
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic duration fixture")
+    with pytest.raises(ValueError, match="replay duration"):
+        evaluate_outcome(query, instrument, definition, None, None)
+
+
+def test_replay_rejects_zero_observation_horizon_at_entry():
+    query = _query()
+    definition = replace(query.outcome_definitions[0])
+    object.__setattr__(definition, "observation_horizon_days", 0)
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic duration fixture")
+    with pytest.raises(ValueError, match="replay duration"):
+        evaluate_outcome(query, instrument, definition, None, None)
+
+
+@pytest.mark.parametrize("horizon", (1, 31, 366))
+@pytest.mark.parametrize("lag", (0, 2))
+def test_replay_preserves_explicit_integer_calendar_windows(horizon, lag):
+    query = _query()
+    definition = replace(query.outcome_definitions[0], observation_horizon_days=horizon,
+                         availability_lag_days=lag)
+    target = query.decision_as_of + timedelta(days=horizon)
+    earliest = target + timedelta(days=lag)
+    query = replace(query, outcome_as_of=earliest, outcome_definitions=(definition,))
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic duration fixture")
+    outcome, context = evaluate_outcome(query, instrument, definition,
+        _bar(instrument, query.decision_as_of.date(), "10"),
+        _bar(instrument, target.date(), "12"))
+    assert context["blocking_reasons"] == []
+    assert context["expected_observed_at"] == target.isoformat()
+    assert context["earliest_available_at"] == earliest.isoformat()
+    assert outcome.value == 20 and outcome.succeeded is True
+    assert outcome.thesis_status is ThesisOutcomeStatus.NOT_OBSERVABLE
+    assert outcome.invalidation_triggered is None
+
+
+@pytest.mark.parametrize("overflow", ("target", "earliest"))
+def test_replay_rejects_supported_integer_windows_outside_datetime_range(overflow):
+    last = datetime(9999, 12, 31, tzinfo=UTC)
+    query = replace(_query(), decision_as_of=last if overflow == "target" else
+                    last - timedelta(days=1), outcome_as_of=last)
+    definition = replace(query.outcome_definitions[0], observation_horizon_days=1,
+                         availability_lag_days=0 if overflow == "target" else 1)
+    instrument = Instrument("600000", Market.CHINA_A, "Synthetic duration fixture")
+    with pytest.raises(ValueError, match="replay duration"):
+        evaluate_outcome(query, instrument, definition, None, None)
+
+
+@pytest.mark.parametrize("legacy_version", (
+    "replay-outcome-v1", "replay-outcome-v2-suspension-utc-endpoints",
+    "replay-outcome-v3-price-thesis-separation",
+    "replay-outcome-v4-strict-threshold-inputs",
+))
+def test_legacy_tagged_replays_are_retained_but_require_reconstruction(
+    tmp_path: Path, monkeypatch, legacy_version,
+):
     store, _ = _prepared_store(tmp_path)
     builder = HistoricalReplayBuilder(SQLiteHistoricalReplayRepository(store))
     with monkeypatch.context() as patch:
         for module in ("builder", "integrity", "outcomes"):
             patch.setattr(f"tong_quant.validation.replay.{module}.REPLAY_OUTCOME_VERSION",
-                          "replay-outcome-v1")
+                          legacy_version)
         legacy = builder.build(_query(), generated_at=datetime(2025, 2, 1, tzinfo=UTC))
     with sqlite3.connect(store.path) as connection:
         old_manifest = connection.execute(

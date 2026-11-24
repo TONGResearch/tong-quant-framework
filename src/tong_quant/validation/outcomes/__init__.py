@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import isfinite
 
 from tong_quant.validation.models import OutcomeDefinition
 
@@ -24,6 +25,15 @@ class OutcomeDefinitionRegistry:
 
     def evaluate(self, outcome_id: str, value: float) -> bool:
         definition = self.get(outcome_id)
+        for number in (value, definition.success_threshold):
+            if type(number) not in (int, float):
+                raise ValueError("outcome comparisons require finite built-in numbers")
+            try:
+                finite = isfinite(number)
+            except OverflowError:
+                finite = False
+            if not finite:
+                raise ValueError("outcome comparisons require finite built-in numbers")
         return _compare(value, definition.success_operator, definition.success_threshold)
 
 

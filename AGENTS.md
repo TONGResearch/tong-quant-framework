@@ -151,6 +151,191 @@ validation, risk management, and controlled execution.
 
 ## Development Style
 
+Tong approved prioritizing a usable MSFT continuous-research loop on November 17.
+Reuse WP-LAUNCH-001 and the existing holding/thesis contracts; do not add another
+official ResearchReport or expand infrastructure without a concrete loop need.
+Prioritize explicit fresh-input checks, multi-timeframe context, a compact
+previous/current change digest and source-bound method validation. A digest is
+research information, never a holding/add/exit instruction or a qualification
+upgrade. Preserve failed/latest/unknown inputs instead of substituting old data.
+At each delivery state what became runnable, what remains blocked and the next
+bounded step. Request owner action only when useful, explaining the exact task,
+reason and impact of deferral. Never request secret values. Keep personal holdings
+and risk answers out of tracked files; future risk policies require an explicit
+measurement basis, not an inferred stop policy. 271 undefined terms and
+seven-plus-one remain deferred.
+
+The November 22 registry comparison repair is recorded in the scoped maintenance
+section of docs/work-packages/wp-validation-001.md. Registry.evaluate rejects
+nonfinite, boolean and unsupported operands/thresholds before all six comparisons;
+invalid input is neither a success nor a failure label. Exact finite built-in
+int/float comparisons retain their semantics; do not coerce strings, missing
+values or arbitrary number objects. This is not global numeric qualification,
+source admission, replay evaluator support or business-thesis evidence.
+
+Tong's November 21 clarification requires symmetric holding/reduction/exit/add
+research, not an entry/add-only narrative or default hold-until-breakeven. See the
+exit addendum in docs/proposals/msft-holding-thesis-validation-v1.zh-CN.md.
+Separate business invalidation, strategy/horizon failure, event/window completion
+and funding/portfolio risk; unknown evidence neither approves holding nor proves
+failure. Do not change a losing hypothesis's horizon retroactively or count
+correlated indicators as votes. Current loss_review_percent is a single-position
+cost-comparison annotation, not a portfolio drawdown policy. Requires explicit
+measurement scope before using owner preferences. New regressions characterize
+existing behavior only; no exit evaluator, thresholds or actions are approved.
+
+The daily change foundation is runnable through scripts/inspect_equity_changes.py;
+see docs/equity-change-digest-2026-11-17.md. Reuse its original-source recomputation
+and single read-only transaction, retaining missing/latest failures and revisions.
+Uninspected counts are null; insufficient warmup is not unchanged. Optional
+--with-period-context now adds weekly/monthly context; see
+docs/equity-period-changes-2026-11-17.md. No opt-in preserves v1 bytes/hashes.
+Period calculations reuse original snapshots and existing long-horizon formulas;
+different ended periods are NOT_ALIGNED, not same-period improvement. Calendar
+rollover is not a new price row or verified session close. Never fill missing or
+suspended periods or count correlated timeframes as independent votes. This is
+not fundamental comparison, qualified holding guidance or a recurring worker.
+Optional --max-native-capture-age-seconds now adds retained annual native record
+changes in the same DB snapshot; see docs/native-fundamental-changes-2026-11-18.md.
+No option preserves v1/v2 bytes. Native content/period/currency/value differences
+are not qualified growth or issuer restatements; LOW/retrieval_time, missing and
+failed/latest observations remain unadmitted. Qualified fundamental comparison
+is still NOT_ASSESSED. Next integrate filing-backed period/definition/revision
+comparisons and reviewed update/recovery, followed by actual method/OOS evidence.
+The SEC comparison proposal is docs/proposals/sec-filing-change-comparison-v1.md;
+its paired boundary record/tests characterize the existing reader only. It is
+not a runtime comparator or accounting admission. Separate two-cutoff source
+record changes from two financial windows at one cutoff. Same tag/period/amount
+or supported numeric agreement cannot resolve namespaces, excluded contexts,
+statement scope or historical vintages. Keep the first runtime slice limited to
+the scoped, reviewed read-only inventory; dimension parsing, financial arithmetic
+and qualification remain separate. The partial window inventory is
+now runnable via scripts/inspect_sec_windows.py; see docs/sec-window-inventory-2026-11-18.md.
+It observes two same-tag financial windows at one cutoff only, not SOURCE_CHANGE
+or the complete SECComparisonPlan. Reconstruct original factories, verify every
+selection/subject/cutoff and retain namespace/unit/entity/unresolved-context and
+age blockers. Tag-level gaps do not prove a competing fact in an exact window.
+No amount values or arithmetic are output, all economic statuses remain
+NOT_ADMITTED, and false source/accounting/score/holding/trading authorities stay.
+Do not claim listed future acceptance cases have passed or caller references grant authority.
+November 22 optional read_sec_source_reference_changes/--previous-as-of provides
+SOURCE_REFERENCE_OBSERVATION, not full SOURCE_CHANGE. Reconstruct both existing
+inventories on one outer read-only DB snapshot and compare actual UTC cutoffs.
+Receipt, selected ID/time reference (without raw_data_hash), complete parent
+binding and body-byte observations cannot become financial changes or source
+admission. Missing/failed/stale comparisons stay NOT_EVALUATED; matching body
+bytes cannot override raw-context blockers. Preserve default single-cutoff bytes,
+all false authorities, unimplemented parsed/representation/gap axes and H3 exclusions.
+The November 23 test-only follow-up covers complete parent/material hashes and
+asymmetric availability using original synthetic factories. An unavailable
+comparison keeps each separately observable material hash; NOT_EVALUATED is not
+proof that both sides are absent. Selected regressions do not qualify real sources
+or implement the remaining comparator axes; runtime/defaults stay unchanged.
+November 23 second slice opts into complete selected capture identity with exact
+API boolean with_selected_capture_identity or CLI --with-selected-capture-identity
+plus --previous-as-of. V2 preserves default inventory/v1 output and compares the
+original selected evidence ID/time/raw_data_hash from each factory document under
+one outer DB snapshot. Keep envelope, body and parent hashes distinct; malformed/
+missing/stale material stays unassessed with the usable side retained. No caller
+receipt, second source lookup or source/accounting authority is introduced.
+Parsed/representation/gap axes and H3 gates remain open; projection-fault tests
+are not real-source admission evidence. See the current inventory record.
+November 23 third slice optionally adds with_check_gap_state/--with-check-gap-state,
+requiring complete capture identity and both cutoffs. V3 compares original check/
+gap counts/status/blockers, not financial values or location; default inventory/
+v1/v2 outputs stay unchanged. Missing material is null, not an empty favorable
+state. Preserve both side hashes but block interpretation on source/review version
+drift. Unresolved counts remain tag-scoped, never verified window-conflict totals.
+Identical check state does not mean identical financial content or holding safety;
+parsed/representation axes, source/accounting/method and H3 gates remain open.
+The November 23 record-boundary design in the SEC proposal limits future
+representation equality to PARSER_OCCURRENCE_PROJECTION_ONLY. Current raw_text
+is a 512-character decoded preview, not full lexical XML or the input to numeric
+parsing; the latter uses complete stripped text with its independent 128 bound.
+Equal parser rows can coexist with different body bytes. Preserve exact original
+normalized strings and occurrence multiplicity, not Decimal/set deduplication.
+Sixteen new tests characterize old behavior, not a new comparator or parser bug.
+Do not change existing limits/receipts or infer raw-text completeness/source/
+financial/holding authority from projected record equality. Runtime remains pending.
+The subsequent November 23 opt-in v4 implements only those bounded parser-record
+hash projections via with_record_projections/--with-record-projections, requiring
+gap/capture context and both cutoffs. Original typed input and selected capture
+must bind exactly to each original inventory on the shared snapshot; mixed
+material raises and missing/failed/stale sides stay unassessed. Preserve exact
+strings/duplicates/nulls/reasons and unique selections; publish hashes/counts,
+never new amounts or previews. Empty observed exact windows are not absent
+sources. Explicit PARSER_OCCURRENCE_PROJECTION_ONLY/full-source-mode-false labels
+cannot become full lexical, financial/source/method/holding qualification. Default
+single/v1/v2/v3 output and all H3 gates remain unchanged; see the inventory record.
+November 23 optional compact=True/--compact projects only the just-recomputed full
+source observation; both cutoffs are required. Distinguish source observation/
+full inventory hashes from summary_hash. Omitted occurrence/parent details are
+explicit, all root blockers/authorities and unknown counts remain; hash-bound
+failed capture is not usable data. A compact JSON cannot rederive its omitted
+full content or authenticate sources, and cannot replace full evidence/ResearchReport.
+No cached/caller summary admission or default/trading change. Synthetic byte
+savings are not token/cost measurements; see the existing inventory record.
+The H3 source-definition review is docs/msft-h3-definition-review-2026-11-19.md.
+Four existing OCF/PPE occurrences and ten lease-related reference candidates are
+located in the old retained body; no extra numeric tags or amounts are admitted.
+The 60-occurrence/32-expanded-name lexical inventory is not a lease obligation,
+coverage or independent-evidence count. Never equate cash PPE with all AI spend,
+mix noncash asset recognition with payments, double-deduct aggregate components,
+or synthesize FCF from two native tags. Definition/overlap, fiscal/column roles,
+source and H3 outcome/method review remain separate; new tests characterize old
+behavior, not a newly implemented formula or completed holding thesis.
+Its second-slice definition proposal separates issuer FCF from research cash-PPE
+and lease-principal sensitivity proxies. All seven overlap relations remain
+UNKNOWN; signed contributions must preserve native signs and explicit role mapping.
+Unknown is not zero, different tags are not disjointness proof, and a blocked
+sensitivity cannot silently become its base proxy. No formulas/thresholds are
+registered. Current one-tag Thesis bindings are not a composite dependency graph;
+future support needs separate review, never formula text masquerading as a native
+tag. Live method references do not alter retained source clocks or admission.
+The November 20 issuer-deck follow-up retains a separate ignored manual packet,
+not provider ingestion or source qualification. Image-only slides can have no XML
+text; preserve original visual references, displayed periods/signs/units and exact
+package hashes. Arithmetic and same-issuer numeric agreement do not admit a metric
+or resolve the seven UNKNOWN overlap relations. Rejected landing HTML remains
+unretained after credential-pattern preflight; never relax that guard or treat
+PPTX opaque-binary screening as secret certification. Keep old receipts unchanged.
+The second November 20 scope review locates fourteen explicit references in two
+tables; ten lease candidates have one exact issuer nonNumeric ancestor and
+continuation ancestry, with zero observed segment/scenario containers. NonNumeric
+is an existing block; continuation alone is not. This narrows a future exact-wrapper
+review, not permission for numerical parsing, conformance/context admission or
+global exclusion changes. Table location and context equality cannot settle the
+seven UNKNOWN overlap relations. H1's dimensional review remains separate.
+The November 22 fixed-byte follow-up binds lease-note origin 31114 through
+continuedAt to 31560 and nested wrapper 31562. Both textblock contexts are current
+period while ten selected facts include comparative periods; never inherit the
+outer context. Existing context/USD shape checks and unique selected IDs are
+structural observations, not conformance, financial/source admission or permission
+to relax nonNumeric/dimensional blocks. This audit uses pinned bytes/prior metadata,
+not fresh registry reconstruction. Keep the seven overlap relations UNKNOWN and
+review complete statement/classification and cash/noncash roles before proposing
+any separately reviewed narrow numerical support. No new amount/parser is admitted.
+November 23 fixed-byte XML-affix review records PPE parentheses split across fact
+cells and adjacent direct XML cells, while all fourteen native sign attributes
+are absent. This is not browser rendering, numeric-text sign, economic direction
+or a source/statement classifier. Do not rewrite native values or infer a cash
+sign multiplier from presentation tokens/absent attributes. Selected numeric text
+is skipped; prior/current contexts remain individual, lease exclusions and all
+seven UNKNOWN relations stay. The ignored packet is metadata only; unchanged
+runtime/tests, old-source pins and source/method gates are documented in the H3 record.
+Research starts with strategy/horizon: short-term and long-term fundamental
+criteria may differ, never the hard data/tradability/validation/risk gates.
+Separate market/industry/instrument and large/small trends; regime is context,
+not a universal switch. Institutional behavior is a source-qualified hypothesis,
+not proof of actor identity/intention. No runtime policy relaxation is approved.
+
+Yahoo native fundamental capture-clock prevention is documented in
+docs/yahoo-fundamental-clock-2026-11-17.md. Require aware actual zero-offset capture
+clocks after download, preserving accepted UTC envelopes/IDs and non-UTC query
+cutoffs. Do not rewrite legacy identities, fall back to older good data or label
+a rejected fetch as a fresh update. Native LOW/retrieval-time annual observations
+remain outside canonical financial/scoring admission; this is not PIT validation.
+
 SEC submissions/concept/filing-page/body producer clocks must be aware and have
 zero actual offset before retained envelope/evidence construction. See
 docs/sec-capture-clocks-2026-11-17.md. Keep accepted UTC bytes/IDs and non-UTC
@@ -170,7 +355,34 @@ row and does not freshen older evidence; future workers still need durable
 pre-fetch attempts. This does not certify other producers or source/PIT quality,
 enable unattended updates or define a new strategy. Default clock is already UTC.
 
-Replay outcome v2 is documented in
+Replay outcome v5 checks exact integer durations at evaluation: horizon > 0,
+lag >= 0, no bool/float/text coercion or rounding. Duration and target/earliest
+datetime overflow raises explicitly without an outcome. Valid UTC integer
+calendar-day behavior stays; no exchange-session or holding-horizon policy is
+inferred. Stored v1-v4 identities require reconstruction, not rewriting. See
+the November 22 second follow-up in the replay endpoint record; defensive tests
+may bypass constructors and do not establish generic model/JSON/source qualification.
+
+The prior replay outcome v4 additionally rejects unsupported/bool/overflowing thresholds
+before endpoint evaluation. Exact finite int/float comparisons remain unchanged;
+real NaN/infinity keeps its existing blocker and diagnostic-only result, unlike
+the registry exception boundary. See the November 22 follow-up in the replay
+endpoint record. No coercion/default threshold, duration/constructor/JSON repair
+or admission follows. Stored v1/v2/v3 identities require explicit reconstruction,
+not rewriting or automatic upgrade.
+
+The prior replay outcome v3 separates price-target success from business-thesis evidence;
+see the November 22 addendum in
+docs/replay-endpoint-qualification-2026-11-17.md. Preserve numeric return/success
+but always leave replay price-only thesis_status NOT_OBSERVABLE and
+invalidation_triggered null. A usable price outcome is not a missing price just
+because its business thesis cannot be observed. Historical validation may resolve
+price targets; ThesisValidation must not count them as business support/failure
+or registered-condition detection. Existing bound recomputation rejects forged
+labels; stored v1/v2 identities stay unchanged and require reconstruction. No
+business outcome generator, exit evaluator or source/method qualification follows.
+
+The prior replay outcome v2 endpoint policy is documented in
 docs/replay-endpoint-qualification-2026-11-17.md. Explicit suspended or nonboolean
 endpoint flags, future visibility and reversed availability block numerical
 outcomes in actual UTC. Preserve original endpoint bindings and incomplete

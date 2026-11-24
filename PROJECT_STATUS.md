@@ -17,6 +17,655 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 ## What Exists
 
+### Change Cutoff Range Hardening: November 24
+
+Independent public-release review found that valid local ISO dates near the
+datetime bounds could overflow during UTC conversion and bypass the equity CLI's
+sanitized error. Both price and native change APIs now reject either overflowing
+cutoff with ValueError before source reads. Twenty-four new API/CLI cases cover
+both range edges and all period/native modes, preserving generic exit 2 behavior.
+Accepted output versions/hashes and all source/accounting/method/holding gates
+are unchanged. This records the scoped repair, not its unrun checks or a completed
+push; exact candidate verification and independent follow-up remain required.
+
+### Public Engineering Sync Preparation: November 23
+
+Tong explicitly approved temporary public visibility for teacher review. The
+authenticated GitHub connector can read and write TONGResearch/tong-quant-framework;
+local SSH authentication is separate and is not required for this connector route.
+The live target branch currently matches local HEAD. Earlier SSH-only blocking
+notes below describe those checks, not an instruction to reconfigure credentials.
+
+This paragraph records preparation, not a completed upload. Publication requires
+an isolated exact candidate, all five required quality checks, independent change
+review, sensitive-file screening and a final non-force expected-head update.
+Retained databases/raw evidence, local audit packets, account data, credentials
+and generated artifacts are excluded. Public code is not an encrypted data backup,
+strategy qualification or milestone acceptance. Preserve pending evidence and
+source/accounting/method gates; execution and notifications remain disabled.
+
+### H3 XML Affix And Heading Evidence: November 23
+
+The same fourteen old-source references now have bounded XML-affix/adjacent-cell
+and exact lexical-heading observations, with selected numeric subtrees skipped.
+All native sign attributes are absent; PPE opening parentheses are in fact cells
+while closing parentheses are in separate right cells. Attribute absence does
+not establish numeric-text sign, cash-flow direction or browser rendering. No
+native value is changed; lease exclusions, all seven UNKNOWN relations and
+source/accounting/method gates remain. Two process reproductions match; five old
+file pins stay exact. Ten synthetic audit self-checks are not new pytest cases;
+existing SEC-body/H3 suites: 218 passed. See
+docs/msft-h3-definition-review-2026-11-19.md for the ignored packet, checks/limits.
+This is pinned bytes/prior metadata, not registry reconstruction or fresh data.
+Independent read-only AI review is PENDING: the review tool returned a usage-limit
+error, with no completed findings. No bypass or review-pass claim; main checks
+do not replace independent review. Resume that bounded review when available.
+After resumption, five old file pins, the two-file packet and its exact audit-tool
+copy are unchanged; 489 Python/config inputs retain the prior tested fingerprint.
+Ruff and all 189 governance checks pass again. This slice's full pytest terminal
+result was not recoverable after the session transition, so no new full-suite
+pass is claimed. Prior slice results below remain historical, not candidate checks.
+Tong requested a push; a fresh strict-host, noninteractive SSH query to the approved
+origin failed with Permission denied (publickey). Cached upstream equality is not
+live verification. Owner action: restore authorized GitHub SSH access on this
+computer; never provide secret values in chat. Independent review and isolated
+exact-candidate checks remain required even after authentication is restored.
+All 38 pending paths stay local, index empty and HEAD unchanged. No commit/push.
+No runtime/test/config/default/trading change;
+ready, not accepted, PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### Optional Compact SEC Source View: November 23
+
+The existing source-reference API/CLI now offers compact=True/--compact with both
+cutoffs, reducing repeated evidence detail for bounded downstream analysis. It
+still recomputes the full original observation first; source/full-inventory hashes
+and the view's summary_hash are distinct. All axes/statuses/blockers/unknowns and
+false authorities remain, omitted details are listed, and no caller receipt or
+cached-view input exists. Forty-nine added cases cover v1-v4. Two synthetic JSON
+size examples shrink 19.88/75.36 percent in bytes, not measured tokens/billing.
+Frozen single/v1-v4 defaults match one fixed vector. See
+docs/sec-window-inventory-2026-11-18.md for final checks/limits. Not a new official
+report, evidence authentication or source/financial/holding qualification.
+
+Final compact module: **49 passed**; related suites: **550 passed**; full
+working-tree pytest: **5230 passed / 6 skipped**, 538.83 seconds. Ruff, mypy
+(324 files), governance (189 checks), whitespace and scoped eleven-file privacy/
+known-pattern checks pass; 489 Python/config inputs retain the final-suite
+fingerprint. Read-only static review finds no actionable scoped issue; byte and
+compatibility measurements are main-runner checks, not independent source/method
+validation. All 38 pending paths remain local, empty index and unchanged HEAD;
+checks include prior work, not isolated candidate/release verification. Next
+source/statement/definition, freshness/revision, method/business outcomes and
+controlled update/recovery, not a new report or holding signal from a compact view.
+
+No real-source inspection/capture/refresh, schema/default/trade, commit/push or
+owner action; ready, not
+accepted, PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### Optional SEC Parser Record Projections: November 23
+
+The existing source-reference API/CLI now optionally compares per-selection
+parsed-record and complete returned parser-occurrence multisets. V4 requires
+gap/capture context and both cutoffs; typed original source bindings and selected
+capture are revalidated. Only hashes/status/counts are published, no new amounts
+or raw text; duplicates, exact value strings, nulls/reasons and original blockers
+are preserved. Full XML/lexical and formal SOURCE_CHANGE mode are explicitly not
+implemented. Single-cutoff/v1/v2/v3 defaults match one frozen synthetic vector.
+Sixty-two added cases (35 new record tests, 27 existing-mode extensions) cover
+the bounded runtime. See docs/sec-window-inventory-2026-11-18.md for final checks
+and limitations. Source/accounting/method/holding qualification remains open.
+
+Final record module: **35 passed**; related suites: **501 passed**; full
+working-tree pytest: **5181 passed / 6 skipped**, 552.61 seconds. Ruff, mypy
+(324 files), governance (189 checks), whitespace and scoped thirteen-file privacy/
+known-pattern checks pass. All 488 Python/config inputs retain the final-suite
+fingerprint. Read-only independent review/follow-up finds no actionable scoped
+issue, not independent source/accounting/method validation. All 37 pending paths
+remain local, empty index and unchanged HEAD; checks include prior work and are
+not isolated candidate/release certification. Next source/statement/definition,
+freshness/revision, method/business outcomes and controlled update/recovery,
+not an automatic holding signal from changed record hashes.
+
+H3 exclusions/seven UNKNOWN relations unchanged. No schema/default/trade,
+real-source capture/review, commit/push or owner action; ready, not accepted,
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### SEC Record Projection Boundary Design: November 23
+
+Added sixteen original-reader characterizations and a bounded design for the
+remaining parsed/representation comparisons, not a new runtime comparator.
+Existing raw_text is a 512-character decoded preview; complete stripped numeric
+input has a separate 128-character limit. Changed XML/body bytes can preserve
+all parser occurrence fields. Future representation equality must be labeled
+PARSER_OCCURRENCE_PROJECTION_ONLY, never original XML completeness/economic
+unchanged. Tests also preserve exact normalized strings and repeated-value
+multiplicity. See docs/sec-comparison-boundaries-2026-11-18.md and the SEC proposal.
+Final boundary module: **28 passed**; related suites: **439 passed**; full
+working-tree pytest: **5119 passed / 6 skipped**, 497.79 seconds. Ruff, mypy
+(324 files), governance (189 checks), whitespace and scoped eight-file privacy/
+known-pattern checks pass; 487 Python/config inputs retain the final-suite
+fingerprint. Read-only review/follow-up finds no actionable issue in this design/
+test scope, not real-source/accounting validation. All 36 pending paths remain
+local, empty index and unchanged HEAD; tests include prior work and are not
+isolated candidate/release certification. Next bounded original-source record
+projections under the documented limits, not full lexical or economic claims.
+No production/CLI/version/schema/default, real-source capture/review or trading
+change. Parsed/representation runtime and financial/method/holding qualification
+remain pending; ready, not accepted, PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled. No commit/push or owner action.
+
+### Optional SEC Check And Gap State: November 23, Third Slice
+
+The existing source-reference reader/CLI now optionally compares exact original
+check/gap projections, requiring complete capture identity and explicit cutoffs.
+V3 separates state counts/status/blockers from content/location and preserves
+both original inventories. Missing/failed/stale/material-invalid states remain
+unassessed with the observable side retained; version drift blocks interpretation.
+Parent report-date changes retain original period blockers. Forty-eight synthetic
+cases (193 inventory total) cover the bounded addition. Single-cutoff/v1/v2 bytes
+match a frozen module on one fixed fixture, not universal source qualification.
+See docs/sec-window-inventory-2026-11-18.md for final checks and limitations.
+Final related suites: **423 passed**; full working-tree pytest: **5103 passed /
+6 skipped**, 499.93 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped eleven-file privacy/known-pattern checks pass. All 487
+Python/config inputs retain the final-suite fingerprint. Read-only review and
+follow-up find no actionable scoped issue; exact-count/conflict/asymmetric-v3
+tests address the named review suggestions, not source/financial qualification.
+All 36 pending paths remain local, empty index and unchanged HEAD; checks include
+prior work, not isolated candidate/release verification. Next parsed/representation
+scope plus independent source/statement/definition and method review, not an
+automatic holding or financial label from reduced gaps.
+Parsed/representation axes, complete SOURCE_CHANGE and financial/method admission
+remain open. No real-source refresh/review, schema/default/trading, commit/push
+or owner action; ready, not accepted, PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled.
+
+### Optional Complete SEC Capture Identity: November 23, Second Slice
+
+The existing two-cutoff source-reference reader/CLI now optionally binds complete
+selected capture ID/time/raw_data_hash. Explicit API boolean/CLI flag opts into
+v2; omitted flags retain the original inventory/v1 output on a frozen synthetic
+compatibility vector. Both original inventories and selected captures come from
+one outer DB snapshot; no caller receipts or second source lookup. Missing,
+failed/stale/mismatched material keeps NOT_EVALUATED with each observable side
+retained. Old ID/time reference and body/parent axes stay separate. Forty-two new
+synthetic cases (145 inventory total) cover this bounded addition. See
+docs/sec-window-inventory-2026-11-18.md for final checks and exact scope.
+Final related suites: **375 passed**; full working-tree pytest: **5055 passed /
+6 skipped**, 508.65 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped eleven-file privacy/known-pattern checks pass; 487 Python/
+config inputs retain the before/after final-suite fingerprint. Read-only review
+and follow-up find no actionable scoped issue, not independent source/accounting
+verification. All 36 pending paths remain local, empty index and unchanged HEAD;
+checks include prior work, not isolated candidate/release certification.
+Full SOURCE_CHANGE/parsed/representation/gap projections and financial/method
+admission remain open. No real retained-source review/refresh, schema/default,
+trade, commit or push; ready, not accepted, PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled. No owner action is needed for this slice.
+
+### SEC Reference Material Regressions: November 23
+
+Test-only follow-up adds 20 synthetic cases for exact canonical reference hashes,
+complete parent bindings and independently observable material on either side of
+an unavailable comparison. Original-factory tests include parent recapture, each
+filing metadata field, missing/failed/stale states, parent-only refresh rejection
+and first body capture between cutoffs. The last case addresses an independent
+read-only review finding. Runtime/CLI/version/schema/defaults stay unchanged;
+this closes selected automation gaps, not full source/financial/method admission.
+See docs/sec-window-inventory-2026-11-18.md for the final check record and limits.
+Final related suites: **333 passed**; full working-tree pytest: **5013 passed /
+6 skipped**, 490.90 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped known-pattern/privacy checks pass. All 487 Python/config
+inputs retain the final-suite fingerprint. Follow-up read-only static review
+finds no actionable issue in these 20 cases; no real-source/financial verification
+follows. Thirty-six pending paths remain, empty index and unchanged HEAD. Checks
+include earlier work, not isolated candidate/release verification. Next complete
+source/statement/definition evidence and remaining comparator axes before any
+financial-outcome or holding claim; avoid treating test coverage as method evidence.
+No real capture/DB review, trading, commit or push; no owner action. Full source
+comparator and H3 accounting review remain open. Ready, not accepted; PIT
+UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### SEC Source Reference Observation: November 22
+
+The existing SEC window API/CLI now supports optional --previous-as-of via
+read_sec_source_reference_changes: two explicit UTC cutoffs, one exact filing,
+one outer read-only DB snapshot and both original inventories preserved. Four
+separate reference observations distinguish receipt, selected ID/time, parent
+binding and body bytes; failure/staleness cannot become unchanged. It is not the
+complete SOURCE_CHANGE/seven-axis comparator, parsed financial change, growth or
+restatement confirmation; omitted raw_data_hash/projection axes remain explicit.
+Default single-cutoff JSON matches the pre-edit module on one fixed synthetic
+vector. Added 29 automated cases; related suites: 313 passed. Full working-tree
+pytest: **4993 passed / 6 skipped**, 501.24 seconds. Ruff, mypy (324 files),
+governance (189 checks), whitespace and scoped privacy/default checks pass;
+487 Python/config inputs retain their before/after full-suite fingerprint.
+Read-only static review found no actionable issue; direct automated parent-axis/
+hash assertions remain a gap, with separate manual vectors checked. A pinned
+five-file temporary clone rehearses the old MSFT cutoff and one second later:
+receipt differs, capture reference/parent/body stay same, all original file pins
+unchanged. No original DB query or fresh-source/financial qualification follows.
+Thirty-six pending paths, empty index and unchanged HEAD; checks include earlier
+work, not isolated release validation. See docs/sec-window-inventory-2026-11-18.md.
+No source/accounting/method qualification, schema/default/trading, commit/push or
+owner action. H3 work stays parallel; ready, not accepted, PIT UNSUITABLE,
+production NOT_READY, execution/notifications disabled.
+
+### Replay Integer Duration Entry: November 22, Second Follow-Up
+
+Fixed a synthetic direct-call reproduction accepting fractional calendar-day
+windows. Replay now requires exact positive int horizon and nonnegative int lag;
+invalid types/signs and duration/target/earliest datetime overflow raise without
+an outcome or rounded/fallback window. Valid UTC integer windows and all prior
+threshold/endpoint/business-thesis safeguards remain. REPLAY_OUTCOME_VERSION v5
+separates new identities; stored v1-v4 rows stay unchanged and need reconstruction.
+Added 32 synthetic cases; related suites: 420 passed. Full working-tree pytest:
+**4964 passed / 6 skipped**, 495.92 seconds. Ruff, mypy (324 files), governance
+(189 checks), whitespace and scoped privacy/default checks pass; 487 Python/
+config inputs retain the same before/after full-suite fingerprint. Read-only
+static review found no confirmed in-scope issue; defensive cases bypass
+construction and legacy tags are not complete old evaluators. Thirty-six pending
+paths, empty index and unchanged HEAD; checks include earlier pending work, not
+isolated release/source/method qualification. See the replay endpoint record.
+No generic constructor/JSON/source/strategy qualification, new duration policy,
+schema/default/trading, commit/push or owner action. H3 remains parallel;
+ready, not accepted, PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### Replay Threshold Input Types: November 22, Follow-Up
+
+Fixed the separate replay evaluator accepting boolean thresholds as numeric.
+Exact built-in int/float thresholds are required; unsupported or finite-check-
+overflow inputs raise before any outcome is returned. Existing real NaN/infinity
+blockers/diagnostic bindings stay unchanged; finite comparisons and price-only
+business-thesis semantics remain. REPLAY_OUTCOME_VERSION v4 creates new identities;
+stored v1/v2/v3 rows stay unchanged and require reconstruction for current admission.
+Added 73 synthetic cases; related suites: 388 passed. Full working-tree pytest:
+**4932 passed / 6 skipped**, 497.34 seconds. Ruff, mypy (324 files), governance
+(189 checks), whitespace and scoped privacy/default checks pass. All 487 Python/
+config inputs retain the same before/after full-suite fingerprint. Read-only
+static review found no confirmed in-scope issue; old-tag tests are not full old
+evaluators, and subclasses/finite extremes lack dedicated new cases. Thirty-six
+pending paths, empty index and unchanged HEAD; checks include earlier pending
+work, not isolated release verification. See the new replay endpoint record
+addendum. This is not a general constructor/window/JSON repair or source/
+strategy qualification. No schema/default/trading, commit/push or owner action.
+H3 work stays parallel; ready, not accepted, PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled.
+
+### Finite Registry Outcome Comparisons: November 22
+
+Fixed a synthetic registry reproduction where NaN/non-numeric operands could
+produce success/failure labels. Registry evaluation now requires finite exact
+built-in int/float values and thresholds; invalid, boolean, missing, textual,
+unsupported Decimal and overflowing operands raise instead of yielding a label.
+Supported numeric comparisons and unknown-ID behavior remain; no source or
+strategy qualification follows. Added 126 synthetic cases; related suites:
+315 passed. Full working-tree pytest: **4859 passed / 6 skipped**, 493.19 seconds.
+Ruff, mypy (324 files), governance (189 checks), whitespace and scoped privacy/
+default checks pass. All 487 Python/config inputs retain the same full-suite
+before/after fingerprint. Read-only static review found no confirmed in-scope
+issue; explicit valid nonzero-threshold, subclass and finite-extreme cases remain
+coverage limits. Thirty-six pending paths, empty index and unchanged HEAD; checks
+include earlier pending work, not isolated release or source/method qualification.
+See the scoped maintenance section of docs/work-packages/wp-validation-001.md.
+This is WP-LAUNCH-001 hardening, not reopening the completed work package or a
+global validation/replay numeric repair. No schema/version/default, authority,
+commit/push or user action. H3 work stays parallel; ready, not accepted,
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### H3 Selected Continuation / Context Review: November 22
+
+The exact lease-note origin at 31114 links to continuation 31560, containing
+wrapper 31562 and the ten previously selected lease references. Unique selected
+IDs/one incoming link are observed, not complete Inline-XBRL conformance. Both
+textblocks use the current-period context but nested facts include current and
+comparative periods: never inherit wrapper periods. Individual context/unit
+shapes match the existing conservative checks, not financial/source admission.
+Two metadata audits match; five old file pins are preserved. This run verifies
+pinned bytes/prior metadata, not a fresh provider-registry reconstruction; see
+the November 22 addendum in docs/msft-h3-definition-review-2026-11-19.md.
+Existing related tests: 218 passed; full working-tree pytest: **4733 passed /
+6 skipped**, 501.30 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped privacy/default checks pass. All 487 Python/config inputs
+retain the prior tested fingerprint. Five old file pins and the new ignored
+packet were rechecked unchanged after resumption. Read-only static review found
+no confirmed in-scope issue; it checked metadata/audit consistency, not original
+raw/DB or source/accounting qualification. Reproduction is two in-process audit
+calls, not independent-source/process evidence. Thirty-three pending paths,
+empty index and unchanged HEAD; checks include earlier work, not isolated release
+validation. No new amounts, parser, runtime/tests, config/default or authority;
+all seven overlap relations remain UNKNOWN. Next
+statement/classification and cash-versus-noncash evidence before separately
+reviewed narrow numerical support. No owner action, commit/push or sync retry;
+ready, not accepted, PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### Replay Price / Business-Thesis Separation: November 22
+
+Fixed a synthetic-reproduced evaluator defect: a resolved price return no longer
+automatically supplies business SUPPORTED/INVALIDATED or registered invalidation
+detection. Price values/success/blockers remain; business status is NOT_OBSERVABLE
+and invalidation_triggered null with explicit price-only scope. Existing historical
+validation remains usable while ThesisValidation has no resolved business result.
+REPLAY_OUTCOME_VERSION v3 creates new identities; stored v1/v2 rows remain unchanged
+and require reconstruction for current admission. Twenty-three added synthetic
+cases cover price signs/operators, module separation, label forgery and legacy-v2
+preservation. Related tests: 189 passed. Full working-tree pytest: **4733 passed /
+6 skipped**, 490.83 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped privacy/default checks pass; 487 Python/config inputs have
+the same fingerprint before/after the suite. Read-only static review found no
+confirmed in-scope issue; direct-module and old-version-tag tests do not establish
+full old-evaluator behavior or real source/method qualification. Checks include
+earlier pending work, not isolated release verification. Thirty-three pending
+paths, empty index and unchanged HEAD; see the replay endpoint record for details.
+No real source/outcome qualification, exit strategy, schema/default or trading
+change, commit or push. Ready, not accepted; PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled. Next source-bound thesis conditions and actual
+business outcomes, not inference from stock returns; H3 review stays parallel.
+
+### Symmetric Exit Research Requirements: November 21
+
+Owner clarification is recorded in the existing MSFT thesis proposal: continuing,
+reducing, exiting and adding exposure need distinct reasons/limits, not automatic
+hold-until-breakeven. Business, strategy/horizon, event/window and portfolio/cash
+reasons are separate; unknown is neither holding approval nor thesis failure.
+Cost loss, peak drawdown and portfolio scope cannot be interchanged. Thirteen
+new synthetic holding-review regressions characterize existing behavior, not a
+new evaluator or completed exit method. No production/default/schema/config or
+authority change. Focused holding/thesis tests: 101 passed. Full working-tree
+pytest: **4710 passed / 6 skipped**, 521.06 seconds. Ruff, mypy (324 files),
+governance (189 checks), whitespace and scoped privacy/default checks pass;
+487 Python/config inputs retain the same fingerprint before/after the suite.
+Read-only static review found no confirmed in-scope issue. The new cases do not
+cover bearish momentum combined with cost loss or assert each exact blocker;
+no source/strategy qualification follows. Checks include earlier pending work,
+not isolated candidate/release validation. Thirty pending paths remain, index
+empty and HEAD unchanged. See the proposal addendum for the exact record.
+Next source/strategy-bound falsifiable exit conditions and independent outcome/OOS
+review through existing Thesis/Validation contracts; H3 scope review stays parallel.
+No private positions/preferences recorded, owner action, commit/push or sync retry.
+WP-LAUNCH-001 ready, not accepted; PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled.
+
+### H3 Statement Scope Evidence: November 20, Second Slice
+
+Fixed-source structural review locates four OCF/PPE references in table 6940 and
+ten lease candidates in table 31567, inside one exact issuer nonNumeric textblock
+and continuation ancestry. The nonNumeric ancestor meets the existing scope block;
+continuation alone is not that blocker. All fourteen referenced contexts have
+zero observed segment/scenario containers, not qualified context/consolidation.
+No extra numeric tag/value, scope relaxation or complete coverage claim. Two
+reconstructions match and five old files retain recorded before/after hashes.
+New metadata/tool packet is ignored and old receipts/issuer packet stay unchanged.
+See the second November 20 section in docs/msft-h3-definition-review-2026-11-19.md
+for the record. Existing SEC-body/H3 suites: 218 passed; no new executable tests.
+Final working-tree pytest: **4697 passed / 6 skipped**, 499.09 seconds. Ruff,
+mypy (324 files), governance (189 checks), whitespace and scoped privacy/default
+checks pass. All 487 Python/config inputs retain the prior fingerprint. Read-only
+static review found no confirmed in-scope issue; it checked metadata consistency
+and existing blocker logic, not real source reconstruction or accounting admission.
+Five old files and the previous issuer packet were rechecked unchanged. Checks
+include earlier pending work, not isolated release qualification. Next exact named wrapper/continuation
+and full statement/context review, not broad dimensional parsing. All seven
+overlap relations remain UNKNOWN; no new runtime/test/config/default or holding
+authority. No owner action, commit/push or sync retry; ready, not accepted,
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+
+### H3 Issuer Reconciliation Evidence: November 20
+
+Retained one official issuer PPTX in an ignored, separate manual evidence packet,
+not provider/registry ingestion. Its image-only slide 20 was visually inspected:
+two displayed quarter columns reconcile arithmetically, and four OCF/PPE magnitudes
+match the exact reconstructed old SEC subset. Original receipt and five old
+file hashes remain unchanged. This is same-issuer numeric agreement, not independent
+financial/source qualification. Landing HTML failed existing credential-pattern
+preflight and was not retained; no match printed or guard relaxed. PPTX known-
+pattern screening cannot certify opaque contents. New actual capture cannot
+freshen old decisions. No new parser, FCF metric, test or H3 evaluator; all seven
+overlap relations remain UNKNOWN. See the November 20 section in
+docs/msft-h3-definition-review-2026-11-19.md. Static read-only visual/hash review
+found no confirmed issue; its pin-list limitation was addressed by a separate new
+repeat record, not modification of the original. No independent old-DB/source or
+accounting qualification. Existing focused suites: 115 passed; full working-tree
+pytest: **4697 passed / 6 skipped**, 504.79 seconds. Ruff, mypy (324 files),
+governance (189 checks), whitespace and scoped privacy/default checks pass. All
+487 Python/config inputs retain the prior fingerprint. Earlier pending work is
+included; this is not isolated release qualification. No new executable test.
+Next verify statement/reconciliation scope and cash-versus-lease relationships.
+No owner action, commit/push or sync retry. Ready, not accepted; PIT UNSUITABLE,
+production NOT_READY, execution/notifications disabled.
+
+### H3 Definition And Overlap Design: November 19, Second Slice
+
+Extended the existing H3 review with separate native OCF, issuer FCF, proposed
+cash-PPE residual and lease-principal sensitivity identities. Signed contributions,
+seven explicitly UNKNOWN overlap relations and pending method/window/outcome
+requirements are specified; no formula, accounting relationship or threshold is
+approved or calculated. Current one-native-tag Thesis bindings cannot represent
+a component graph; future support needs separate review, not a fake native tag.
+Two live official method references are not retained receipts or historical PIT
+evidence and do not update old source cutoffs. See the follow-up section in
+docs/msft-h3-definition-review-2026-11-19.md. Existing boundary suites pass 115
+tests; no new test or formula implementation. Final working-tree pytest:
+**4697 passed / 6 skipped**, 501.48 seconds. Ruff, mypy (324 files), governance
+(189 checks), whitespace and scoped privacy checks pass. All 487 Python/config
+inputs retain their prior exact fingerprint. Read-only static design review found
+no confirmed in-scope issue; no independent financial/source qualification.
+These checks include earlier pending work, not isolated release qualification.
+Next obtain one retained exact-period issuer definition/reconciliation before
+deciding whether composite binding support is needed. Documents only, no new
+runtime/test/config/default or authority; ready, not accepted. No commit/push,
+sync retry or owner action. Source/method gates remain open, execution and
+notifications disabled, PIT UNSUITABLE and production NOT_READY.
+
+### MSFT H3 Source Definition Review: November 19
+
+Completed a fixed-source H3 evidence/definition review rather than adding another
+display layer or financial formula. The existing OCF/PPE reader's four accepted
+but unqualified occurrences are bound to exact row labels, indices, contexts and
+normalization attributes. A metadata-only lexical lease scan found 60 occurrences/
+32 expanded names, including ten selected payment/recognition reference candidates;
+no extra amounts, dimensions or statement scope were parsed/admitted. These are
+not lease-obligation or completeness counts. The review lists aggregation,
+classification, signed-flow, noncash and duplicate-deduction questions needed
+before any derived cash measure or H3 result. Repeated audit metadata and five
+old file hashes remain exact, not fresh evidence. See
+docs/msft-h3-definition-review-2026-11-19.md. Added seven existing-reader boundary
+tests; 284 related tests pass. Final stable working-tree pytest: **4697 passed /
+6 skipped**, 489.64 seconds. Ruff, mypy (324 files), governance (189 checks),
+whitespace and scoped privacy/default checks pass. All 487 Python/config inputs
+retain identical before/after fingerprints. Read-only review found no confirmed
+in-scope defect; it checked metadata consistency, not real source binding or
+accounting semantics. Checks include earlier pending work, not isolated release
+qualification. All 28 pending paths remain local with an empty source index.
+Production code/default/schema/version and existing inspectors stay unchanged;
+the tests only characterize current no-FCF/no-authority boundaries. Next explicit
+definition/overlap review and predeclared H3 method/outcome evidence remain open.
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled; ready, not
+accepted. No commit/push or sync retry; no validated hold/add/sell capability.
+
+### Same-Filing SEC Window Inventory: November 18
+
+The new read-only inspect_sec_windows.py and typed SECWindowPair API now list
+two exact same-tag windows at one cutoff and one CIK/accession. Existing retained
+period factories are reused in one snapshot; full subject/selection/cutoff bindings
+are checked. Namespace/unit/entity, unresolved tag context, failed latest inputs,
+configured capture-age and basis mismatch blockers remain explicit; uninspectable
+counts are null. References carry no amounts. Economic status stays NOT_ADMITTED
+and all source/PIT/accounting/score/Validation/holding/execution flags remain false.
+277 focused tests pass, including 54 new regressions. Old MSFT rehearsal
+has two observed-unqualified raw pairs and three tag-context-blocked pairs; all
+five economic statuses remain unadmitted. Five pinned files and old period hash
+remain exact. Review's overflow/root/mid-read findings were repaired and
+statically re-reviewed; direct API overflow tests also pass. Final stable-tree
+pytest: **4690 passed / 6 skipped**, 487.25 seconds. Ruff, mypy (324 files),
+governance (188 checks), whitespace and scoped privacy/default checks pass.
+All 486 Python/config inputs retain identical before/after fingerprints. See
+docs/sec-window-inventory-2026-11-18.md; these working-tree checks include earlier
+pending work, not isolated release qualification.
+This is a partial window inventory, not SOURCE_CHANGE, complete
+SECComparisonPlan, definition admission or validated financial/holding method.
+Existing defaults/normalizers/schema/dependencies stay unchanged. Next: scoped
+filing-definition/context review, reviewed refresh/recovery and method/OOS evidence.
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled; ready, not
+accepted. No commit/push or sync retry; prior GitHub authentication issue remains
+separate from local development.
+
+### SEC Comparison Contract And Boundary Evidence: November 18
+
+Delivered docs/proposals/sec-filing-change-comparison-v1.md and twelve new
+existing-reader characterizations, not runtime comparison or accounting admission.
+The contract separates two-cutoff source-record changes from two explicit financial
+windows at one cutoff; matching labels/amounts cannot resolve namespace, duration,
+instant, excluded-context or publication/revision gaps. It forbids dimension
+promotion, favorable fallback and self-approved definition/identity claims.
+Retained MSFT exact-quarter reconstruction equals its old full receipt with five
+pinned files unchanged: ten supported-subset checks, six with unresolved tag
+contexts; 61 scoped source occurrences include 45 unsupported. No fresh data or
+accounting admission. 223 focused tests pass, including twelve new cases.
+Review's period-isolation/equality-spec findings were repaired
+and statically re-reviewed with no further issue. Final stable working-tree pytest:
+**4636 passed / 6 skipped**, 442.07 seconds. Ruff, mypy (322 files), governance
+(187 checks), whitespace and scoped privacy/default checks pass. All 483
+Python/config inputs retain identical before/after fingerprints. See
+docs/sec-comparison-boundaries-2026-11-18.md; checks include earlier pending work,
+not isolated release qualification. Next bounded runtime:
+opt-in non-dimensional SEC comparability inventory after scoped contract review,
+then independent accounting/source admission, reviewed updates and method/OOS
+validation. Existing v1/v2/v3 change entry points stay unchanged. No production
+code, schema, default, model-version or trading changes, commit or push. PIT
+UNSUITABLE, production NOT_READY, execution/notifications disabled; ready, not accepted.
+
+### Retained Native Fundamental Changes: November 18
+
+The existing change API/CLI now has a positive-integer native capture-age opt-in.
+It reconstructs original US/HK/MY annual receipts and adds v3 native record
+comparisons; no flag preserves v1/v2. Price and native reads use one outer
+read-only DB snapshot, no implicit cross-store/root composition. Same-period
+value/representation differences, period advancement/regression and incompatible
+labels are separate; full-history counters prevent latest-only masking.
+Latest failure/stale/ambiguous/tampered/missing and per-metric partial gaps remain
+explicit, with no older-good fallback or inferred business growth/restatement.
+Qualified fundamental comparison stays NOT_ASSESSED; LOW/retrieval_time and all
+false source/PIT/financial/validation/holding/execution authorities remain.
+Six frozen pre-slice v1/v2 real-cutoff vectors match. Three-market old October 27
+v3 rehearsal repeats exactly, preserves 54 pinned files and still has 28 native
+observations per source, not fresh financial evidence. 383 focused tests pass,
+including 96 new regressions. Read-only review found no confirmed implementation
+defect; requested coverage was added and statically re-reviewed with no further
+issue. Final stable working-tree pytest: **4624 passed / 6 skipped**, 451.45 seconds.
+Ruff, mypy (322 files), governance (185 checks), whitespace and scoped privacy/
+disabled-default checks pass. All 482 Python/config inputs retain identical
+before/after fingerprints. See docs/native-fundamental-changes-2026-11-18.md;
+these include earlier pending work, not isolated release qualification.
+Next: filing-backed
+period/definition/revision comparisons, reviewed update/recovery and method/OOS
+validation. No schema/dependency/default/trading change, commit or push. PIT
+UNSUITABLE, production NOT_READY, execution/notifications disabled. Ready, not
+accepted; not a completed recurring loop or validated hold/add/sell method.
+
+### Optional Weekly/Monthly Change Context: November 17
+
+The existing change CLI now accepts --with-period-context; typed API uses the
+strict include_period_context boolean. Opt-in v2 recomputes compact weekly/monthly
+context on the same two retained daily snapshots. No flag preserves v1 JSON/hashes.
+Same ended periods, calendar-end advancement and noncomparable inputs are distinct;
+cross-period indicators are NOT_ALIGNED and missing warmup is NOT_EVALUATED.
+Missing source counts stay null, open periods are excluded and gaps never stitched.
+Actual market-local boundaries include DST, not inferred exchange session closes.
+206 focused tests pass, including 35 new regressions. Six retained October 27
+compatibility vectors preserve frozen pre-slice v1 output; v2 repeats exactly with
+54 pinned files unchanged. No fresh data or source upgrade. Independent review's
+inventory-null and fixed-baseline findings were repaired; re-review found no
+further issue in scope. Final stable working-tree pytest: **4528 passed / 6 skipped**,
+519.42 seconds. Ruff, mypy (321 files), governance (184 checks), whitespace and
+scoped privacy/default checks pass. All 480 Python/config inputs retain identical
+before/after fingerprints. See docs/equity-period-changes-2026-11-17.md; these
+checks include earlier pending work and are not isolated release qualification.
+Next: source-bound fundamental changes, reviewed update/recovery
+and actual method/OOS validation. No schema/dependency/default changes or
+commit/push. PIT UNSUITABLE, production NOT_READY, execution/notifications disabled.
+Ready, not accepted; no hold/add/sell authority or completed continuous loop.
+
+### Daily Equity Change Foundation: November 17
+
+The MSFT loop now has a runnable read-only daily previous/current digest and CLI,
+also covering retained US/HK/MY equities. Two explicit UTC cutoffs share one DB
+snapshot; original receipts and technical diagnostics are recomputed and bound.
+New rows, no new rows and noncomparable inputs are distinct. Source/parameter/
+history revisions and latest failure cannot become favorable market changes;
+uninspected counts stay null and insufficient warmup is NOT_EVALUATED.
+65 focused offline tests pass. Old October 27 MSFT/Tencent/Maybank rehearsal is
+deterministic and preserves 54 pinned files: MSFT is noncomparable, not improved;
+the other two have no new rows. This is not a fresh quote or source qualification.
+Independent review findings were repaired and re-review found no further issue
+in scope. Final stable working-tree pytest: **4493 passed / 6 skipped**, 442.13
+seconds; Ruff, mypy (321 files), governance (183 checks), whitespace and scoped
+privacy/default checks pass. All 479 Python/config inputs retain identical
+before/after fingerprints. See docs/equity-change-digest-2026-11-17.md. These
+checks include earlier pending work, not an isolated release candidate.
+Daily only: financial and multi-timeframe changes remain NOT_ASSESSED; holding
+method NOT_VALIDATED. Next integrate ended weekly/monthly context and bound
+financial changes, then reviewed update/recovery and method/OOS validation.
+No schema/dependency/default/trading changes, commit or push. PIT UNSUITABLE,
+production NOT_READY, execution/notifications disabled; ready, not accepted.
+
+### Owner-Approved Delivery Priority: November 17
+
+Tong approved prioritizing a repeatable MSFT continuous-research loop and asking
+for specific owner assistance where needed. This records the operating priority,
+not a new runtime capability, completed loop or trading approval. Four-market and
+financial/nonfinancial goals remain; MSFT is the first acceptance case.
+
+Current capabilities versus remaining work:
+
+| Loop component | Existing capability | Remaining acceptance |
+| --- | --- | --- |
+| Inputs | Explicit capture and retained-source checks | Reviewed update/freshness/session policy, durable failure recovery and unattended worker |
+| Technical context | Read-only daily/weekly/monthly/yearly diagnostics | Current-source qualification and validated method/context selection; no indicator voting |
+| Change summary | Daily, optional weekly/monthly and retained native financial-record comparisons with bound receipts and gaps | Qualified filing-backed accounting changes; reviewed update/recovery integration |
+| Holding thesis | Owner annotations and typed thesis declarations | Qualified accounting inputs and approved conditions/windows; no inferred hold/add/sell |
+| Validation | Replay and Validation infrastructure | Qualified historical inputs and actual predeclared method/OOS evidence |
+
+First bounded runtime target now delivered: a compact read-only daily change digest,
+reusing original-snapshot binding rather than trusting caller labels or hashes.
+Unknown/stale/failed inputs, source/parameter differences and unequal period ends
+must remain explicit; a missing result cannot become unchanged, improved or safe.
+Keep provider and engineering repairs tied to concrete loop blockers. Operator
+requests should specify task, reason and consequence if deferred; no passwords,
+tokens or personal holdings enter Git. Owner risk preferences remain private;
+future risk policies require an explicit measurement basis, not an inferred stop.
+See docs/work-packages/wp-launch-001.md and the existing MSFT thesis proposal.
+PIT UNSUITABLE, production NOT_READY, execution/notifications disabled. This slice
+originally changed documentation and the next-phase objective only; the daily
+foundation is the separate implementation above, not completed-loop acceptance.
+Verification on the pending working tree: **4428 passed / 6 skipped**, 413.27
+seconds; no new tests in this priority slice. Ruff, mypy (319 files), governance
+(182 checks), whitespace and scoped known-pattern privacy checks pass. All 476
+Python/config inputs retain identical before/after fingerprints. These checks
+include the earlier uncommitted Yahoo fundamental clock repair; they are not
+an isolated release candidate, method validation or completed-loop acceptance.
+No commit or push in this slice.
+
+### Yahoo Native Fundamental Clock Prevention: November 17
+
+Started from reviewed/pushed baseline 4774193666113d9163e13ecfa56ca101d4f7a480.
+The existing US/HK/MY native annual fundamental producer now rejects naive or
+nonzero-offset capture clocks before retention, after download. UTC bytes/IDs,
+normalization and non-UTC query cutoffs remain unchanged. Seventy-two regressions
+cover producer/read clocks and future microsecond/local-date boundaries;
+six frozen-HEAD success/failure vectors preserve UTC
+batches. Real retained MSFT/Tencent/Maybank receipts remain exact at the old
+October 27 cutoff, with 28 observations each and five pinned files unchanged.
+No fresh data, accounting admission or buy/hold/add/sell validation follows.
+Scoped read-only AI review requested twelve added microsecond/local-date negative
+cases and confirmed the gap closed. All 187 focused tests pass. Full stable-tree
+pytest: **4428 passed / 6 skipped**, 406.64 seconds. Ruff, mypy (319 files),
+governance (182 checks), whitespace and scoped known-pattern privacy/default
+checks pass. All 476 Python/config inputs retain exact before/after fingerprints;
+these are working-tree checks, not isolated release qualification. See
+docs/yahoo-fundamental-clock-2026-11-17.md. PIT UNSUITABLE, production NOT_READY,
+execution/notifications disabled; no schema/dependency change, commit or push.
+
 ### SEC Retained Capture Clock Guard: November 17
 
 Four existing SEC producers now reject naive/nonzero-offset capture clocks

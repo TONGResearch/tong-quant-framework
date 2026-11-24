@@ -21,16 +21,29 @@ def evaluate_outcome(
     decision_bar: Bar | None,
     outcome_bar: Bar | None,
 ) -> tuple[ValidationOutcome, dict[str, object]]:
+    threshold = definition.success_threshold
+    if type(threshold) not in (int, float):
+        raise ValueError("replay threshold requires a supported built-in number")
+    try:
+        finite_threshold = isfinite(threshold)
+    except OverflowError:
+        raise ValueError("replay threshold requires a supported built-in number") from None
     start = query.decision_as_of.astimezone(UTC)
     end_cutoff = query.outcome_as_of.astimezone(UTC)
-    target = start + timedelta(days=definition.observation_horizon_days)
-    earliest = target + timedelta(days=definition.availability_lag_days)
+    horizon, lag = definition.observation_horizon_days, definition.availability_lag_days
+    if type(horizon) is not int or type(lag) is not int or horizon <= 0 or lag < 0:
+        raise ValueError("replay duration requires integer days: horizon > 0 and lag >= 0")
+    try:
+        target = start + timedelta(days=horizon)
+        earliest = target + timedelta(days=lag)
+    except OverflowError:
+        raise ValueError("replay duration exceeds the supported datetime range") from None
     blockers: list[str] = []
     if definition.target_metric != "close_return_pct":
         blockers.append("unsupported_target_metric")
     if definition.benchmark is not None:
         blockers.append("benchmark_not_supported")
-    if not isfinite(definition.success_threshold):
+    if not finite_threshold:
         blockers.append("invalid_success_threshold")
     if end_cutoff < earliest:
         blockers.append("outcome_not_matured")
@@ -91,18 +104,14 @@ def evaluate_outcome(
         value=value,
         benchmark_value=None,
         succeeded=succeeded,
-        thesis_status=(
-            ThesisOutcomeStatus.NOT_OBSERVABLE
-            if value is None
-            else ThesisOutcomeStatus.SUPPORTED
-            if succeeded
-            else ThesisOutcomeStatus.INVALIDATED
-        ),
-        invalidation_triggered=None if value is None else not bool(succeeded),
+        # A resolved price target is not evidence of business-thesis invalidation.
+        thesis_status=ThesisOutcomeStatus.NOT_OBSERVABLE,
+        invalidation_triggered=None,
         metadata={
             "target_metric": definition.target_metric,
             "outcome_contract": REPLAY_OUTCOME_VERSION,
             "price_basis": "unadjusted_price_only_excludes_distributions_and_costs",
+            "thesis_evidence_basis": "NOT_EVALUATED_PRICE_ONLY",
         },
     )
     return outcome, {
@@ -118,6 +127,7 @@ def evaluate_outcome(
         "outcome_bar": _binding(outcome_bar),
         "blocking_reasons": blockers,
         "target_metric": definition.target_metric,
+        "thesis_evidence_basis": "NOT_EVALUATED_PRICE_ONLY",
         "value": value,
         "outcome_available_at": outcome.available_at.isoformat(),
         "price_basis": outcome.metadata["price_basis"],
@@ -126,6 +136,7 @@ def evaluate_outcome(
             "corporate_actions_total_return_and_trading_costs_not_evaluated",
             "calendar_dates_do_not_establish_exchange_sessions_or_executable_prices",
             "false_suspension_flags_do_not_verify_status_history_or_actual_trading",
+            "price_target_success_does_not_evaluate_business_thesis_or_registered_conditions",
         ],
     }
 

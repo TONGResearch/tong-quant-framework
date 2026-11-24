@@ -39,6 +39,14 @@ required_commands = [
   ".venv/bin/python scripts/check_project_governance.py",
 ]
 required_documents = [
+  "docs/msft-h3-definition-review-2026-11-19.md",
+  "docs/sec-window-inventory-2026-11-18.md",
+  "docs/proposals/sec-filing-change-comparison-v1.md",
+  "docs/sec-comparison-boundaries-2026-11-18.md",
+  "docs/native-fundamental-changes-2026-11-18.md",
+  "docs/equity-period-changes-2026-11-17.md",
+  "docs/equity-change-digest-2026-11-17.md",
+  "docs/yahoo-fundamental-clock-2026-11-17.md",
   "docs/sec-capture-clocks-2026-11-17.md",
   "docs/yahoo-capture-clock-2026-11-17.md",
   "docs/replay-endpoint-qualification-2026-11-17.md",
@@ -177,7 +185,7 @@ required_documents = [
 ]
 
 [next_phase]
-objective = "Prioritize MSFT holding research within the November 30 US read-only increment; evidence and controlled-launch hardening continue in parallel"
+objective = "Deliver the MSFT continuous-research loop: explicit input freshness, multi-timeframe context, compact change digest and source-bound method validation; four-market expansion remains in scope, with evidence and hardening in parallel"
 promotion_requirement = "Paper trading requires authoritative lineage, deterministic simulation, reconciliation, and fail-closed risk controls; live trading remains separately gated"
 
 [[work_packages]]

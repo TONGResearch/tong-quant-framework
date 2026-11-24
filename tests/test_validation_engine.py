@@ -1,4 +1,6 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 
@@ -75,6 +77,37 @@ def test_outcome_registry_requires_pre_registered_definition() -> None:
     assert registry.evaluate("relative-outcome", 1.5) is True
     with pytest.raises(KeyError, match="unknown outcome"):
         registry.evaluate("chosen-after-results", 10)
+
+
+@pytest.mark.parametrize("operator", ("<", "<=", ">", ">=", "==", "!="))
+@pytest.mark.parametrize("position", ("value", "threshold"))
+@pytest.mark.parametrize("invalid", (
+    pytest.param(float("nan"), id="nan"),
+    pytest.param(float("inf"), id="positive-infinity"),
+    pytest.param(float("-inf"), id="negative-infinity"),
+    pytest.param(True, id="true"), pytest.param(False, id="false"),
+    pytest.param(None, id="missing"), pytest.param("1", id="numeric-text"),
+    pytest.param(Decimal("1"), id="unsupported-decimal"),
+    pytest.param(10 ** 10000, id="integer-overflows-float-check"),
+))
+def test_outcome_registry_rejects_invalid_comparison_operands(operator, position, invalid):
+    definition = replace(_definition(), success_operator=operator,
+                         success_threshold=invalid if position == "threshold" else 0)
+    registry = OutcomeDefinitionRegistry((definition,))
+    with pytest.raises(ValueError, match="finite built-in numbers"):
+        registry.evaluate(definition.outcome_id, invalid if position == "value" else 0)
+
+
+@pytest.mark.parametrize("operator,expected", (
+    ("<", (True, False, False)), ("<=", (True, True, False)),
+    (">", (False, False, True)), (">=", (False, True, True)),
+    ("==", (False, True, False)), ("!=", (True, False, True)),
+))
+@pytest.mark.parametrize("index,value", ((0, -1), (1, 0.0), (2, 1.0)))
+def test_outcome_registry_preserves_finite_numeric_comparisons(operator, expected, index, value):
+    definition = replace(_definition(), success_operator=operator, success_threshold=0)
+    registry = OutcomeDefinitionRegistry((definition,))
+    assert registry.evaluate(definition.outcome_id, value) is expected[index]
 
 
 def test_validation_request_rejects_future_outcome() -> None:

@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 from copy import deepcopy
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from urllib.error import HTTPError
@@ -20,7 +21,7 @@ from tong_quant.data.native_financial_inputs import (
     read_native_financial_research_input,
 )
 from tong_quant.data.providers import yahoo_fundamentals as provider
-from tong_quant.data.providers.contracts import ProviderDatasetRequest
+from tong_quant.data.providers.contracts import ProviderDatasetRequest, provider_evidence_id
 from tong_quant.data.providers.yahoo_fundamentals import (
     DATASET,
     MAX_BYTES,
@@ -77,6 +78,191 @@ def _ingest(foundation, capture=None, *, scope=SCOPES[0], at=NOW, completed=None
 
 def _read(foundation, scope=SCOPES[0], at=NOW):
     return read_global_fundamental_inputs(*foundation, scope[1], scope[0], as_of=at)
+
+
+def _native_clock_footprint(foundation):
+    store, artifacts = foundation
+    paths = [store.path]
+    wal = store.path.with_name(store.path.name + "-wal")
+    if wal.exists():
+        paths.append(wal)
+    paths += [path for path in artifacts.root.rglob("*") if path.is_file()]
+    return {path: sha256(path.read_bytes()).hexdigest() for path in paths}
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("clock_label", ("naive", "malaysia", "ny_first", "ny_second"))
+@pytest.mark.parametrize("failed", (False, True))
+def test_native_invalid_capture_clock_rejects_before_retention(
+    foundation, scope, clock_label, failed,
+):
+    captured = datetime(2026, 11, 1, 1, 30)
+    if clock_label == "malaysia":
+        captured = captured.replace(tzinfo=ZoneInfo("Asia/Kuala_Lumpur"))
+    elif clock_label.startswith("ny"):
+        captured = captured.replace(tzinfo=ZoneInfo("America/New_York"),
+                                    fold=int(clock_label.endswith("second")))
+    capture = YahooFundamentalCapture(None, "network_unavailable") if failed else _capture(scope)
+    downloads = []
+
+    def download(request):
+        downloads.append(request)
+        return capture
+
+    store, artifacts = foundation
+    request = _request(scope)
+    before = _native_clock_footprint(foundation)
+    with pytest.raises(ValueError, match="timezone|capture clock must use UTC"):
+        ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: NOW).ingest(
+            YahooFundamentalSnapshotAdapter(download=download, clock=lambda: captured), request)
+    assert downloads == [request]  # Capture-clock validation occurs after download.
+    assert _native_clock_footprint(foundation) == before and not artifacts.root.exists()
+    for table in ("ingestion_batches", "provider_artifacts", "provider_evidence_records",
+                  "raw_dataset_fingerprints", "provider_limitations"):
+        assert store.table_count(table) == 0
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("zone", ("UTC", "Etc/GMT", "Europe/London"))
+@pytest.mark.parametrize("failed", (False, True))
+def test_native_zero_offset_clocks_preserve_bytes_ids_and_readback(
+    foundation, scope, zone, failed,
+):
+    capture = YahooFundamentalCapture(None, "network_unavailable") if failed else _capture(scope)
+    labelled = NOW.astimezone(ZoneInfo(zone))
+    canonical = YahooFundamentalSnapshotAdapter(
+        download=lambda _: capture, clock=lambda: NOW).fetch(_request(scope))
+    actual = YahooFundamentalSnapshotAdapter(
+        download=lambda _: capture, clock=lambda: labelled).fetch(_request(scope, labelled))
+    assert actual == canonical
+    assert actual.artifacts[0].content == canonical.artifacts[0].content
+    assert actual.records[0].evidence_id == canonical.records[0].evidence_id
+    _ingest(foundation, capture, scope=scope, at=labelled)
+    result = _read(foundation, scope)
+    assert result["source_bound"] is True
+    assert result["status"] == ("network_unavailable" if failed else "observed_unqualified")
+    assert len(result["observations"]) == (0 if failed else 14)
+    assert result["trust_ceiling"] == "LOW" and result["availability_precision"] == "retrieval_time"
+    assert not result["accounting_definitions_admitted"]
+    assert not result["historical_replay_eligible"] and not result["financial_scoring_authorized"]
+    assert not result["execution_authorized"]
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("zone", ("Asia/Kuala_Lumpur", "America/New_York"))
+def test_native_non_utc_request_and_read_cutoffs_remain_supported(foundation, scope, zone):
+    labelled = NOW.astimezone(ZoneInfo(zone))
+    store, artifacts = foundation
+    ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: NOW).ingest(
+        YahooFundamentalSnapshotAdapter(download=lambda _: _capture(scope), clock=lambda: NOW),
+        _request(scope, labelled))
+    canonical = _read(foundation, scope)
+    same = _read(foundation, scope, labelled)
+    assert same["input_hash"] == canonical["input_hash"]
+    assert financial_input_json(same) == financial_input_json(canonical)
+    assert same["source_bound"] and same["status"] == "observed_unqualified"
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("zone", ("Asia/Kuala_Lumpur", "America/New_York"))
+@pytest.mark.parametrize("utc_hour", (0, 20))
+def test_native_offset_cutoffs_preserve_utc_visibility_across_local_dates(
+    foundation, scope, zone, utc_hour,
+):
+    captured = datetime(2026, 11, 1, utc_hour, 30, tzinfo=UTC)
+    labelled = captured.astimezone(ZoneInfo(zone))
+    early = (captured - timedelta(microseconds=1)).astimezone(ZoneInfo(zone))
+    crosses_date = (zone == "America/New_York" and utc_hour == 0) or (
+        zone == "Asia/Kuala_Lumpur" and utc_hour == 20)
+    assert (labelled.date() != captured.date()) is crosses_date
+    store, artifacts = foundation
+    before = _native_clock_footprint(foundation)
+    adapter = YahooFundamentalSnapshotAdapter(download=lambda _: _capture(scope),
+                                               clock=lambda: captured)
+    with pytest.raises(ValueError, match="future event"):
+        ProviderNeutralIngestionService(store, artifact_store=artifacts,
+            clock=lambda: captured).ingest(adapter, _request(scope, early))
+    assert _native_clock_footprint(foundation) == before and not artifacts.root.exists()
+    for table in ("ingestion_batches", "provider_artifacts", "provider_evidence_records",
+                  "raw_dataset_fingerprints", "provider_limitations"):
+        assert store.table_count(table) == 0
+    ProviderNeutralIngestionService(store, artifact_store=artifacts,
+        clock=lambda: captured).ingest(adapter, _request(scope, labelled))
+    pinned = _native_clock_footprint(foundation)
+    missing = _read(foundation, scope, early)
+    assert missing["status"] == "missing" and missing["captures"] == []
+    assert not missing["source_bound"] and missing["observations"] == []
+    local_result = _read(foundation, scope, labelled)
+    utc_result = _read(foundation, scope, captured)
+    assert local_result["source_bound"] and local_result["status"] == "observed_unqualified"
+    assert financial_input_json(local_result) == financial_input_json(utc_result)
+    assert _native_clock_footprint(foundation) == pinned
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("predecessor", (False, True))
+def test_native_legacy_offset_identity_remains_blocked_without_old_good_fallback(
+    foundation, scope, predecessor,
+):
+    if predecessor:
+        _ingest(foundation, scope=scope)
+    later = NOW + timedelta(seconds=1)
+    labelled = later.astimezone(ZoneInfo("Asia/Kuala_Lumpur"))
+    canonical = YahooFundamentalSnapshotAdapter(download=lambda _: _capture(scope),
+        clock=lambda: later).fetch(_request(scope, later))
+    original = canonical.records[0]
+    record = replace(original, available_at=labelled, retrieved_at=labelled,
+        evidence_id=provider_evidence_id(provider=original.provider, dataset=original.dataset,
+            market=original.market, subject=original.subject, available_at=labelled,
+            source_reference=original.source_reference, payload=original.payload))
+    legacy = replace(canonical, retrieved_at=labelled, records=(record,), artifacts=(replace(
+        canonical.artifacts[0], published_at=labelled, retrieved_at=labelled),))
+
+    class LegacyFixtureAdapter:
+        provider_id = canonical.provider
+
+        def capabilities(self):
+            return YahooFundamentalSnapshotAdapter().capabilities()
+
+        def fetch(self, request):
+            return legacy
+
+    # Test-only representation of an old offset identity, not a production bypass.
+    store, artifacts = foundation
+    ProviderNeutralIngestionService(store, artifact_store=artifacts, clock=lambda: later).ingest(
+        LegacyFixtureAdapter(), _request(scope, labelled))
+    before = _native_clock_footprint(foundation)
+    result = _read(foundation, scope, later)
+    assert result["status"] == "rejected_or_ambiguous" and not result["source_bound"]
+    assert result["observations"] == [] and result["latest"] == {}
+    assert len(result["captures"]) == 1 + int(predecessor)
+    assert result["captures"][-1]["evidence_id"] == record.evidence_id
+    assert not result["financial_scoring_authorized"] and not result["execution_authorized"]
+    assert _native_clock_footprint(foundation) == before
+    assert store.table_count("provider_evidence_records") == 1 + int(predecessor)
+    if predecessor:
+        assert _read(foundation, scope)["status"] == "observed_unqualified"
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("failed", (False, True))
+def test_native_bad_capture_cannot_replace_or_freshen_retained_evidence(foundation, scope, failed):
+    _ingest(foundation, scope=scope)
+    original = _read(foundation, scope)
+    before = _native_clock_footprint(foundation)
+    later = NOW + timedelta(seconds=1)
+    capture = YahooFundamentalCapture(None, "network_unavailable") if failed else _capture(scope)
+    with pytest.raises(ValueError, match="capture clock must use UTC"):
+        _ingest(foundation, capture, scope=scope,
+                at=later.astimezone(ZoneInfo("Asia/Kuala_Lumpur")))
+    assert _native_clock_footprint(foundation) == before
+    after = _read(foundation, scope, later)
+    assert after["selected_evidence_id"] == original["selected_evidence_id"]
+    assert after["captures"] == original["captures"]
+    assert after["observations"] == original["observations"]
+    assert after["freshness"] == "UNASSESSED"
+    assert foundation[0].table_count("ingestion_batches") == 1
+    assert foundation[0].table_count("fundamental_facts") == 0
 
 
 @pytest.mark.parametrize("scope", SCOPES)

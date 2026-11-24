@@ -1,5 +1,186 @@
 # Engineering Risk Register
 
+Presentation/native/economic-sign conflation (November 23): selected old-source
+PPE parentheses straddle a fact cell and its adjacent XML cell, outside the
+native fact. Absent sign attributes do not establish the sign of numeric text,
+and empty affixes do not establish an inflow. XML tokens are not browser-rendered
+or accounting-direction evidence. Preserve native values, exact contexts, lease
+exclusions and UNKNOWN overlap/sign-role states; no multiplier/formula is admitted.
+
+Compact-view/evidence confusion (November 23): the optional source view omits
+details and cannot itself reproduce the full observation/inventory hashes it
+references. Preserve omissions, all root statuses/flags and inspected/null counts;
+hash-bound failures can still be unusable. Recompute original stores rather than
+admit arbitrary/cached summaries. Output byte savings are not measured token/cost
+savings or source/financial/holding qualification; full evidence remains separate.
+
+Record-hash admission inflation (November 23): optional v4 compares only original
+per-selection parser-record multisets. Exact strings/duplicate/null/status/field
+differences are observations, not amounts changed economically or verified issuer
+restatements. Returned parser representation still omits full XML. Mixed typed
+input/capture binding rejects; source failures/staleness stay unassessed. Hashes
+and zero matching-window counts cannot authorize scores, safe holding or trading.
+
+Parser-record/original-XML conflation (November 23): raw_text stores a bounded
+512-character decoded preview and omits child markup/lexical character references.
+Different body bytes can yield identical complete returned rows; long-prefix
+previews are not the complete stripped numeric input (separate 128-character
+bound). Future projection equality must remain parser-occurrence-only, retaining
+body hash and original normalized strings/multiplicity. This is a representation
+limit, not evidence of a parser defect, source truth or economic unchanged.
+
+Gap-state/content confusion (November 23 third slice): an unchanged state
+projection can coexist with changed values/body/location, and a parent report-date
+change can block a formerly observable period without changing body bytes. New
+optional v3 preserves those distinctions, unassessed failures and source/review
+version drift. Tag-level unresolved counts are not verified per-window conflicts,
+coverage, independent votes, source truth or financial/holding improvement.
+
+Capture identity versus content (November 23): opt-in source-reference v2 adds
+selected raw_data_hash alongside its ID/time; the original reference axis stays
+unchanged. Envelope, body and parent hashes have different meanings. A complete
+capture identity is neither independent source authentication nor financial
+unchanged/improvement. Invalid or unavailable material remains NOT_EVALUATED;
+projection-fault tests cannot certify an otherwise unverifiable retained source.
+
+SEC reference changes versus financial change (November 22): optional two-cutoff
+observations distinguish receipt IDs, capture ID/time, complete parent binding
+and body bytes. Receipt/parent changes can be view changes, and byte changes do
+not prove changed financial magnitudes or issuer restatements. Capture reference
+omits raw_data_hash and cannot be called full capture identity. Failure/stale
+states remain unassessed, parsed/representation/gap axes unimplemented, and every
+source/accounting/score/holding/trading authority false. Default path is unchanged.
+
+Replay duration coercion (November 22 second follow-up): fractional/boolean
+day fields could reach timedelta and produce outcomes despite the declared
+integer contract. V5 checks exact int signs and catches date-range overflow,
+without a rounded/default window or label. Old v1-v4 require reconstruction.
+Generic constructors/JSON and economic horizon/method validity remain separate;
+passing this boundary cannot qualify exchange sessions or a holding/exit rule.
+
+Replay threshold types (November 22 follow-up): the registry repair did not cover
+the separate price evaluator, where boolean thresholds still generated numeric
+outcomes. V4 rejects unsupported/overflowing threshold types and preserves real
+nonfinite threshold blockers without a result label. Stored v1/v2/v3 need explicit
+reconstruction. Duration/constructor types and nonfinite declaration serialization
+remain separate; this scoped repair cannot certify them or source/strategy validity.
+
+Invalid registry operands (November 22): NaN can satisfy != and booleans can be
+silently compared as numbers. The existing registry evaluator now rejects invalid
+values and thresholds before comparison, rather than turning bad input into a
+success or a negative outcome. Scope is this API only; caller-provided labels,
+other numeric consumers and real data/method admission still need separate review.
+
+Wrapper-period inheritance (November 22): the selected issuer lease textblocks
+use a current-period context while nested facts also reference a comparative
+period. Copying the wrapper context would misdate those references. The exact
+continuedAt link, individual context/USD checks and unique selected IDs are only
+structural evidence, not Inline-XBRL conformance or cash classification. Existing
+nonNumeric exclusions remain; no extra values or financial definitions admitted.
+
+Price/business label conflation (November 22): replay previously mapped price
+target success/failure directly into thesis support/invalidation and a tautological
+condition-detection flag. V3 keeps price results but leaves business status
+NOT_OBSERVABLE and detection null; old v1/v2 results require reconstruction.
+External supplied labels still require independent source/condition/outcome review;
+this scoped correction cannot validate business reasoning, an exit strategy or
+the general ValidationOutcome contract. See the replay endpoint record addendum.
+
+Exit-research asymmetry (November 21): entry/add-only analysis can hide reasons to
+reduce or exit, while missing evidence can be misread as hold approval. Preserve
+independent remaining-opportunity/risk arguments, original strategy/horizon and
+event completion; do not anchor an exit to cost recovery or retroactively extend
+a losing hypothesis. A single-position cost alert cannot represent peak/portfolio
+drawdown or an owner's undeclared risk policy. Tests do not validate an exit method.
+
+H3 scope interpretation (November 20, second slice): source table placement,
+context equality and zero segment/scenario containers cannot qualify statement
+scope or economic overlap. Ten selected lease candidates have a nonNumeric block;
+continuation ancestry alone is not the same blocker. Preserve the exact issuer
+expanded name and separate continuation-graph review; do not fix this scoped need
+by enabling all nested facts, generic dimensions or unqualified lease arithmetic.
+
+H3 issuer-deck evidence (November 20): a picture-only table can be absent from an
+XML text scan; missing text is not missing disclosure. Visual/manual values,
+arithmetic consistency and two documents from one issuer do not qualify financial
+definitions, independent evidence or source trust. Rejected landing HTML is not
+retained link proof; opaque PPTX pattern screening is not credential certification.
+Preserve manual packet limitations and actual capture time; do not backdate or
+silently convert native positive payment magnitude to a derived cash contribution.
+
+H3 proposed-formula risk (November 19, second slice): signed source contributions
+cannot be replaced by absolute values or unconditional subtraction. Issuer FCF
+and research proxies are separate identities; a blocked lease sensitivity cannot
+fall back to its base proxy as a success. All seven proposed overlap relations
+remain UNKNOWN, not disjointness/zero. Live official method context is not retained
+filing/PIT admission, and current one-tag bindings cannot authenticate composites.
+
+H3 definition interpretation (November 19): OCF/PPE labels, equal contexts and
+matching periods cannot establish issuer FCF, all AI investment or sustainable
+cash return. The source review keeps lease payment/interest/principal and asset-
+recognition references distinct without parsing new amounts. Lexical Lease-name
+counts include noncash/stock/rate and leasehold items, not financial obligations
+or coverage. Aggregate components could be double-deducted without an explicit
+overlap/sign/window policy. No residual or H3 success/failure label is authorized.
+
+SEC window inventory interpretation (November 18): an observed raw context does
+not establish fiscal, accounting, statement, issuer-linkage or economic equivalence.
+The new partial tool emits no values, keeps economic status NOT_ADMITTED and all
+authorities false. Configured capture age is not publication/current-disclosure
+freshness; tag-level unresolved context does not prove window-specific conflict.
+Observed/unsupported counts apply only to the explicit requested-tag scope.
+SOURCE_CHANGE, dimensions, source admission and method evidence remain separate.
+
+SEC comparison semantics (November 18): existing supported subset agreement can
+coexist with multiple namespaces, excluded contexts or different exact duration/
+instant windows. New characterizations preserve those unqualified states. The
+comparison proposal distinguishes capture changes and financial windows; it does
+not certify fiscal continuity, original historical vintage, consolidation or
+source quality. Future inventory must not turn matching raw labels, absent
+dimensions or caller references into accounting/scoring/holding authority.
+
+Native-record interpretation (November 18): newly source-bound capture changes
+can be mistaken for verified financial growth or issuer restatements. The new
+digest compares native labels/content only, with latest failure and per-metric
+ambiguity visible, no growth arithmetic or source/accounting promotion. Capture
+freshness is not filing/publication freshness. Identical partial records do not
+resolve missing metrics, interim disclosures, business condition or position
+safety. Price/native currency differences do not authorize FX or valuation.
+
+Multi-timeframe change interpretation (November 17): opt-in weekly/monthly context
+distinguishes calendar rollover from new market observations and different period
+ends from aligned indicator changes. Open/missing/suspended periods and warmup
+remain explicit; source blockers cannot be repaired by longer periods. Calendar
+ended is not exchange-close or complete-coverage verification, especially with
+truncated first/last source windows and DST. Same ended-period values do not
+establish fresh financial evidence, safe holding or independent indicator votes.
+
+Daily-change interpretation (November 17): new read-only comparison preserves
+source/parameter/history changes, latest failures, null uninspected counts and
+insufficient-warmup states. No new rows is not unchanged business or safe holding;
+same-provider changes are not independent evidence. Daily close delta excludes
+costs/actions and is not portfolio return. Financial/multi-timeframe changes and
+holding method remain unassessed/unvalidated; update/recovery and qualification
+remain open. Short-term fundamental flexibility is a research direction, never a
+data/tradability/validation/risk waiver or proof of institutional intent.
+
+Usability/interpretation risk (November 17): engineering checks and descriptive
+stock analysis can be mistaken for a working continuous-monitoring/decision loop.
+The owner-approved priority now names explicit freshness, timeframe, change and
+validation acceptance. Remaining risks include missing-as-unchanged summaries,
+source/parameter changes misread as business changes, correlated indicators
+double-counted and private loss preferences treated as an executable stop without
+an explicit measurement basis.
+No input or strategy qualification follows from a priority document or test count.
+
+Yahoo native fundamental identity risk (November 17): synthetic nonzero capture
+offsets yielded irreconstructible IDs despite identical normalized content. The
+producer now blocks new unsupported clocks, retaining UTC and legacy identities.
+Existing real old-cutoff outputs remain exact, not fresh or source-qualified.
+Rejected new attempts have no ingestion row and must not freshen old evidence;
+durable attempt audit, independent accounting/publication/revision evidence and
+other provider clock contracts remain open. LOW/retrieval_time is unchanged.
+
 SEC capture identity risk (November 17): four UTC envelopes could disagree with
 original-offset capture IDs. Zero-offset producer guards prevent new unsupported
 captures without rewriting legacy records, source versions or publication times.

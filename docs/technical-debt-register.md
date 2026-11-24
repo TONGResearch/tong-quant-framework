@@ -1,5 +1,181 @@
 # Technical Debt Register
 
+H3 sign-role evidence (November 23): fixed-byte metadata now binds selected XML
+affixes, adjacent punctuation and preceding lexical headings without reading
+numeric subtrees. Remaining numeric-text/economic contribution sign, complete
+classification, cash/noncash/aggregate overlap and independent source/method review
+are not resolved by native sign-attribute absence or parentheses. No runtime
+mapping, lexical-to-number conversion or narrow lease numerical support is approved.
+The independent metadata/code review is pending after a review-tool usage-limit
+failure; repeatability/self-checks cannot be counted as that independent review.
+
+SEC compact source view (November 23): optional output now reduces duplicated
+detail while retaining just-recomputed full-observation/inventory references and
+separate summary hash. It cannot replace omitted evidence, authenticate a source
+or create an official ResearchReport/holding decision. Actual tokenizer/billing
+measurement is not implemented; size examples are synthetic JSON bytes. Qualified
+data/method/financial outcomes and controlled update/recovery remain open.
+
+SEC bounded record implementation (November 23): explicit v4 now hashes original
+per-selection parsed/returned-occurrence multisets with exact typed source/capture
+binding and failure/version gates. No amounts/previews are newly published and
+default single/v1/v2/v3 stay unchanged on a fixed vector. Remaining full lexical
+extraction, formal SOURCE_CHANGE plan/mode, qualified fiscal/accounting/revision/
+freshness/source evidence, method/OOS/business outcomes and controlled updates/
+recovery are not supplied by this diagnostic. H3 numerical gates stay closed.
+
+SEC record-projection design (November 23): sixteen new old-reader regressions
+fix the future comparison scope as parser-occurrence-only, not complete lexical
+XML. Implementation of parsed/representation multisets remains pending. Keep
+the 512-character decoded preview, separate 128-character complete stripped
+numeric-input bound, exact normalized strings, duplicate multiplicity and body
+identity distinct. Full lexical hashing needs separate reviewed extraction/
+completeness/version guarantees, not a silent limit/parser/old-receipt change.
+
+SEC check/gap-state follow-up (November 23 third slice): optional v3 now compares
+original status/count/blocker projections with complete-capture and version gates;
+default inventory/v1/v2 remain unchanged on one fixed fixture. Remaining parsed
+records, representation/location, accounting/source/fiscal/freshness and method/OOS
+evidence are not supplied by reduced gaps. Keep unresolved tag/window scope and
+missing-side nulls explicit; no source/holding/trading promotion is implemented.
+
+SEC capture-identity follow-up (November 23): explicit optional v2 now compares
+full selected ID/time/raw_data_hash from original factory documents; default v1
+still carries only its original reference axis. Parsed-record, representation/
+gap projections, accounting/source/fiscal/definition/freshness and method/OOS gates
+remain open. Exact identity cannot establish source truth or holding permission.
+Failure/parent-invalid states and projection-fault cases are synthetic tests,
+not independent real-source evidence or permission to relax H3 exclusions.
+
+SEC source-reference slice (November 22): one DB snapshot now supports optional
+two-cutoff receipt/reference/parent/body observation through the existing window
+reader. Remaining: full selected capture including raw_data_hash, parsed-record
+multisets, representation/gap projections, reviewed definitions, source/fiscal/
+revision/freshness policy, real method/OOS evidence and controlled updates/recovery.
+Do not inflate this partial mode into complete SOURCE_CHANGE or financial growth;
+H3 numeric scope and all seven UNKNOWN accounting relations remain unchanged.
+
+Replay integer durations (November 22 second follow-up): v5 enforces exact integer
+horizon/lag and explicit datetime overflow rejection at the evaluator entry.
+Thirty-two added synthetic cases do not certify all constructors or time/numeric
+consumers. Keep generic JSON/model review, actual session calendars, data/source
+qualification and predeclared business/exit windows separate; no arbitrary
+holding-duration cap or automatic old-record migration is approved.
+
+Replay threshold entry (November 22 follow-up): v4 rejects unsupported/bool/
+overflowing threshold inputs, preserving existing nonfinite-real blockers and
+supported numeric comparisons. Seventy-three added cases characterize that
+boundary plus old-v3 reconstruction. Duration/window types, generic constructors
+and nonfinite declaration serialization remain outside scope; no canonical/source
+qualification is implied. Preserve old rows and do not translate rejection or
+missing outcomes into business failure, holding approval or execution permission.
+
+Registry numeric boundary (November 22): evaluation now refuses nonfinite or
+unsupported values/thresholds instead of emitting a result label. The 126 new
+cases cover both operands and all six operators. Definition construction and
+external ValidationOutcome labels are not thereby qualified; other numeric
+consumers remain separate. Preserve supported finite results and stored rows,
+and never interpret an invalid-input exception as an unfavorable business outcome.
+
+H3 selected continuation review (November 22): exact origin/link/continuation/
+wrapper and individual context/unit identities are observed in hash-pinned old
+bytes. Outer current-period context cannot replace comparative fact contexts.
+Next complete statement/classification and cash-versus-noncash review, then decide
+whether separately versioned narrow numeric support is justified. Unique links
+and syntactic subset checks do not admit amounts, financial definitions, full
+Inline-XBRL conformance or any of the seven UNKNOWN overlap relations. New packet
+does not reconstruct the provider registry; previous source bindings stay separate.
+
+Replay thesis scope (November 22): v3 no longer manufactures business labels or
+registered-condition detection from a price-only comparison. Existing price
+validation is retained; business status is unobservable. Next implement/review
+source-bound actual thesis outcomes and their independent detection basis through
+existing contracts; external caller labels remain supplied, not verified. Preserve
+old v1/v2 stored rows, reconstruct before current admission, and never equate
+price-goal failure with a business failure or missing price data.
+
+Exit research requirements (November 21): symmetric continue/reduce/exit/add and
+business/strategy/event/funding reasons are specified in the existing MSFT thesis
+proposal; thirteen added tests characterize current holding-review nonauthority.
+Remaining: explicit original strategy/horizon and falsifiable conditions, qualified
+decision/outcome evidence, defined portfolio risk measurement, independent OOS
+validation and feasible fill/cost review. No sell evaluator or default policy exists.
+Reuse existing Thesis/ResearchReport/Validation; no parallel report or trading API.
+
+H3 scope narrowing (November 20, second slice): fourteen explicit references now
+have table/row/ancestor and container metadata in an ignored packet; no extra
+values or production support. Next review the one exact issuer lease textblock,
+continuation references and complete statement/context/unit/period identity, then
+consider a separately reviewed versioned numerical-support proposal. Zero observed
+containers is not admission; leave global exclusions, H1 dimensions, old hashes
+and all seven UNKNOWN overlap relations intact. No new parser is approved.
+
+H3 issuer reconciliation (November 20): one image-only official deck is retained
+outside Git as a manual packet; source/slide/sign/unit references and numeric-only
+comparison to the old subset are recorded. No US-PPTX provider ingestion or numeric
+admission exists. Next independent statement/scope/definition and cash/lease overlap
+review, then assess composite binding need. Landing HTML remains rejected and
+unretained; opaque source screening is not certification or encrypted recovery.
+Do not extend HK/MY adapters, fake a native FCF tag or fill the old receipt.
+
+H3 definition design (November 19, second slice): the existing source-review record
+now specifies distinct candidate metrics, signed-role transformations, UNKNOWN
+overlap relations and pending validation parameters. No production formula or
+composite support exists. Next retain exact-period issuer definition/reconciliation
+and component evidence; assess contract needs only after that review. Do not fake
+a native tag, use live reference dates as historical availability or mark the
+unimplemented acceptance cases as passed. Source/method/threshold gates stay open.
+
+H3 definition follow-up (November 19): old-source review now locates exact OCF/PPE
+labels/attributes and candidate lease references without broader numeric parsing.
+Remaining: independently supported statement/fiscal/definition and overlap record,
+cash versus noncash/sign conventions, publication/revision source qualification,
+issuer measure versus research proxy specification and predeclared H3 outcomes/
+method validation. No FCF computation or thesis evaluator was added; see
+docs/msft-h3-definition-review-2026-11-19.md. Do not relax dimension/ancestor gates.
+
+SEC window inventory (November 18): partial one-cutoff same-filing context tool is
+implemented without changing existing period readers/defaults. It preserves raw
+bindings, no-amount references, null inventories and source/context/freshness
+blockers. Remaining: SOURCE_CHANGE equality axes, reviewed definition/reference
+contract, publication/revision and fiscal/scope evidence, independent freshness
+policy, method/OOS validation and update/recovery. It is not full comparator or
+financial admission; see docs/sec-window-inventory-2026-11-18.md.
+
+SEC comparison contract (November 18): proposed typed modes, source/period pins,
+namespace and unresolved-context checks are documented in
+docs/proposals/sec-filing-change-comparison-v1.md. Twelve added tests characterize
+existing behavior only; comparator, definition admission and financial arithmetic
+are not implemented. Next bounded runtime is a separate optional non-dimensional
+comparability inventory; it must preserve legacy period output, exact cutoff/
+factory binding and false authorities. Do not relax the earlier dimensional plan.
+
+Continuous-research usability (November 17): existing capture, technical binding,
+holding/thesis declaration and Validation components are not a complete recurring
+loop. The owner-approved priority is recorded in WP-LAUNCH-001 and PROJECT_STATUS;
+the daily previous/current foundation now implements source/parameter compatibility,
+missing/stale/failure semantics and deterministic recomputed bindings. Remaining:
+qualified filing-backed financial changes, reviewed updates/recovery and actual
+method/OOS validation. Optional native annual record changes are now implemented
+without admitting accounting definitions, publication/revision history or thesis
+outcomes; see docs/native-fundamental-changes-2026-11-18.md. Optional weekly/monthly
+ended-period context is implemented with
+recomputed bindings and explicit alignment/gap semantics, not verified complete
+exchange candles or a yearly change feature. See docs/equity-period-changes-2026-11-17.md
+and docs/equity-change-digest-2026-11-17.md.
+Do not add a second official report, enable a worker/notification or infer an
+executable risk rule from private preferences. Strategy/horizon-sensitive
+fundamental criteria and institutional-behavior hypotheses need separate explicit
+design/validation; documentation does not relax runtime hard gates.
+
+Yahoo native fundamental clocks (November 17): scoped prevention and 72 new
+regressions now cover the static finding from the SEC inventory. Old/current
+UTC compatibility includes six frozen-HEAD vectors and three retained-market
+reads, not source qualification. Remaining: explicit legacy identity compatibility,
+durable rejected-fetch attempts/recovery, fresh qualified interim/publication/
+revision evidence and actual financial/technical method validation. Other source
+contracts are not fixed by this guard. See docs/yahoo-fundamental-clock-2026-11-17.md.
+
 SEC clock follow-up (November 17): four producers now reject unsupported capture
 offsets while retaining UTC bytes/IDs. Sixty regressions, frozen-HEAD vectors and
 real old MSFT period/body hash rehearsal cover prevention/compatibility, not new

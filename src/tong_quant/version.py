@@ -61,6 +61,16 @@ RESEARCH_CONFIDENCE_VERSION = "research-confidence-v2-utc"
 EQUITY_NOTE_VERSION = "equity-diagnostic-note-v2-utc-context"
 TECHNICAL_DISPLAY_BINDING_VERSION = "daily-technical-display-binding-v1"
 EQUITY_BOUND_NOTE_VERSION = "equity-diagnostic-note-v8-technical-binding"
+EQUITY_CHANGE_DIGEST_VERSION = "equity-daily-change-digest-v1"
+EQUITY_PERIOD_CHANGE_DIGEST_VERSION = "equity-change-digest-v2-period-context"
+NATIVE_FUNDAMENTAL_CHANGE_VERSION = "native-fundamental-change-v1-retained-observations"
+EQUITY_NATIVE_CHANGE_DIGEST_VERSION = "equity-change-digest-v3-native-context"
+SEC_WINDOW_INVENTORY_VERSION = "sec-window-inventory-v1-unqualified"
+SEC_SOURCE_REFERENCE_VERSION = "sec-source-reference-observation-v1"
+SEC_SOURCE_CAPTURE_IDENTITY_VERSION = "sec-source-reference-observation-v2-capture-identity"
+SEC_SOURCE_CHECK_GAP_VERSION = "sec-source-reference-observation-v3-check-gap-state"
+SEC_SOURCE_RECORD_PROJECTION_VERSION = "sec-source-reference-observation-v4-parser-records"
+SEC_SOURCE_COMPACT_VIEW_VERSION = "sec-source-observation-compact-view-v1"
 HOLDING_REVIEW_VERSION = "owner-holding-review-v1-readonly"
 THESIS_BINDING_VERSION = "thesis-explicit-evidence-binding-v1"
 THESIS_REPORT_BINDING_VERSION = "research-thesis-binding-diagnostics-v1"
@@ -117,7 +127,7 @@ ARTIFACT_AUDIT_VERSION = "provider-artifact-audit-v1"
 VALIDATION_ENGINE_VERSION = "validation-engine-v0.6"
 HISTORICAL_REPLAY_VERSION = "historical-replay-v0.6.3.4"
 REPLAY_CONFIDENCE_VERSION = "replay-confidence-v0.6.3.4"
-REPLAY_OUTCOME_VERSION = "replay-outcome-v2-suspension-utc-endpoints"
+REPLAY_OUTCOME_VERSION = "replay-outcome-v5-integer-duration-inputs"
 REPLAY_RESEARCH_BINDING_VERSION = "replay-research-binding-v2-utc-cutoffs"
 NOTIFICATION_ENGINE_VERSION = "notification-engine-v0.8"
 PIT_READINESS_VERSION = "pit-readiness-v0.8-phase2"
@@ -252,6 +262,16 @@ __all__ = [
     "EQUITY_NOTE_VERSION",
     "TECHNICAL_DISPLAY_BINDING_VERSION",
     "EQUITY_BOUND_NOTE_VERSION",
+    "EQUITY_CHANGE_DIGEST_VERSION",
+    "EQUITY_PERIOD_CHANGE_DIGEST_VERSION",
+    "NATIVE_FUNDAMENTAL_CHANGE_VERSION",
+    "EQUITY_NATIVE_CHANGE_DIGEST_VERSION",
+    "SEC_WINDOW_INVENTORY_VERSION",
+    "SEC_SOURCE_REFERENCE_VERSION",
+    "SEC_SOURCE_CAPTURE_IDENTITY_VERSION",
+    "SEC_SOURCE_CHECK_GAP_VERSION",
+    "SEC_SOURCE_RECORD_PROJECTION_VERSION",
+    "SEC_SOURCE_COMPACT_VIEW_VERSION",
     "RESEARCH_REPORT_VERSION",
     "RESEARCH_CONDITIONS_VERSION",
     "EVIDENCE_SCORE_ADMISSION_VERSION",

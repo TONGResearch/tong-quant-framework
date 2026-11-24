@@ -23,7 +23,7 @@ NOW = datetime(2026, 11, 10, 22, tzinfo=UTC)
 
 def _annotation():
     return {"holding": {"symbol": "TEST", "market": "us", "currency": "USD",
-        "quantity": "0.1737", "reported_average_cost": "10", "investment_intent": "long_term",
+        "quantity": "0.2468", "reported_average_cost": "10", "investment_intent": "long_term",
         "loss_review_percent": "30", "observed_at": (NOW - timedelta(days=1)).isoformat(),
         "recorded_at": NOW.isoformat(),
         "maximum_context_age_seconds": 86400, "maximum_price_age_seconds": 86400}}
@@ -58,7 +58,7 @@ def test_deterministic_readonly_review_preserves_limits_and_withholds_authority(
     assert result == _review(annotation) and annotation == before
     assert result["comparison_status"] == "OBSERVED_UNQUALIFIED"
     assert Decimal(result["price_only_change_percent"]) == 0
-    assert result["observed_position_value"] == "1.7370"
+    assert result["observed_position_value"] == "2.4680"
     assert result["holding_horizon"] == "NOT_ESTIMATED"
     assert result["thesis_invalidation"] == "NOT_EVALUATED"
     assert result["owner_context"]["borrowed_funds_status"] == "UNKNOWN"
@@ -112,7 +112,7 @@ def test_missing_source_and_latest_suspension_do_not_fall_back():
     ("quantity", True), ("quantity", 0.1), ("quantity", "1e-999999"),
     ("reported_average_cost", "NaN"), ("reported_average_cost", "Infinity"),
     ("reported_average_cost", "1000000000000"), ("loss_review_percent", "101"),
-    ("observed_at", "2026-11-09T22:48:49"), ("observed_at", "invalid"),
+    ("observed_at", "2026-10-01T12:00:00"), ("observed_at", "invalid"),
     ("maximum_context_age_seconds", True), ("maximum_price_age_seconds", 0),
     ("maximum_price_age_seconds", 999999999), ("currency", "MYR"),
     ("investment_intent", "buy"), ("symbol", "../invalid"), ("market", "china_a")])
@@ -210,7 +210,7 @@ def test_markdown_warns_on_pre_position_data_and_keeps_existing_technical_result
     note = render_equity_note(doc)
     assert "PRICE_PREDATES_HOLDING_OBSERVATION" in note
     assert "NOT_ESTIMATED" in note and "NOT_EVALUATED" in note
-    assert "0.1737" in note and "OWNER_CONTEXT_STALE" not in note
+    assert "0.2468" in note and "OWNER_CONTEXT_STALE" not in note
     assert doc == before
 
 
@@ -225,3 +225,89 @@ def test_rehashed_foreign_or_admitted_review_cannot_render(key, value):
     review["review_hash"] = sha256(financial_input_json(body).encode()).hexdigest()
     with pytest.raises(ValueError):
         render_equity_note(doc)
+
+
+def _exit_annotation(**changes):
+    annotation = _annotation()
+    annotation["holding"].update(quantity="2", loss_review_percent="25")
+    annotation["holding"].update(changes)
+    return annotation
+
+
+def _assert_no_holding_decision(result):
+    assert result["exit_review"] == "RESEARCH_REVIEW_ONLY_NO_SELL_INSTRUCTION"
+    assert result["holding_horizon"] == "NOT_ESTIMATED"
+    assert result["thesis_invalidation"] == "NOT_EVALUATED"
+    assert result["financial_review"] == "NOT_EVALUATED_BY_THIS_CHECK"
+    assert result["holding_management_authorized"] is False
+    assert result["validation_authorized"] is False
+    assert result["execution_authorized"] is False
+    assert "target_exit_price" not in result
+    assert "recommended_action" not in result
+
+
+@pytest.mark.parametrize("cost,expected", [
+    ("4", "NOT_REACHED_ON_THIS_OBSERVATION"),
+    ("10", "NOT_REACHED_ON_THIS_OBSERVATION"),
+    ("25", "REVIEW_REQUIRED"),
+])
+def test_cost_changes_alert_not_technical_evidence_or_exit_permission(cost, expected):
+    result = _review(_exit_annotation(reported_average_cost=cost))
+    reference = _review(_exit_annotation())
+    assert result["loss_review_status"] == expected
+    assert result["technical_input_hash"] == reference["technical_input_hash"]
+    assert result["trend_structure_family"] == reference["trend_structure_family"]
+    assert result["momentum_family"] == reference["momentum_family"]
+    _assert_no_holding_decision(result)
+
+
+@pytest.mark.parametrize("kind", ["missing", "suspended", "stale", "rejected"])
+def test_blocked_exit_review_is_neither_hold_approval_nor_thesis_failure(kind):
+    snapshot = _snapshot()
+    annotation = _exit_annotation()
+    if kind == "missing":
+        snapshot = replace(snapshot, bars=())
+    elif kind == "suspended":
+        snapshot = replace(snapshot, bars=(*snapshot.bars[:-1],
+                                          replace(snapshot.bars[-1], is_suspended=True)))
+    elif kind == "stale":
+        annotation["holding"]["maximum_price_age_seconds"] = 86399
+    else:
+        snapshot = replace(snapshot, status="rejected_or_ambiguous")
+    result = _review(annotation, snapshot)
+    assert result["comparison_status"] == "BLOCKED" and result["blockers"]
+    assert result["price_only_change_percent"] is None
+    assert result["loss_review_status"] == "NOT_EVALUATED"
+    _assert_no_holding_decision(result)
+
+
+@pytest.mark.parametrize("rising,expected", [(True, "BULLISH"), (False, "BEARISH")])
+def test_directional_technical_evidence_does_not_evaluate_an_exit_thesis(rising, expected):
+    snapshot = _snapshot()
+    bars = tuple(replace(bar, open=Decimal(100 + index if rising else 400 - index),
+        close=Decimal(100 + index if rising else 400 - index),
+        high=Decimal(101 + index if rising else 401 - index),
+        low=Decimal(99 + index if rising else 399 - index))
+        for index, bar in enumerate(snapshot.bars))
+    result = _review(_exit_annotation(), replace(snapshot, bars=bars))
+    assert result["momentum_family"] == expected
+    _assert_no_holding_decision(result)
+
+
+def test_cost_loss_review_cannot_establish_peak_or_portfolio_drawdown():
+    snapshot = _snapshot()
+    peak = replace(snapshot.bars[-2], open=Decimal(40), close=Decimal(40),
+                   high=Decimal(41), low=Decimal(39))
+    result = _review(_exit_annotation(), replace(snapshot,
+        bars=(*snapshot.bars[:-2], peak, snapshot.bars[-1])))
+    assert Decimal(result["price_only_change_percent"]) == 0
+    assert result["loss_review_status"] == "NOT_REACHED_ON_THIS_OBSERVATION"
+    assert "portfolio_drawdown" not in result and "maximum_drawdown" not in result
+    _assert_no_holding_decision(result)
+
+
+@pytest.mark.parametrize("intent", ["short_term", "medium_term", "long_term"])
+def test_declared_horizon_never_automatically_validates_holding_or_event_exit(intent):
+    result = _review(_exit_annotation(investment_intent=intent))
+    assert result["owner_context"]["investment_intent"] == intent
+    _assert_no_holding_decision(result)
