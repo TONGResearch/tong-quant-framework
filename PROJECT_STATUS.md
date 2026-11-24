@@ -17,6 +17,44 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 ## What Exists
 
+### H3 Metadata Review Closure: November 24
+
+The independent read-only review of the fixed XML-affix audit code, its ignored
+packet and prior metadata is complete, with no actionable scoped issue. It
+independently recomputed the metadata/packet hashes and checked all fourteen
+selected references, subtree exclusion, bounded punctuation and individual
+contexts. It did not execute the audit/tests or inspect original filing/DB/WAL
+bytes. Main-runner verify-only reproduction retains the exact review hash, ten
+synthetic self-checks and five old byte pins; the packet/tool copy is unchanged.
+Related SEC-body/H3 tests: 218 passed, 65.68 seconds. See the H3 review record.
+
+This closes only the metadata/code review, not original-source authentication,
+accounting/sign-role review, financial admission or method validation. All seven
+overlap relations remain UNKNOWN and sign mapping NOT_ASSESSED. No new numeric
+input, formula, parser, strategy or holding authority is added. Next complete
+statement/classification and cash/noncash/aggregate/sign-role evidence before any
+separately reviewed narrow numerical support. At this metadata-review handoff,
+the four-document update was local; it did not complete a new engineering release
+or whole-work-package acceptance. Later reviewed Git synchronization is separate.
+
+### Reviewed Engineering Publication: November 24
+
+The 38-file engineering candidate was published and its remote SHA verified as
+ab19c1879bd06c6241095a057c645866892dc4d0 on codex/wp-launch-001-hardening. Its exact
+tree is 3677558ff999f07ec5a247f76ea61c1962025839. Isolated-candidate checks passed:
+5254 pytest cases, 6 skipped (559.03 seconds); Ruff; mypy (324 files); governance
+(189 checks); whitespace and file/privacy screening. Independent complete-change
+review and follow-up closed the UTC-overflow finding. Local HEAD/tracking matched
+the verified publication and the working tree was clean at that handoff.
+
+Those are the published candidate's checks, not a new full-suite run for this
+documentation update or independent financial/source validation. Private data,
+databases, original artifacts and local audit packets were not published. The
+authenticated GitHub connector resolved the publication path; earlier SSH-only
+failure/owner-action notes are historical, not a current request for credentials.
+Main was not merged. PIT UNSUITABLE, production NOT_READY, ready not accepted;
+execution and notifications remain disabled.
+
 ### Change Cutoff Range Hardening: November 24
 
 Independent public-release review found that valid local ISO dates near the
@@ -25,8 +63,8 @@ sanitized error. Both price and native change APIs now reject either overflowing
 cutoff with ValueError before source reads. Twenty-four new API/CLI cases cover
 both range edges and all period/native modes, preserving generic exit 2 behavior.
 Accepted output versions/hashes and all source/accounting/method/holding gates
-are unchanged. This records the scoped repair, not its unrun checks or a completed
-push; exact candidate verification and independent follow-up remain required.
+are unchanged. This repair was included in the reviewed publication recorded
+above; the earlier preparation and pending-check notes are historical checkpoints.
 
 ### Public Engineering Sync Preparation: November 23
 
@@ -57,9 +95,9 @@ file pins stay exact. Ten synthetic audit self-checks are not new pytest cases;
 existing SEC-body/H3 suites: 218 passed. See
 docs/msft-h3-definition-review-2026-11-19.md for the ignored packet, checks/limits.
 This is pinned bytes/prior metadata, not registry reconstruction or fresh data.
-Independent read-only AI review is PENDING: the review tool returned a usage-limit
-error, with no completed findings. No bypass or review-pass claim; main checks
-do not replace independent review. Resume that bounded review when available.
+Independent metadata/code review was initially PENDING after a tool usage-limit
+error. The scoped November 24 closure above supersedes that blocker; it does not
+complete the separate original-source/accounting/sign-role or method review.
 After resumption, five old file pins, the two-file packet and its exact audit-tool
 copy are unchanged; 489 Python/config inputs retain the prior tested fingerprint.
 Ruff and all 189 governance checks pass again. This slice's full pytest terminal

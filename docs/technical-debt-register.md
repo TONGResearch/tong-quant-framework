@@ -6,8 +6,11 @@ numeric subtrees. Remaining numeric-text/economic contribution sign, complete
 classification, cash/noncash/aggregate overlap and independent source/method review
 are not resolved by native sign-attribute absence or parentheses. No runtime
 mapping, lexical-to-number conversion or narrow lease numerical support is approved.
-The independent metadata/code review is pending after a review-tool usage-limit
-failure; repeatability/self-checks cannot be counted as that independent review.
+The initially blocked independent metadata/code review completed on November 24,
+with matching metadata/packet hashes and no actionable scoped issue. It did not
+execute the audit or verify original source bytes. Repeatability/self-checks and
+metadata review cannot replace independent source/accounting/sign-role admission;
+that remaining debt and all seven UNKNOWN overlap relations are unchanged.
 
 SEC compact source view (November 23): optional output now reduces duplicated
 detail while retaining just-recomputed full-observation/inventory references and
