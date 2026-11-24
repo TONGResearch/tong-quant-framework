@@ -17,6 +17,97 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 ## What Exists
 
+### Public Academic Reproduction And Second Real Case: November 24
+
+The exporter is subject-parameterized for US/HK/MY inputs, not MSFT-only; each HTML
+still contains one frozen case. A-shares/Japan and arbitrary listed-symbol coverage
+are not admitted by this export path. A separately retained NVDA case now exports
+752 daily rows at its November 8 cutoff, beside MSFT's 971 at November 15. All seven
+inspected DB/WAL/artifact byte pins remain exact. These different vintages are not
+contemporaneous opportunities; neither source is independently qualified.
+
+scripts/verify_academic_reproduction.py runs six public synthetic flat/rising
+fixtures across the three identity routes, with no provider, DB, holding or AI
+dependency. SMA golden values and independent Decimal EMA/KDJ references test the
+same shared production computations. Short KDJ prefixes detect lost smoothing
+hidden by endpoint convergence; fault injection must make checks fail. Record
+environment, expected/observed values, blockers and hashes without claiming real
+listings, sessions, economic performance or all-market completeness. The UI now
+says adjustment basis unverified, not proven unadjusted history.
+
+Focused academic suites: 73 passed (11.62 seconds); Ruff, mypy (328 files) and
+whitespace checks pass. Independent full pending academic static review found the
+adjustment-label and convergence-only coverage issues, both repaired. Independent
+static follow-up closes the complete 15-file academic scope without actionable
+findings; it did not run tests, inspect real/private data or establish publication
+or source qualification. Exact isolated-candidate checks remain pending at this
+checkpoint. See docs/academic-verification-guide.md. Existing screenshot/full-suite
+records remain historical. No new capture, data qualification, order or default
+change; this is not work-package acceptance or a completed FYP/economic study.
+
+### Encoding-Safe Academic Test Records: November 24
+
+A synthetic UTF-16 JUnit document with a DTD/internal entity bypassed the ASCII
+byte preflight and was accepted as a failure-free local record. The parser now
+uses a DTD-rejecting TreeBuilder callback, before entity expansion, while keeping
+the existing byte preflight, 2,000,001-byte read bound and all counter/structure
+checks. No dependency or accepted-record output/version change is introduced.
+
+Fifteen plain/internal/external DTD cases across UTF-8/BOM and UTF-16 variants now
+reject; five valid encoded cases preserve counts and original-byte fingerprints.
+All 61 focused tests pass (8.07 seconds); Ruff, mypy (326 files), governance (189
+checks) and whitespace checks pass. Independent read-only static follow-up closes
+both the bounded-read and parser-boundary repairs without actionable residual
+findings. That reviewer ran no tests or data/network/Git operations.
+
+This is scoped local verification, not a new full-suite, isolated candidate or
+publication result. Existing screenshots/retained evidence are unchanged; their
+older full-suite record remains historical. PIT UNSUITABLE, production NOT_READY,
+execution and notifications disabled; no orders, source/financial admission,
+commit or push. Next validate the pending presentation as an exact isolated
+candidate before any reviewed publication; source/accounting/PIT review remains
+separate and cannot be satisfied by engineering tests.
+
+### Bounded Academic Test-Record Read: November 24
+
+The optional JUnit reader now reads at most 2,000,001 bytes before applying its
+existing two-megabyte admission limit, rather than loading the complete file
+before rejecting it. This closes a local resource-exhaustion boundary; accepted
+records retain identical hashes/counts and no source, research or trading gate
+changes. Two instrumented regressions assert the actual read bound, oversized
+rejection and unchanged accepted-content fingerprint. The focused suite now has
+41 passing cases; Ruff, mypy (326 files) and all 189 governance checks pass.
+
+The 5293-pass full-suite record and screenshots below precede this small repair;
+they are not claimed as new whole-suite verification of it. No retained market
+data, generated presentation, execution default, commit or remote was changed.
+Independent review and exact isolated-candidate checks remain required before
+publication. Next review this repair with the pending presentation slice without
+promoting source/PIT/financial readiness.
+
+### Academic Read-Only Workbench: November 24
+
+An owner-requested English screenshot interface now exposes existing historical
+technical computations, evidence lineage, project verification and architecture.
+Daily/weekly/monthly/yearly views reuse checked inputs and shared formulas, keep
+open periods and history gaps explicit, and never infer trading permission. The
+retained MSFT demonstration contains 971 daily rows at the fixed November 15
+cutoff, not a current quote or independently qualified source.
+
+The self-contained HTML export requires an existing read-only store, explicit
+cutoff and age bound; source paths, holdings and account inputs are excluded.
+Local JUnit records are optional engineering evidence, not strategy validation.
+Independent static review identified artifact-root normalization and contradictory
+JUnit-counter risks; both received scoped fixes and regression tests. Focused
+checks: 39 passed; full local suite: 5293 passed, 6 skipped (553.00 seconds).
+Ruff, mypy (326 files), 189 governance checks and whitespace checks pass. Browser
+checks cover all four views at desktop and 320/390/520/768-pixel widths, frequency
+switching, chart controls, provenance and JSON download, without script errors or
+horizontal page overflow. These are local working-tree checks, not isolated
+publication-candidate verification or independent financial validation. See
+docs/academic-showcase-2026-11-24.md for reproduction and limitations. This local
+presentation slice does not accept WP-LAUNCH-001 or change any readiness/default.
+
 ### H3 Metadata Review Closure: November 24
 
 The independent read-only review of the fixed XML-affix audit code, its ignored

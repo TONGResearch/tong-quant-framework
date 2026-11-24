@@ -51,6 +51,52 @@ relaxed by this statement, and a losing trade cannot silently change its horizon
 
 ## Current implementation slice
 
+November 24 academic reproduction adds a second retained historical US case and
+public offline six-case synthetic verification across US/HK/MY routes. It does
+not admit A-shares/Japan, actual HK/MY data or every listed security. Independent
+Decimal references, explicit environment/tolerance, KDJ short-prefix anchors and
+fault injection separate reference verification from self-consistency. The UI
+removes an unsupported unadjusted-history claim. All seven inspected real source
+pins remain exact; differing MSFT/NVDA cutoffs cannot be compared as one market
+snapshot. Seventy-three focused cases, Ruff, mypy (328 files) and whitespace
+checks pass; review follow-up and isolated publication checks remain separate.
+See ../academic-verification-guide.md. Source/PIT/performance and execution gates
+are unchanged; no live capture/order/default change or work-package acceptance.
+
+November 24 encoded-JUnit follow-up closes a reproduced UTF-16 DTD/internal-entity
+bypass of raw ASCII preflight. A parser-target DTD callback rejects declarations
+before expansion across encodings, retaining the bounded read and existing
+counter/structure gates. Twenty added cases cover fifteen encoded DTD rejections
+and five accepted-byte identities; 61 focused tests pass (8.07 seconds). Ruff,
+mypy (326 files), all 189 governance checks and whitespace checks pass. Independent
+read-only static follow-up closes the parser/read-bound repairs; no independent
+test/data execution or source/strategy/publication approval is implied. Existing
+full-suite/screenshot evidence is historical; an exact isolated publication
+candidate remains required. No data/default/authority/dependency/commit/push change.
+
+November 24 bounded-read follow-up limits the optional academic JUnit input read
+to 2,000,001 bytes before its unchanged two-megabyte admission check. Oversized
+records cannot require an unbounded whole-file read first. Two added regressions
+exercise the read request itself and accepted-content fingerprint; 41 focused
+tests, Ruff, mypy (326 files), governance (189 checks) and whitespace checks pass.
+The earlier full-suite/screenshot record is not a new full-suite run for this
+repair. Independent review and isolated publication checks remain pending; no
+source data, default, authority, commit or remote change. Ready, not accepted.
+
+November 24 owner-requested academic presentation adds a self-contained English
+read-only workbench, evidence lineage, verification/safety and architecture views.
+It reuses existing checked technical/calendar computations, shows explicit history
+and source gaps, and admits no holding, strategy-validation or execution authority.
+The optional local JUnit record rejects contradictory counters/outcomes; output
+protection normalizes artifact paths consistently and never overwrites a file.
+Thirty-nine focused tests pass; the full local suite passes 5293 cases with six
+skipped (553.00 seconds). Ruff, mypy (326 files), governance (189 checks), whitespace
+and browser responsive/control checks pass. This is local working-tree evidence,
+not isolated publication-candidate verification. Generated data-bearing
+HTML, screenshots and original sources stay outside Git. See
+../academic-showcase-2026-11-24.md. Local implementation, not publication or work
+package acceptance; all readiness and disabled defaults remain unchanged.
+
 November 24 independent release review identified unsanitized UTC conversion
 overflow in the equity change CLI. Both price and native change APIs now turn
 either cutoff's conversion overflow into a generic ValueError before source

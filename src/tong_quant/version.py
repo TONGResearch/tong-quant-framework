@@ -62,6 +62,7 @@ EQUITY_NOTE_VERSION = "equity-diagnostic-note-v2-utc-context"
 TECHNICAL_DISPLAY_BINDING_VERSION = "daily-technical-display-binding-v1"
 EQUITY_BOUND_NOTE_VERSION = "equity-diagnostic-note-v8-technical-binding"
 EQUITY_CHANGE_DIGEST_VERSION = "equity-daily-change-digest-v1"
+ACADEMIC_SHOWCASE_VERSION = "academic-readonly-showcase-v1"
 EQUITY_PERIOD_CHANGE_DIGEST_VERSION = "equity-change-digest-v2-period-context"
 NATIVE_FUNDAMENTAL_CHANGE_VERSION = "native-fundamental-change-v1-retained-observations"
 EQUITY_NATIVE_CHANGE_DIGEST_VERSION = "equity-change-digest-v3-native-context"
@@ -263,6 +264,7 @@ __all__ = [
     "TECHNICAL_DISPLAY_BINDING_VERSION",
     "EQUITY_BOUND_NOTE_VERSION",
     "EQUITY_CHANGE_DIGEST_VERSION",
+    "ACADEMIC_SHOWCASE_VERSION",
     "EQUITY_PERIOD_CHANGE_DIGEST_VERSION",
     "NATIVE_FUNDAMENTAL_CHANGE_VERSION",
     "EQUITY_NATIVE_CHANGE_DIGEST_VERSION",

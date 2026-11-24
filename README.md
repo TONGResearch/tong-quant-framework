@@ -80,7 +80,8 @@ hardening boundaries:
 - Checksum-verified baseline migration and fail-closed physical schema fingerprint
 - Provider-neutral evidence ingestion with trust and availability metadata
 - CNInfo disclosure evidence through explicit AKShare transport provenance
-- Yahoo Finance unadjusted global daily-bar evidence with conservative trust
+- Yahoo Finance provider-native global daily-bar observations with conservative
+  trust and an unverified adjustment basis
 - Provider-neutral Yahoo daily-bar calibration with deterministic fixtures,
   fail-closed unavailable/incompatible attempts, and optional Massive evidence
 - Scheduled CNInfo/Yahoo provider contract monitoring and audit persistence
@@ -111,6 +112,46 @@ It intentionally does not implement Paper Trading, order-level backtesting,
 trade approval, orders, execution logic, live brokerage, or auto rebalancing.
 
 ## Quick Start
+
+### Academic Research Workbench
+
+For an independent review without private data, start with the
+[academic verification guide](docs/academic-verification-guide.md):
+
+```bash
+python scripts/verify_academic_reproduction.py --output verification.json
+```
+
+This runs six explicitly synthetic cases across US/HK/MY routes, checks SMA/MACD/
+KDJ against separate numerical references and tests blocked-input behavior.
+It is offline after dependency installation; it does not qualify real listings,
+market data, trading sessions or strategy performance. The actual exporter below
+is subject-parameterized, but each generated page is a fixed single-stock snapshot,
+not a live all-market terminal. This export path does not yet admit A-shares/Japan.
+
+An offline English workbench presents retained observations, evidence lineage,
+local engineering checks and system architecture. It reuses the existing research
+formulas and original read-only source reconstruction; it is not a fabricated
+profit dashboard, a second official ResearchReport, or a live-trading interface.
+
+```bash
+python scripts/export_academic_showcase.py \
+  --database data/processed/msft-review-20261115-zgzl_o5o/snapshot.sqlite3 \
+  --artifact-root data/processed/msft-review-20261115-zgzl_o5o/raw \
+  --market us --symbol MSFT \
+  --as-of 2026-11-15T09:13:45.007947+00:00 \
+  --max-observation-age-seconds 604800 \
+  --output data/processed/academic-showcase/index.html
+```
+
+The example requires the original local retained sample, which is not on GitHub.
+The seven-day limit is illustrative, not a production freshness policy. Open the
+exported HTML directly in a browser; no server, account, network or frontend
+installation is required. Optional `--junit-report` displays an actual local pytest
+JUnit record, explicitly separate from strategy-performance validation. Existing
+output files are never overwritten. See [academic showcase notes](docs/academic-showcase-2026-11-24.md).
+
+### Environment
 
 ```bash
 python3 -m venv .venv
