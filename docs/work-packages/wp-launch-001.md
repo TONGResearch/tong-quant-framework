@@ -51,6 +51,44 @@ relaxed by this statement, and a losing trade cannot silently change its horizon
 
 ## Current implementation slice
 
+November 25 test-only follow-up adds six US/HK/MY combined-reader failure/recovery
+sequences. A later successful retained capture cannot rewrite an earlier failed
+digest, make the failed previous side comparable, erase another component's
+failure or qualify trading/holding authority. Same-content recapture is not a
+new price observation or business improvement. The root price comparison is
+not aggregate native/period input health. Read phases preserve original fixture
+DB/artifact/committed-WAL bytes and create no report/signal/fact. See the existing
+native-fundamental-change record for explicit scope. No runtime/default change,
+automatic retry/recovery implementation, source/method qualification, real-data
+capture, commit or push; ready, not accepted. Earlier dirty documentation stays.
+Final related scope: 226 passed (71.63 seconds); pre-strengthening full run:
+5333 passed, six skipped (471.31 seconds). The last batch-ID/status/source-bound
+assertions were checked by the final focused rerun and independent static
+follow-up, not by that full run. Ruff, mypy (328 files), governance (189) and
+whitespace pass; isolated final-candidate release verification remains separate.
+
+November 25 documentation handoff pins the completed academic publication to
+commit 9407bdeca6cdf11a206e6a6d426c0755d7e7e336 / tree
+5884ca61aecb6d4da267029217ea0788c1d791d9. The November 24 exact isolated candidate
+passed 5327 tests with six skipped, Ruff, mypy (328 files), governance (189),
+whitespace/privacy checks and offline wheel build/unpacked import-resource smoke;
+independent complete-candidate static review closed scoped findings. These are
+historical candidate checks, not newly executed checks for the handoff. Local
+commit/tree/tracking and retained JUnit fingerprints/counts were rechecked without
+new remote polling, market-source reads or market capture. The verification guide now
+provides a pinned fresh-checkout route and distinguishes unavailable private
+source/record bytes from public numerical reproduction. Earlier pending-release
+checkpoint notes below remain historical. MSFT is sufficient for the owner's
+academic example; return to evidence/freshness/method work rather than expanding
+the showcase. No source/PIT/financial/strategy admission, package acceptance,
+runtime/default change, commit or push follows from this documentation slice.
+Current local documentation checks separately pass 5327 tests, six skipped
+(605.04 seconds), Ruff, mypy (328 files), 189 governance checks and whitespace.
+Those checks do not replace exact-candidate publication review. The owner has
+changed research wake-ups to every four hours, retaining quota protection, and
+reiterated delivery before December; prioritize core acceptance gaps, not more
+presentation cases or an unearned package/readiness promotion.
+
 November 24 academic reproduction adds a second retained historical US case and
 public offline six-case synthetic verification across US/HK/MY routes. It does
 not admit A-shares/Japan, actual HK/MY data or every listed security. Independent

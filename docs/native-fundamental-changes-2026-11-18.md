@@ -83,6 +83,55 @@ validation, replay, holding, execution and official-report authorities stay fals
 
 ## Verification
 
+### November 25 Retained Failure/Recovery Sequence
+
+Six added integration regressions exercise US/HK/MY fixtures with either a price
+capture failure or a native-financial capture failure, followed by an explicitly
+ingested successful receipt. They use the existing combined daily/weekly/monthly
+and native reader, not a new recovery worker or strategy. They characterize
+existing behavior; no runtime repair or new production freshness policy is claimed.
+
+- The failed latest receipt cannot be replaced by an older successful receipt.
+  The other component remains separately observable, not a substitute for it.
+  Its exact evidence ID is pinned through the fixture's failed ingestion batch;
+  provider failure status is checked on both failed sides. Native failures also
+  require source_bound=True, distinguishing retained failure from generic rejection.
+- After the new receipt, re-reading the earlier explicit cutoffs reproduces the
+  entire failed digest exactly. Recovery does not rewrite historical observations.
+- Comparing a failed previous cutoff with a recovered current cutoff remains
+  NOT_COMPARABLE for that component, while retaining the new current receipt.
+- Comparing the earlier good capture with the new same-content capture observes
+  a changed capture identity, not a new market row or a financial improvement.
+- All source/PIT/holding/execution authorities remain false across the root,
+  native context and period context. No ResearchReport, Signal or FundamentalFact
+  is created; database/artifact/committed-WAL byte pins stay exact during reads.
+
+The root comparison_status describes prices only. In particular,
+NO_NEW_PRICE_OBSERVATIONS can coexist with a NOT_COMPARABLE native context; it
+is not an all-inputs-healthy flag. The root fundamental comparison remains
+NOT_ASSESSED and holding method NOT_VALIDATED after a successful retained read.
+Synthetic capture times and long fixture age limits do not qualify actual
+source freshness, automatic retry, job recovery, market sessions or accounting.
+No private source, holdings or live provider is used by these cases. Existing
+source/method/OOS and controlled-refresh acceptance gates remain open.
+
+The final related scope passes 226 tests in 71.63 seconds. A full working-tree
+run passed 5333 tests, six skipped, in 471.31 seconds before the last assertion
+strengthening; it collected the earlier version of these six cases. Do not call
+it an exact final-candidate full-suite run. The final focused rerun includes the
+strengthened assertions; runtime source is unchanged. Ruff, mypy (328 files),
+all 189 governance checks and whitespace checks pass. Independent read-only
+static review found that an unavailable native failure could satisfy generic
+rejection assertions; the batch-ID/status/source-bound checks above close that
+coverage gap. Static follow-up reports no further scoped actionable finding; it
+ran no tests and did not inspect real sources or grant publication approval.
+
+The pre-existing academic handoff stays intact. These mixed working-tree checks
+cannot replace isolated-candidate verification before reviewed GitHub publication.
+No test record is added to Git, and no commit/push or default change occurred.
+
+### Earlier Verification Records
+
 Focused tests cover three markets, deterministic copied-source bindings, original
 default modes, same-capture/recapture/order invariance, latest and historical
 changes, currency/period labels, duplicates/missing/invalid/future rows, zero and

@@ -22,6 +22,24 @@ not a dated listing record. No claim of "all stocks supported" is made.
 
 ## Supervisor Quick Check
 
+The reviewed academic revision is
+9407bdeca6cdf11a206e6a6d426c0755d7e7e336, with tree
+5884ca61aecb6d4da267029217ea0788c1d791d9. The default branch need not contain it.
+Use a new checkout so inspection cannot discard an existing developer's changes:
+
+```sh
+git clone --branch codex/wp-launch-001-hardening https://github.com/TONGResearch/tong-quant-framework.git tong-quant-academic-review
+cd tong-quant-academic-review
+git switch --detach 9407bdeca6cdf11a206e6a6d426c0755d7e7e336
+git rev-parse HEAD HEAD^{tree}
+```
+
+The last command must print the commit and tree above before reproducing that
+release's claims. Cloning requires repository access and a network connection;
+checking out this revision does not provide private historical source artifacts.
+Later revisions may add documentation or code and need their own scoped checks;
+the recorded full-suite result must not silently follow a moving branch.
+
 Use the reviewed branch containing this guide, not an older default branch.
 Install Python 3.12 and the project's dependencies following the README. Initial
 dependency installation can require internet access; the checks below do not.
@@ -117,6 +135,9 @@ evidence-aware equity-research workbench, not a proven automated money-making sy
 
 ## Review Checkpoint
 
+The following paragraph describes the pre-publication checkpoint; the completed
+release record is in the next section. Its pending wording is not a current gate.
+
 The two focused academic suites pass 73 cases; Ruff, mypy (328 files), whitespace
 and all 189 governance checks pass locally. Independent static review of the
 15-file academic scope and follow-up closed the adjustment-provenance and
@@ -125,3 +146,28 @@ reviewer ran no tests, real-data/browser/network operations or Git mutations.
 Exact isolated-candidate release checks remain a separate gate at this checkpoint.
 Do not transfer an old full-suite record to later edits or claim independent
 verification of private source bytes from this code review.
+
+## Completed Release Record
+
+The pinned commit above records the exact isolated 15-file candidate verification:
+5327 pytest cases passed, six skipped, zero failures/errors, 649.23 seconds;
+Ruff, mypy (328 files), all 189 governance checks, whitespace/privacy preflight
+and independent complete-candidate static review passed. Packaging evidence is
+an offline wheel build and imports/resource access from its unpacked contents,
+not a fresh isolated dependency installation or an independent-host test.
+
+The original local JUnit record fingerprint is
+acb52c201f1436c9eff76d084de955792b8a01cee729b8fc2c51742156185f09.
+The final presentation's anonymous derivative is
+33f4ce721d84448793c823cedfdefc6e47134c50fe5fac492a3646d1a65971ce.
+All 5333 case outcomes are preserved, with hashed case identities and the original
+fingerprint retained in properties. The derivative fits the reader's existing
+size bound; no test was dropped or reclassified to fit it. These local records
+are not bundled in Git. Without the corresponding bytes, a reviewer can inspect
+the public implementation and rerun checks but cannot authenticate these historic
+execution records merely from the quoted fingerprints.
+
+Do not mix these records with the earlier 5293-pass screenshot checkpoint. A new
+test execution yields a new local record even when its outcomes agree. Nothing
+in this publication accepts WP-LAUNCH-001, validates a trading strategy, admits
+private source data or changes disabled execution/notification defaults.

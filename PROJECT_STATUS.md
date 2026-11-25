@@ -17,6 +17,79 @@ This is the canonical short handoff for developers and AI agents. Read it with
 
 ## What Exists
 
+### Retained Update Failure/Recovery Regression: November 25
+
+Six new combined-reader regressions cover a price or native-financial capture
+failure followed by a separately ingested successful receipt, across US/HK/MY.
+They verify latest-failure preservation, exact historical digest reproduction
+after recovery, blocked failed-to-good comparisons and independent component
+states. Same-content recapture is not new market/business evidence. Every
+source/PIT/holding/execution authority remains false, no report/signal/fact is
+created, and read phases preserve database/artifact/committed-WAL byte pins.
+The root price comparison is not aggregate input health; a usable price
+component cannot clear a failed native context. See the November 25 addendum in
+docs/native-fundamental-changes-2026-11-18.md.
+
+Final related scope: 226 passed (71.63 seconds). The full working-tree run passed
+5333 cases with six skipped (471.31 seconds), but collected the six new cases
+before independent review strengthened their failed-receipt assertions; only the
+final focused rerun verifies that last test edit. Ruff, mypy (328 files), all
+189 governance checks and whitespace checks pass. Static review/follow-up closed
+the failure-ID/status/native-source-bound coverage gap, not source qualification.
+This is not exact final-candidate publication verification or a new whole-suite
+record for the strengthened assertions.
+
+This is test-only characterization of existing behavior, not a runtime repair,
+new refresh worker, recovery acceptance or method/strategy validation. The
+earlier three-file academic handoff remains local and is preserved. No actual
+provider capture, private-source read, readiness/default change, commit or push.
+Next complete the controlled refresh/recovery and source-bound method evidence
+gates inside WP-LAUNCH-001; Paper and live gates are not waived by the deadline.
+
+### Owner Schedule And Delivery Reminder: November 25
+
+The existing research heartbeat now runs every four hours at 00/04/08/12/16/20
+Malaysia time, replacing the prior three-hour schedule; the separate GitHub
+schedule is unchanged. Its original quota guard remains: skip a round below 20%
+weekly remaining or 15% five-hour remaining, or when usable limits are unknown.
+The owner reiterated delivery before December 2026. The task now explicitly
+prioritizes the original agreed core scope and early disclosure of acceptance
+gaps; neither the academic showcase nor passing engineering tests completes the
+system. No package/readiness promotion or trading permission follows from a date.
+
+### Academic Publication Evidence Handoff: November 25
+
+The academic slice is recorded in commit
+9407bdeca6cdf11a206e6a6d426c0755d7e7e336 on codex/wp-launch-001-hardening,
+with tree 5884ca61aecb6d4da267029217ea0788c1d791d9. Its isolated candidate passed
+5327 pytest cases, with six skipped and no failures/errors (649.23 seconds),
+Ruff, mypy (328 files), 189 governance checks, whitespace/privacy preflight and
+offline wheel build plus unpacked-wheel import/resource smoke checks. Independent
+complete-candidate static review and follow-up closed the scoped findings. This
+is the completed November 24 engineering-publication record, not a new full-suite
+run for this documentation handoff, a fresh environment installation, remote CI
+result or qualification of original market sources.
+
+This handoff rechecked the local commit/tree/tracking identities and retained
+JUnit counts/fingerprints against the delivery receipt; it did not query remote
+state again. The earlier pending-checkpoint paragraphs below remain historical,
+not current publication blockers. The guide now pins a fresh-checkout review to
+that exact revision and separates code reproduction from source authentication
+and economic validation. Generated presentations and private source files remain
+outside Git. MSFT remains the primary showcase; no further stock/UI expansion is
+needed for the owner's academic demonstration.
+
+WP-LAUNCH-001 remains ready, not accepted. Source/accounting/PIT and actual
+method/OOS evidence remain separate. Next return to the continuous-research
+evidence/freshness gates rather than interpreting the published test counts as
+validated holding/exit/add guidance. Execution and notifications remain disabled.
+
+Current local documentation-handoff verification separately passed 5327 tests,
+six skipped, no failures/errors (605.04 seconds), Ruff, mypy (328 files), all
+189 governance checks and whitespace checks. It is not isolated publication
+verification, an independent review or a new commit/push. Only this status, the
+academic verification guide and WP-LAUNCH-001 handoff document changed.
+
 ### Public Academic Reproduction And Second Real Case: November 24
 
 The exporter is subject-parameterized for US/HK/MY inputs, not MSFT-only; each HTML

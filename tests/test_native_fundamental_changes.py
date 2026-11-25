@@ -20,6 +20,7 @@ from tong_quant.application.equity_changes import read_equity_change_digest
 from tong_quant.data.artifacts import FileSystemArtifactStore
 from tong_quant.data.financial_inputs import financial_input_json
 from tong_quant.data.providers.yahoo_fundamentals import NATIVE_METRICS, YahooFundamentalCapture
+from tong_quant.data.providers.yahoo_snapshot import YahooSnapshotCapture
 from tong_quant.data.storage.sqlite import SQLiteStore
 from tong_quant.version import (
     EQUITY_NATIVE_CHANGE_DIGEST_VERSION,
@@ -342,6 +343,92 @@ def test_price_and_native_reads_share_snapshot_across_component_boundary(foundat
         foundation[1], "MSFT", SCOPES[0][0], **kwargs)
     assert fresh["comparison_status"] == "NO_NEW_PRICE_OBSERVATIONS"
     assert fresh["native_fundamental_context"]["comparison_status"] == "NOT_COMPARABLE"
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+@pytest.mark.parametrize("failed_component", ("price", "native"))
+def test_retained_recovery_preserves_failed_cutoffs_and_separate_component_authority(
+    foundation, scope, failed_component,
+):
+    prices = runpy.run_path(str(Path(__file__).with_name("test_global_price_inputs.py")))
+    price_scope = next(item for item in prices["SCOPES"] if item[0] is scope[0])
+    prices["_ingest"](foundation, scope=price_scope, at=AT)
+    _ingest(foundation, scope)
+    recovered_at = LATER + timedelta(seconds=1)
+
+    def read(previous, current):
+        return read_equity_change_digest(
+            SQLiteStore(foundation[0].path, read_only=True), foundation[1], scope[1], scope[0],
+            previous_as_of=previous, as_of=current, maximum_age_seconds=400 * 86400,
+            maximum_native_capture_age_seconds=AGE, include_period_context=True)
+
+    if failed_component == "price":
+        failure = prices["_ingest"](foundation, scope=price_scope, at=LATER,
+                                    capture=YahooSnapshotCapture(None, "provider_unavailable"))
+    else:
+        failure = _ingest(foundation, scope, at=LATER,
+                          capture=YahooFundamentalCapture(None, "network_unavailable"))
+    with sqlite3.connect(foundation[0].path) as connection:
+        failure_rows = connection.execute(
+            "SELECT evidence_id FROM provider_evidence_records WHERE batch_id = ?",
+            (failure.batch_id,)).fetchall()
+    assert len(failure_rows) == 1
+    failure_id = failure_rows[0][0]
+    failure_status = ("provider_unavailable" if failed_component == "price"
+                      else "network_unavailable")
+    pins = _footprint(foundation)
+    failed = read(AT, LATER)
+    native = failed["native_fundamental_context"]
+    assert failed["comparison_status"] == (
+        "NOT_COMPARABLE" if failed_component == "price" else "NO_NEW_PRICE_OBSERVATIONS")
+    assert native["comparison_status"] == (
+        "NOT_COMPARABLE" if failed_component == "native" else "RETAINED_NATIVE_CONTENT_IDENTICAL")
+    affected = failed if failed_component == "price" else native
+    assert affected["previous"]["selected_evidence_id"] != affected["current"][
+        "selected_evidence_id"]
+    assert affected["current"]["selected_evidence_id"] == failure_id
+    assert affected["current"]["status"] == failure_status
+    if failed_component == "native":
+        assert affected["current"]["source_bound"] is True
+    assert affected["blocking_reasons"]
+    assert _footprint(foundation) == pins
+
+    if failed_component == "price":
+        prices["_ingest"](foundation, scope=price_scope, at=recovered_at)
+    else:
+        _ingest(foundation, scope, at=recovered_at)
+    pins = _footprint(foundation)
+    recovered = read(AT, recovered_at)
+    crossing_failure = read(LATER, recovered_at)
+    assert read(AT, LATER) == failed  # Later receipt cannot rewrite an earlier failed cutoff.
+    assert recovered["comparison_status"] == "NO_NEW_PRICE_OBSERVATIONS"
+    assert recovered["native_fundamental_context"]["comparison_status"] == (
+        "RETAINED_NATIVE_CONTENT_IDENTICAL")
+    affected_recovery = (recovered if failed_component == "price"
+                         else recovered["native_fundamental_context"])
+    assert affected_recovery["same_selected_capture"] is False
+    assert affected_recovery["current"]["selected_evidence_id"] != affected["current"][
+        "selected_evidence_id"]
+    affected_crossing = (crossing_failure if failed_component == "price"
+                         else crossing_failure["native_fundamental_context"])
+    assert affected_crossing["comparison_status"] == "NOT_COMPARABLE"
+    assert affected_crossing["previous"]["selected_evidence_id"] == failure_id
+    assert affected_crossing["previous"]["status"] == failure_status
+    if failed_component == "native":
+        assert affected_crossing["previous"]["source_bound"] is True
+    assert any(reason.startswith("previous_") for reason in affected_crossing["blocking_reasons"])
+    assert affected_crossing["current"]["selected_evidence_id"] == affected_recovery["current"][
+        "selected_evidence_id"]
+    for result in (failed, recovered, crossing_failure):
+        assert result["fundamental_comparison"] == "NOT_ASSESSED"
+        assert result["holding_method"] == "NOT_VALIDATED" and result["price_change"] is None
+        for component in (result, result["native_fundamental_context"], result["period_context"]):
+            for authority in ("source_qualified", "pit_qualified", "holding_management_authorized",
+                              "execution_authorized"):
+                assert component[authority] is False
+    assert _footprint(foundation) == pins
+    for table in ("research_reports", "signals", "fundamental_facts"):
+        assert foundation[0].table_count(table) == 0
 
 
 @pytest.mark.parametrize("microseconds,expected", ((0, "WITHIN_LIMIT"), (1, "STALE")))
